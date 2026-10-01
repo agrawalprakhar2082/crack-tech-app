@@ -166,6 +166,51 @@
   .price .btn{width:100%}
   .note{margin-top:24px;font-size:14px;color:var(--muted-2);text-align:center}
 
+  .sample{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brass);border:1px dashed var(--brass);border-radius:999px;padding:2px 9px;margin-right:6px}
+
+  /* package builder */
+  .builder{width:min(640px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--line);border-radius:24px;background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+  .builder::backdrop{background:rgba(19,21,14,.55);backdrop-filter:blur(3px)}
+  .builder[open]{animation:pbIn .25s cubic-bezier(.2,.8,.2,1)}
+  @keyframes pbIn{from{opacity:0;transform:translateY(12px)}}
+  .pb{padding:32px 32px 28px}
+  .pb-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+  .pb-head h2{font-size:clamp(34px,5vw,46px);margin:14px 0 8px}
+  .pb-head p{color:var(--muted);margin:0;font-size:15.5px}
+  .pb-presets{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 18px}
+  .pb-presets button{font:500 13.5px/1 var(--sans);color:var(--fg-2);background:var(--bg);border:1px solid var(--line-2);border-radius:999px;padding:9px 14px;cursor:pointer;transition:border-color .2s,background .2s}
+  .pb-presets button:hover{border-color:var(--fg)}
+  .pb-presets button[aria-pressed="true"]{background:var(--olive-soft);border-color:var(--olive);color:var(--fg)}
+  .pb-items{border:1px solid var(--line);border-radius:16px}
+  .pb-item{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 18px}
+  .pb-item + .pb-item{border-top:1px solid var(--line)}
+  .pb-item strong{display:block;font-weight:500}
+  .pb-item span{font-size:14px;color:var(--muted)}
+  .pb-item em{font-style:normal}
+  .stepper{display:flex;align-items:center;border:1px solid var(--line-2);border-radius:999px;flex:none}
+  .stepper button{width:40px;height:40px;border:0;background:transparent;color:var(--fg);font-size:20px;line-height:1;cursor:pointer;border-radius:999px}
+  .stepper button:hover:not(:disabled){background:var(--bg-2)}
+  .stepper button:disabled{color:var(--muted-2);cursor:default}
+  .stepper output{min-width:28px;text-align:center;font-family:var(--mono);font-size:16px}
+  .pb-tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:18px}
+  .pb-tier{border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center;font-size:13px;color:var(--muted);transition:all .2s}
+  .pb-tier b{display:block;font-family:var(--serif);font-weight:400;font-size:22px;color:var(--fg-2);line-height:1.1}
+  .pb-tier.on{background:var(--olive);border-color:var(--olive);color:var(--on-olive)}
+  .pb-tier.on b{color:var(--on-olive)}
+  .pb-hint{min-height:1.6em;margin:10px 0 0;font-size:14.5px;color:var(--olive)}
+  .pb-sum{margin:14px 0 0;border-top:1px solid var(--line)}
+  .pb-sum div{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .pb-sum dt{color:var(--muted)}
+  .pb-sum dd{margin:0;font-family:var(--mono);font-size:14.5px}
+  .pb-sum .save dd{color:var(--olive)}
+  .pb-sum .total{align-items:baseline}
+  .pb-sum .total dt{color:var(--fg);font-weight:500}
+  .pb-sum .total dd{font-family:var(--serif);font-size:40px;line-height:1}
+  .pb-fine{font-size:13px;color:var(--muted-2);margin:14px 0 0}
+  .pb-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .pb-actions .btn-primary{flex:1}
+  .pb-actions .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
   /* faq */
   .faq{display:grid;grid-template-columns:.85fr 1.15fr;gap:72px}
   .faq .lede{margin-top:20px}
@@ -266,6 +311,10 @@
     .book-form{padding:12px 10px 16px}
     .form-grid{grid-template-columns:1fr}
     .tabs{border-radius:18px;width:100%}
+    .pb{padding:24px 18px 20px}
+    .pb-tiers{grid-template-columns:repeat(2,1fr)}
+    .pb-item{padding:14px}
+    .pb-actions .btn{flex:1 1 100%}
     .tab{flex:1 1 100%;text-align:center}
     .foot{grid-template-columns:1fr 1fr}
     .foot > div:first-child{grid-column:1/-1}
@@ -475,11 +524,11 @@
           <h3>Interview package</h3>
           <div class="amt" style="font-size:52px;padding-top:8px">Custom</div>
           <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Coaching and mocks, sized to your timeline</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Built around your target companies</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Priority scheduling</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Mix mocks and coaching, sized to your timeline</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span>Save up to <span data-max-off>15%</span> as you add sessions</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Built around your target companies, with priority scheduling</li>
           </ul>
-          <a href="#book" class="btn btn-outline" data-service="Interview package">Plan my package</a>
+          <button type="button" class="btn btn-outline" data-open-builder>Build my package</button>
         </div>
       </div>
       <p class="note">Prices in USD. Payment details are shared once your session is confirmed.</p>
@@ -544,7 +593,7 @@
                   <option>Interview package</option>
                 </select>
               </div>
-              <div class="field full"><label for="f-msg">Target role or company <span class="opt">(optional)</span></label><textarea id="f-msg" name="message" placeholder="e.g. Senior SWE, onsite in 6 weeks"></textarea></div>
+              <div class="field full"><label for="f-msg">Target role, company or package details <span class="opt">(optional)</span></label><textarea id="f-msg" name="message" placeholder="e.g. Senior SWE, onsite in 6 weeks"></textarea></div>
               <input type="hidden" name="_subject" value="New Crack Tech call request">
               <div class="full"><button type="submit" class="btn btn-primary" style="width:100%">Request my free call <span class="arr">→</span></button></div>
               <p class="fine full">No spam. Your details are only used to arrange your call.</p>
@@ -559,6 +608,56 @@
     </div>
   </section>
 </main>
+
+<dialog class="builder" id="builder" aria-labelledby="pb-title">
+  <form method="dialog" class="pb">
+    <div class="pb-head">
+      <div>
+        <div class="kicker">Interview package</div>
+        <h2 id="pb-title">Build your <em>package.</em></h2>
+        <p>Mix mock interviews and coaching sessions. The more you book, the more you save.</p>
+      </div>
+      <button class="icon-btn" value="close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+
+    <div class="pb-presets" role="group" aria-label="Starting points">
+      <button type="button" data-preset="0,3">3 mocks</button>
+      <button type="button" data-preset="2,2">2 coaching + 2 mocks</button>
+      <button type="button" data-preset="3,3">Full loop: 3 + 3</button>
+      <button type="button" data-preset="4,4">Intensive: 4 + 4</button>
+    </div>
+
+    <div class="pb-items">
+      <div class="pb-item">
+        <div><strong>1:1 coaching session</strong><span>90 min · <em data-unit="coaching"></em> each</span></div>
+        <div class="stepper"><button type="button" data-step="coaching,-1" aria-label="One fewer coaching session">−</button><output id="pb-coaching" aria-live="polite">0</output><button type="button" data-step="coaching,1" aria-label="One more coaching session">+</button></div>
+      </div>
+      <div class="pb-item">
+        <div><strong>Mock interview</strong><span>60 min · <em data-unit="mock"></em> each</span></div>
+        <div class="stepper"><button type="button" data-step="mock,-1" aria-label="One fewer mock interview">−</button><output id="pb-mock" aria-live="polite">0</output><button type="button" data-step="mock,1" aria-label="One more mock interview">+</button></div>
+      </div>
+    </div>
+
+    <div class="pb-tiers" id="pb-tiers" aria-label="Package discounts"></div>
+    <p class="pb-hint" id="pb-hint"></p>
+
+    <dl class="pb-sum">
+      <div><dt>Sessions</dt><dd id="pb-count">—</dd></div>
+      <div><dt>At single-session prices</dt><dd id="pb-sub">—</dd></div>
+      <div class="save"><dt>Package discount</dt><dd id="pb-off">—</dd></div>
+      <div class="total"><dt>Your package</dt><dd id="pb-total">—</dd></div>
+      <div><dt>Works out to</dt><dd id="pb-each">—</dd></div>
+    </dl>
+    <p class="pb-fine"><span class="sample">Sample discounts</span> Prices in USD. Your package is confirmed on a free call before any payment.</p>
+
+    <div class="pb-actions">
+      <button type="button" class="btn btn-primary" id="pb-request">Request this package <span class="arr">→</span></button>
+      <button class="btn btn-outline" value="close">Not now</button>
+    </div>
+  </form>
+</dialog>
 
 <footer>
   <div class="wrap">
@@ -677,6 +776,74 @@
     if (selectEvent) selectEvent(SERVICE_TO_EVENT[b.dataset.service] || 'intro');
     else svc.value = b.dataset.service;
   }));
+
+  // ---------------- Package builder ----------------
+  // Single-session prices and package discounts (by total sessions). Discounts are sample values: edit here.
+  const UNIT = { coaching: 300, mock: 150 };
+  const TIERS = [ { min: 2, off: 0 }, { min: 3, off: .05 }, { min: 5, off: .10 }, { min: 8, off: .15 } ];
+  const MAX_EACH = 10;
+  const money = n => '$' + Math.round(n).toLocaleString('en-US');
+  const dlg = $('#builder'), pkg = { coaching: 2, mock: 2 };
+  document.querySelectorAll('[data-unit]').forEach(el => { el.textContent = money(UNIT[el.dataset.unit]); });
+  document.querySelectorAll('[data-max-off]').forEach(el => { el.textContent = TIERS[TIERS.length - 1].off * 100 + '%'; });
+  $('#pb-tiers').innerHTML = TIERS.map((t, i) => {
+    const next = TIERS[i + 1];
+    return `<div class="pb-tier" data-i="${i}"><b>${t.off ? t.off * 100 + '% off' : 'Base'}</b>${!next ? `${t.min}+` : next.min - 1 > t.min ? `${t.min}–${next.min - 1}` : t.min} sessions</div>`;
+  }).join('');
+  const tierFor = n => [...TIERS].reverse().find(t => n >= t.min);
+  const summary = short => {
+    const parts = [];
+    if (pkg.coaching) parts.push(short ? `${pkg.coaching} coaching` : `${pkg.coaching} × 1:1 coaching`);
+    if (pkg.mock) parts.push(short ? `${pkg.mock} mock${pkg.mock > 1 ? 's' : ''}` : `${pkg.mock} × mock interview`);
+    return parts.join(' + ');
+  };
+  const quote = () => {
+    const n = pkg.coaching + pkg.mock;
+    const sub = pkg.coaching * UNIT.coaching + pkg.mock * UNIT.mock;
+    const t = tierFor(n), off = t ? Math.round(sub * t.off) : 0;
+    return { n, sub, t, off, total: sub - off };
+  };
+  const draw = () => {
+    const q = quote();
+    $('#pb-coaching').value = pkg.coaching; $('#pb-mock').value = pkg.mock;
+    document.querySelectorAll('[data-step]').forEach(b => {
+      const [k, d] = b.dataset.step.split(','); const v = pkg[k] + +d;
+      b.disabled = v < 0 || v > MAX_EACH;
+    });
+    document.querySelectorAll('[data-preset]').forEach(b => b.setAttribute('aria-pressed', b.dataset.preset === `${pkg.coaching},${pkg.mock}`));
+    document.querySelectorAll('.pb-tier').forEach(el => el.classList.toggle('on', q.t === TIERS[el.dataset.i]));
+    const next = TIERS.find(t => t.min > q.n);
+    $('#pb-hint').textContent = q.n < TIERS[0].min ? `Add at least ${TIERS[0].min} sessions to make a package.`
+      : next ? `Add ${next.min - q.n} more session${next.min - q.n > 1 ? 's' : ''} to save ${next.off * 100}%.` : 'You have the best package discount.';
+    $('#pb-count').textContent = q.n ? `${q.n} · ${summary(true)}` : '0';
+    $('#pb-sub').textContent = money(q.sub);
+    $('#pb-off').textContent = q.off ? `−${money(q.off)} (${q.t.off * 100}%)` : '—';
+    $('#pb-total').textContent = money(q.total);
+    $('#pb-each').textContent = q.n ? `${money(q.total / q.n)} per session` : '—';
+    $('#pb-request').disabled = q.n < TIERS[0].min;
+  };
+  dlg.addEventListener('click', e => {
+    if (e.target === dlg) return dlg.close(); // click on the backdrop
+    const step = e.target.closest('[data-step]'), preset = e.target.closest('[data-preset]');
+    if (step) { const [k, d] = step.dataset.step.split(','); pkg[k] = Math.min(MAX_EACH, Math.max(0, pkg[k] + +d)); draw(); }
+    if (preset) { [pkg.coaching, pkg.mock] = preset.dataset.preset.split(',').map(Number); draw(); }
+  });
+  const openBuilder = () => { draw(); dlg.showModal(); };
+  document.querySelectorAll('[data-open-builder]').forEach(b => b.addEventListener('click', openBuilder));
+  if (location.hash === '#build-package') openBuilder();
+  // hand the chosen package to the booking section
+  $('#pb-request').addEventListener('click', () => {
+    const q = quote();
+    const line = `Package: ${summary()}, ${money(q.total)}${q.off ? ` (${q.t.off * 100}% off ${money(q.sub)})` : ''}`;
+    dlg.close();
+    if (selectEvent) selectEvent('intro');
+    else {
+      svc.value = 'Interview package';
+      const msg = $('#f-msg'), rest = msg.value.replace(/^Package: .*\n?/, '');
+      msg.value = line + (rest ? '\n' + rest : '\n');
+    }
+    $('#book').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+  });
 
   // gentle reveal on scroll
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.1});
