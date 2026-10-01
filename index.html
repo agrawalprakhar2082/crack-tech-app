@@ -164,7 +164,11 @@
   .price li{padding:10px 0;border-top:1px solid var(--line);font-size:15.5px;display:flex;gap:12px}
   .price li svg{flex:none;width:18px;height:18px;margin-top:3px;color:var(--olive)}
   .price .btn{width:100%}
+  .price .code-link{display:block;text-align:center;margin-top:14px;font-size:14px;color:var(--muted);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+  .price .code-link:hover{color:var(--olive)}
+  .sample{display:inline-block;width:max-content;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brass);border:1px dashed var(--brass);border-radius:999px;padding:2px 9px;margin-top:8px}
   .note{margin-top:24px;font-size:14px;color:var(--muted-2);text-align:center}
+  .note a{color:var(--fg-2);text-underline-offset:3px}
 
   /* faq */
   .faq{display:grid;grid-template-columns:.85fr 1.15fr;gap:72px}
@@ -194,6 +198,10 @@
   .tab:hover{color:var(--fg)}
   .tab[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.08)}
   .tab small{color:var(--muted-2);font-family:var(--mono);font-size:12px;margin-left:6px}
+  .code-note{max-width:640px;margin:0 auto 18px;padding:14px 18px;border:1px solid var(--line-2);border-radius:14px;background:var(--olive-soft);font-size:15px;color:var(--fg-2)}
+  .code-note strong{color:var(--fg)}
+  .code-note span{display:block;margin-top:4px;color:var(--muted)}
+  .code-note a{color:var(--olive)}
   .cal-wrap{min-height:560px;position:relative}
   .cal-wrap .cal-loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--mono);font-size:13px}
   #cal-inline{width:100%;min-height:560px;overflow:auto}
@@ -442,47 +450,54 @@
       <div class="sec-head rv">
         <div>
           <div class="kicker">Pricing</div>
-          <h2>Simple, <em>per-session</em> pricing.</h2>
+          <h2>Buy a package, <em>then book.</em></h2>
         </div>
-        <p class="lede">No subscriptions and no lock-in. Start with a free 15-minute call and we'll work out what you actually need.</p>
+        <p class="lede">No subscriptions and no lock-in. Pick a package, pay by transfer, and book your sessions with the code we email you. Not sure yet? The free 15-minute call is open to everyone.</p>
       </div>
       <div class="prices">
         <div class="price rv">
           <span class="kind">Practice</span>
-          <h3>Mock interview</h3>
-          <div class="amt">$150 <small>/ 60 min</small></div>
+          <h3>Mock interview pack</h3>
+          <div class="amt" data-pkg="mock-3">&nbsp;</div>
+          <span class="sample" hidden>Sample price</span>
           <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span data-sessions="mock-3"></span></li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Coding, design or behavioral</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Real interview conditions</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Written scorecard and next steps</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Written scorecard after each mock</li>
           </ul>
-          <a href="#book" class="btn btn-outline" data-service="Mock interview">Book a mock</a>
+          <a href="pay.html?pkg=mock-3" class="btn btn-outline">Buy a package</a>
+          <a href="#book" class="code-link" data-service="Mock interview">Have a package code? Book here</a>
         </div>
         <div class="price feat rv">
           <span class="pill">Most popular</span>
           <span class="kind">Coaching</span>
-          <h3>1:1 coaching session</h3>
-          <div class="amt">$300 <small>/ 90 min</small></div>
+          <h3>Coaching pack</h3>
+          <div class="amt" data-pkg="coach-3">&nbsp;</div>
+          <span class="sample" hidden>Sample price</span>
           <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Deep dive on your weakest area</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span data-sessions="coach-3"></span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Deep dives on your weakest areas</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Personal roadmap and practice plan</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Questions answered between sessions</li>
           </ul>
-          <a href="#book" class="btn btn-primary" data-service="1:1 coaching session">Book coaching <span class="arr">→</span></a>
+          <a href="pay.html?pkg=coach-3" class="btn btn-primary">Buy a package <span class="arr">→</span></a>
+          <a href="#book" class="code-link" data-service="1:1 coaching session">Have a package code? Book here</a>
         </div>
         <div class="price rv">
           <span class="kind">Bundle</span>
-          <h3>Interview package</h3>
-          <div class="amt" style="font-size:52px;padding-top:8px">Custom</div>
+          <h3>Full interview loop</h3>
+          <div class="amt" data-pkg="loop">&nbsp;</div>
+          <span class="sample" hidden>Sample price</span>
           <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Coaching and mocks, sized to your timeline</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span data-sessions="loop"></span></li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Built around your target companies</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Priority scheduling</li>
           </ul>
-          <a href="#book" class="btn btn-outline" data-service="Interview package">Plan my package</a>
+          <a href="pay.html?pkg=loop" class="btn btn-outline">Buy a package</a>
+          <a href="#book" class="code-link" data-service="1:1 coaching session">Have a package code? Book here</a>
         </div>
       </div>
-      <p class="note">Prices in USD. Payment details are shared once your session is confirmed.</p>
+      <p class="note">Just one session? <a href="pay.html?pkg=mock-1">Single mock interview <span data-price="mock-1"></span></a> · <a href="pay.html?pkg=coach-1">Single coaching session <span data-price="coach-1"></span></a></p>
+      <p class="note" style="margin-top:8px">Prices in USD. Pay by Wise or bank transfer, and your package code arrives by email once payment lands. Need something custom? Ask on your free call.</p>
     </div>
   </section>
 
@@ -498,7 +513,7 @@
         <details><summary>Who will I be working with?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>A senior software engineer currently at a top tech company, who has spent 7+ years coaching candidates through coding, system design and behavioral rounds.</p></details>
         <details><summary>How is this different from practising on my own?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Practising alone tells you whether you got the answer. It doesn't tell you how an interviewer would score your communication, approach or testing, which is usually where offers are lost. Coaching gives you that feedback.</p></details>
         <details><summary>What happens on the free call?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Fifteen minutes on your target roles, your timeline and where you feel weakest. You leave with a suggested plan, whether or not you book anything.</p></details>
-        <details><summary>How do sessions and payment work?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Sessions are live over video. Once we agree on a time, you'll receive payment details. Sessions can be rescheduled with 24 hours' notice.</p></details>
+        <details><summary>How do sessions and payment work?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Sessions are live over video. Buy a package on this page and pay by Wise or bank transfer using the reference shown. Once the payment lands, you'll get an email with your package code and number of sessions. Use the code to book each session. The free intro call needs no code. Sessions can be rescheduled with 24 hours' notice.</p></details>
       </div>
     </div>
   </section>
@@ -510,12 +525,12 @@
           <div>
             <div class="kicker">Book a session</div>
             <h2>Let's plan your <em>next offer.</em></h2>
-            <p>Pick a time that suits you. Not sure what you need? Start with the free 15-minute call.</p>
+            <p>The free 15-minute call is open to everyone. Paid sessions are booked with the package code we email you after payment.</p>
           </div>
           <ol>
-            <li>Choose a session and a time</li>
-            <li>Get a calendar invite with a video link</li>
-            <li>Leave with a clear plan</li>
+            <li>Start with a free call, or buy a package</li>
+            <li>Get your package code by email</li>
+            <li>Pick a time and enter your code</li>
           </ol>
         </div>
 
@@ -525,6 +540,10 @@
             <button class="tab" role="tab" aria-selected="true" data-event="intro">Free 15-min call</button>
             <button class="tab" role="tab" aria-selected="false" data-event="mock">Mock interview <small>$150</small></button>
             <button class="tab" role="tab" aria-selected="false" data-event="coaching">1:1 coaching <small>$300</small></button>
+          </div>
+          <div class="code-note" id="code-note" hidden>
+            <strong>Have a package code? Book here.</strong> Pick a time below and enter your code when asked. Your booking is confirmed once the code checks out.
+            <span>No code yet? <a href="#pricing">Buy a package</a></span>
           </div>
           <div class="cal-wrap"><div class="cal-loading" id="cal-loading">Loading calendar…</div><div id="cal-inline"></div></div>
           <p class="cal-alt">Calendar not loading? <a href="#" id="cal-direct" target="_blank" rel="noopener">Open the booking page</a></p>
@@ -544,9 +563,10 @@
                   <option>Interview package</option>
                 </select>
               </div>
+              <div class="field full" id="code-field" hidden><label for="f-code">Package code <span class="opt">(from your payment email)</span></label><input id="f-code" name="package_code" placeholder="e.g. CT-PKG-7Q4M" autocomplete="off"><p class="fine" style="margin-top:8px">No code yet? <a href="#pricing" style="color:var(--olive)">Buy a package</a> first, or ask about it on the free call.</p></div>
               <div class="field full"><label for="f-msg">Target role or company <span class="opt">(optional)</span></label><textarea id="f-msg" name="message" placeholder="e.g. Senior SWE, onsite in 6 weeks"></textarea></div>
               <input type="hidden" name="_subject" value="New Crack Tech call request">
-              <div class="full"><button type="submit" class="btn btn-primary" style="width:100%">Request my free call <span class="arr">→</span></button></div>
+              <div class="full"><button type="submit" class="btn btn-primary" style="width:100%" id="f-submit">Request my free call <span class="arr">→</span></button></div>
               <p class="fine full">No spam. Your details are only used to arrange your call.</p>
             </div>
           </form>
@@ -580,6 +600,7 @@
   </div>
 </footer>
 
+<script src="site-config.js"></script>
 <script>
 (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -625,6 +646,13 @@
   }), {rootMargin:'-45% 0px -50% 0px'});
   ['how','services','signals','pricing','faq','book'].forEach(id => spy.observe(document.getElementById(id)));
 
+  // ---------------- Packages ----------------
+  // Prices come from site-config.js
+  document.querySelectorAll('.amt[data-pkg]').forEach(el => { el.textContent = CT.money(CT.pkg(el.dataset.pkg).price); });
+  document.querySelectorAll('[data-sessions]').forEach(el => { el.textContent = CT.pkg(el.dataset.sessions).sessions; });
+  document.querySelectorAll('[data-price]').forEach(el => { el.textContent = '(' + CT.money(CT.pkg(el.dataset.price).price) + ')'; });
+  if (CT.PRICES_ARE_PLACEHOLDERS) document.querySelectorAll('.sample').forEach(el => { el.hidden = false; });
+
   // ---------------- Booking ----------------
   // 1. Create a free account at cal.com.
   // 2. Create three event types with these URL slugs (or change them below).
@@ -633,7 +661,13 @@
   const CAL_EVENTS = { intro: "intro-call", mock: "mock-interview", coaching: "coaching" };
   const SERVICE_TO_EVENT = { "Mock interview": "mock", "1:1 coaching session": "coaching", "Interview package": "intro" };
 
-  const svc = $('#f-svc');
+  const svc = $('#f-svc'), codeField = $('#code-field'), submitBtn = $('#f-submit');
+  const syncForm = () => {
+    const paid = svc.selectedIndex > 0;
+    codeField.hidden = !paid;
+    submitBtn.firstChild.textContent = paid ? 'Request a session ' : 'Request my free call ';
+  };
+  svc.addEventListener('change', syncForm);
   let selectEvent = null;
 
   if (CAL_USERNAME) {
@@ -655,6 +689,7 @@
       current = key;
       $('#cal-direct').href = `https://cal.com/${link(key)}`;
       document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.event === key));
+      $('#code-note').hidden = key === 'intro';
       if (!loaded) return;
       const old = $('#cal-inline'), fresh = document.createElement('div');
       fresh.id = 'cal-inline'; old.replaceWith(fresh);
@@ -675,7 +710,7 @@
   // pricing buttons open the matching booking option
   document.querySelectorAll('[data-service]').forEach(b => b.addEventListener('click', () => {
     if (selectEvent) selectEvent(SERVICE_TO_EVENT[b.dataset.service] || 'intro');
-    else svc.value = b.dataset.service;
+    else { svc.value = b.dataset.service; syncForm(); }
   }));
 
   // gentle reveal on scroll
@@ -684,6 +719,7 @@
 
   // form: async submit once a real Formspree ID is configured
   const form = $('#lead');
+  form.action = 'https://formspree.io/f/' + CT.FORMSPREE_ID;
   const done = () => { form.style.display = 'none'; $('#form-ok').style.display = 'block'; };
   form.addEventListener('submit', async e => {
     e.preventDefault();
