@@ -165,6 +165,11 @@
   .price li svg{flex:none;width:18px;height:18px;margin-top:3px;color:var(--olive)}
   .price .btn{width:100%}
   .note{margin-top:24px;font-size:14px;color:var(--muted-2);text-align:center}
+  .pay-methods{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:28px}
+  .pm-chip{font:500 13px/1 var(--sans);color:var(--fg-2);background:var(--surface);border:1px solid var(--line-2);border-radius:999px;padding:8px 13px}
+  .pm-chip.pm-strong{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+  .pm-secure{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-left:6px}
+  .pm-secure svg{width:15px;height:15px;color:var(--olive)}
 
   .sample{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brass);border:1px dashed var(--brass);border-radius:999px;padding:2px 9px;margin-right:6px}
 
@@ -531,7 +536,10 @@
           <button type="button" class="btn btn-outline" data-open-builder>Build my package</button>
         </div>
       </div>
-      <p class="note">Prices in USD. Payment details are shared once your session is confirmed.</p>
+      <div class="pay-methods" aria-label="Accepted payment methods">
+        <span class="pm-chip pm-strong">Apple Pay</span><span class="pm-chip">Google Pay</span><span class="pm-chip">Visa · Mastercard · Amex</span><span class="pm-secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Secure checkout by Stripe</span>
+      </div>
+      <p class="note" style="margin-top:12px">Prices in USD. Single sessions are paid when you book. The free 15-minute call is always free.</p>
     </div>
   </section>
 
@@ -547,7 +555,7 @@
         <details><summary>Who will I be working with?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>A senior software engineer currently at a top tech company, who has spent 7+ years coaching candidates through coding, system design and behavioral rounds.</p></details>
         <details><summary>How is this different from practising on my own?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Practising alone tells you whether you got the answer. It doesn't tell you how an interviewer would score your communication, approach or testing, which is usually where offers are lost. Coaching gives you that feedback.</p></details>
         <details><summary>What happens on the free call?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Fifteen minutes on your target roles, your timeline and where you feel weakest. You leave with a suggested plan, whether or not you book anything.</p></details>
-        <details><summary>How do sessions and payment work?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Sessions are live over video. Once we agree on a time, you'll receive payment details. Sessions can be rescheduled with 24 hours' notice.</p></details>
+        <details><summary>How do sessions and payment work?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Sessions are live over video. Single sessions are paid when you book, securely by card, Apple Pay or Google Pay through Stripe. For a custom package, we agree the plan on your free call and then send you a secure Stripe payment link. Sessions can be rescheduled with 24 hours' notice.</p></details>
       </div>
     </div>
   </section>
@@ -650,7 +658,7 @@
       <div class="total"><dt>Your package</dt><dd id="pb-total">—</dd></div>
       <div><dt>Works out to</dt><dd id="pb-each">—</dd></div>
     </dl>
-    <p class="pb-fine"><span class="sample">Sample discounts</span> Prices in USD. Your package is confirmed on a free call before any payment.</p>
+    <p class="pb-fine"><span class="sample">Sample discounts</span> Prices in USD. We confirm your package on a free call, then send a secure Stripe payment link (card, Apple Pay or Google Pay).</p>
 
     <div class="pb-actions">
       <button type="button" class="btn btn-primary" id="pb-request">Request this package <span class="arr">→</span></button>
