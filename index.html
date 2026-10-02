@@ -728,7 +728,7 @@
   // 1. Create a free account at cal.com.
   // 2. Create three event types with these URL slugs (or change them below).
   // 3. Put your Cal.com username here, e.g. "cracktech". Leave empty to use the request form instead.
-  const CAL_USERNAME = "";
+  const CAL_USERNAME = "crack-tech-io";
   const CAL_EVENTS = { intro: "intro-call", mock: "mock-interview", coaching: "coaching" };
   const SERVICE_TO_EVENT = { "Mock interview": "mock", "1:1 coaching session": "coaching", "Interview package": "intro" };
 
@@ -750,15 +750,19 @@
       Cal.ns.ct("ui", { theme: calTheme(), cssVarsPerTheme: brand, hideEventTypeDetails: false, layout: "month_view" });
       render(current);
     };
-    const render = key => {
+    // notes carried into the free-call booking, e.g. the package chosen in the builder
+    let prefillNotes = '';
+    const render = (key, notes) => {
       current = key;
-      $('#cal-direct').href = `https://cal.com/${link(key)}`;
+      if (notes !== undefined) prefillNotes = notes;
+      const notesFor = key === 'intro' ? prefillNotes : '';
+      $('#cal-direct').href = `https://cal.com/${link(key)}` + (notesFor ? `?notes=${encodeURIComponent(notesFor)}` : '');
       document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.event === key));
       if (!loaded) return;
       const old = $('#cal-inline'), fresh = document.createElement('div');
       fresh.id = 'cal-inline'; old.replaceWith(fresh);
       $('#cal-loading').hidden = false;
-      Cal.ns.ct("inline", { elementOrSelector: "#cal-inline", calLink: link(key), config: { layout: "month_view", theme: calTheme() } });
+      Cal.ns.ct("inline", { elementOrSelector: "#cal-inline", calLink: link(key), config: { layout: "month_view", theme: calTheme(), ...(notesFor && { notes: notesFor }) } });
       setTimeout(() => { $('#cal-loading').hidden = true; }, 1500);
     };
     selectEvent = render;
@@ -836,7 +840,7 @@
     const q = quote();
     const line = `Package: ${summary()}, ${money(q.total)}${q.off ? ` (${q.t.off * 100}% off ${money(q.sub)})` : ''}`;
     dlg.close();
-    if (selectEvent) selectEvent('intro');
+    if (selectEvent) selectEvent('intro', line);
     else {
       svc.value = 'Interview package';
       const msg = $('#f-msg'), rest = msg.value.replace(/^Package: .*\n?/, '');
