@@ -208,8 +208,9 @@
   .pb-sum .total dd{font-family:var(--serif);font-size:40px;line-height:1}
   .pb-fine{font-size:13px;color:var(--muted-2);margin:14px 0 0}
   .pb-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
-  .pb-actions .btn-primary{flex:1}
-  .pb-actions .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .pb-actions .btn{white-space:nowrap;flex:1 1 auto}
+  .pb-actions .btn svg{flex:none}
+  .pb-actions .btn:disabled,.pb-actions .btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed;transform:none;pointer-events:none}
 
   /* faq */
   .faq{display:grid;grid-template-columns:.85fr 1.15fr;gap:72px}
@@ -531,7 +532,7 @@
           <button type="button" class="btn btn-outline" data-open-builder>Build my package</button>
         </div>
       </div>
-      <p class="note">Prices in USD. Payment details are shared once your session is confirmed.</p>
+      <p class="note">Prices in USD. Pay securely by card or PayPal when you book. The free 15-minute call is always free.</p>
     </div>
   </section>
 
@@ -547,7 +548,7 @@
         <details><summary>Who will I be working with?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>A senior software engineer currently at a top tech company, who has spent 7+ years coaching candidates through coding, system design and behavioral rounds.</p></details>
         <details><summary>How is this different from practising on my own?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Practising alone tells you whether you got the answer. It doesn't tell you how an interviewer would score your communication, approach or testing, which is usually where offers are lost. Coaching gives you that feedback.</p></details>
         <details><summary>What happens on the free call?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Fifteen minutes on your target roles, your timeline and where you feel weakest. You leave with a suggested plan, whether or not you book anything.</p></details>
-        <details><summary>How do sessions and payment work?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Sessions are live over video. Once we agree on a time, you'll receive payment details. Sessions can be rescheduled with 24 hours' notice.</p></details>
+        <details><summary>How do sessions and payment work?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Sessions are live on Google Meet. You pay when you book, by card or PayPal, and your session is confirmed straight away. For a custom package, message us on WhatsApp or email: we'll agree the plan together, and you can pay by bank transfer or PayPal. Sessions can be rescheduled with 24 hours' notice.</p></details>
       </div>
     </div>
   </section>
@@ -563,7 +564,7 @@
           </div>
           <ol>
             <li>Choose a session and a time</li>
-            <li>Get a calendar invite with a video link</li>
+            <li>Get a calendar invite with a Google Meet link</li>
             <li>Leave with a clear plan</li>
           </ol>
         </div>
@@ -650,11 +651,12 @@
       <div class="total"><dt>Your package</dt><dd id="pb-total">—</dd></div>
       <div><dt>Works out to</dt><dd id="pb-each">—</dd></div>
     </dl>
-    <p class="pb-fine"><span class="sample">Sample discounts</span> Prices in USD. Your package is confirmed on a free call before any payment.</p>
+    <p class="pb-fine"><span class="sample">Sample discounts</span> Prices in USD. Message us to set up your package. Packages are paid by bank transfer or PayPal.</p>
 
     <div class="pb-actions">
-      <button type="button" class="btn btn-primary" id="pb-request">Request this package <span class="arr">→</span></button>
-      <button class="btn btn-outline" value="close">Not now</button>
+      <a class="btn btn-primary" id="pb-wa" target="_blank" rel="noopener" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:17px;height:17px"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.4A8 8 0 1 1 21 12z"/></svg>Discuss on WhatsApp</a>
+      <a class="btn btn-outline" id="pb-mail" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:17px;height:17px"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email us</a>
+      <button type="button" class="btn btn-outline" id="pb-request">Book a free call to discuss</button>
     </div>
   </form>
 </dialog>
@@ -672,7 +674,7 @@
       </div>
       <div>
         <h4>Get started</h4>
-        <ul><li><a href="#book">Book a free call</a></li><li><a href="#book" data-service="Mock interview">Book a mock interview</a></li><li><a href="#top">Back to top ↑</a></li></ul>
+        <ul><li><a href="#book">Book a free call</a></li><li><a href="#book" data-service="Mock interview">Book a mock interview</a></li><li data-contact="whatsapp" hidden><a target="_blank" rel="noopener">WhatsApp us</a></li><li data-contact="email" hidden><a>Email us</a></li><li><a href="#top">Back to top ↑</a></li></ul>
       </div>
     </div>
     <div class="legal"><span>© <span id="yr">2026</span> Crack Tech. All rights reserved.</span><span>Made for engineers, by an engineer.</span></div>
@@ -728,7 +730,7 @@
   // 1. Create a free account at cal.com.
   // 2. Create three event types with these URL slugs (or change them below).
   // 3. Put your Cal.com username here, e.g. "cracktech". Leave empty to use the request form instead.
-  const CAL_USERNAME = "";
+  const CAL_USERNAME = "crack-tech-io";
   const CAL_EVENTS = { intro: "intro-call", mock: "mock-interview", coaching: "coaching" };
   const SERVICE_TO_EVENT = { "Mock interview": "mock", "1:1 coaching session": "coaching", "Interview package": "intro" };
 
@@ -750,15 +752,19 @@
       Cal.ns.ct("ui", { theme: calTheme(), cssVarsPerTheme: brand, hideEventTypeDetails: false, layout: "month_view" });
       render(current);
     };
-    const render = key => {
+    // notes carried into the free-call booking, e.g. the package chosen in the builder
+    let prefillNotes = '';
+    const render = (key, notes) => {
       current = key;
-      $('#cal-direct').href = `https://cal.com/${link(key)}`;
+      if (notes !== undefined) prefillNotes = notes;
+      const notesFor = key === 'intro' ? prefillNotes : '';
+      $('#cal-direct').href = `https://cal.com/${link(key)}` + (notesFor ? `?notes=${encodeURIComponent(notesFor)}` : '');
       document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.event === key));
       if (!loaded) return;
       const old = $('#cal-inline'), fresh = document.createElement('div');
       fresh.id = 'cal-inline'; old.replaceWith(fresh);
       $('#cal-loading').hidden = false;
-      Cal.ns.ct("inline", { elementOrSelector: "#cal-inline", calLink: link(key), config: { layout: "month_view", theme: calTheme() } });
+      Cal.ns.ct("inline", { elementOrSelector: "#cal-inline", calLink: link(key), config: { layout: "month_view", theme: calTheme(), ...(notesFor && { notes: notesFor }) } });
       setTimeout(() => { $('#cal-loading').hidden = true; }, 1500);
     };
     selectEvent = render;
@@ -830,13 +836,40 @@
   });
   const openBuilder = () => { draw(); dlg.showModal(); };
   document.querySelectorAll('[data-open-builder]').forEach(b => b.addEventListener('click', openBuilder));
-  if (location.hash === '#build-package') openBuilder();
-  // hand the chosen package to the booking section
-  $('#pb-request').addEventListener('click', () => {
+  // ---------------- Contact ----------------
+  // WhatsApp number in international format, digits only (e.g. "919876543210"), and business email.
+  // While empty, the matching buttons and footer links stay hidden.
+  const CONTACT = { whatsapp: "", email: "" };
+  const packageLine = () => {
     const q = quote();
-    const line = `Package: ${summary()}, ${money(q.total)}${q.off ? ` (${q.t.off * 100}% off ${money(q.sub)})` : ''}`;
+    return `Package: ${summary()}, ${money(q.total)}${q.off ? ` (${q.t.off * 100}% off ${money(q.sub)})` : ''}`;
+  };
+  const waLink = text => `https://wa.me/${CONTACT.whatsapp}` + (text ? `?text=${encodeURIComponent(text)}` : '');
+  const mailLink = (subject, body) => `mailto:${CONTACT.email}?subject=${encodeURIComponent(subject)}` + (body ? `&body=${encodeURIComponent(body)}` : '');
+  const waFooter = document.querySelector('[data-contact="whatsapp"]'), mailFooter = document.querySelector('[data-contact="email"]');
+  if (CONTACT.whatsapp) { waFooter.hidden = false; waFooter.querySelector('a').href = waLink("Hi Crack Tech, I have a question about coaching."); }
+  if (CONTACT.email) { mailFooter.hidden = false; mailFooter.querySelector('a').href = mailLink('Crack Tech enquiry'); }
+  const syncContact = () => {
+    const ok = !$('#pb-request').disabled;
+    const msg = `Hi Crack Tech, I'd like to discuss a custom package.\n${packageLine()}`;
+    const wa = $('#pb-wa'), mail = $('#pb-mail');
+    wa.hidden = !CONTACT.whatsapp; mail.hidden = !CONTACT.email;
+    if (CONTACT.whatsapp) wa.href = waLink(msg);
+    if (CONTACT.email) mail.href = mailLink('Custom package enquiry', msg);
+    [wa, mail].forEach(a => a.setAttribute('aria-disabled', !ok));
+    // with no contact details yet, booking the free call is the main action
+    $('#pb-request').classList.toggle('btn-primary', !CONTACT.whatsapp && !CONTACT.email);
+    $('#pb-request').classList.toggle('btn-outline', !!(CONTACT.whatsapp || CONTACT.email));
+  };
+  dlg.addEventListener('click', () => setTimeout(syncContact));
+  document.querySelectorAll('[data-open-builder]').forEach(b => b.addEventListener('click', syncContact));
+  if (location.hash === '#build-package') { openBuilder(); syncContact(); }
+
+  // book the free call with the chosen package in the notes
+  $('#pb-request').addEventListener('click', () => {
+    const line = packageLine();
     dlg.close();
-    if (selectEvent) selectEvent('intro');
+    if (selectEvent) selectEvent('intro', line);
     else {
       svc.value = 'Interview package';
       const msg = $('#f-msg'), rest = msg.value.replace(/^Package: .*\n?/, '');

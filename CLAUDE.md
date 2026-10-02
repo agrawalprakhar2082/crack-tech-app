@@ -19,40 +19,43 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 - Owner's identity is kept off the site: described only as "a senior engineer at a top tech company with 7+ years coaching".
 - No unverifiable claims (removed "hundreds of FAANG offers"). Add real testimonials only if the user provides them.
 - Pricing: Mock interview $150 / 60 min; 1:1 coaching $300 / 90 min; Interview package "Custom".
+- Package builder: the Interview package card's "Build my package" opens a pop-up (`#builder`; `#build-package` opens it from a link) with steppers for coaching and mocks, and a live total with volume discounts (`UNIT` and `TIERS` in the script). The discounts are sample values (3–4 sessions 5%, 5–7 10%, 8+ 15%).
 
-## Booking (built, switched off until configured)
+## Booking (Cal.com, switched on)
 
-- Cal.com inline embed with tabs: Free 15-min call, Mock interview, 1:1 coaching.
-- To switch on: set `CAL_USERNAME` in the script near the bottom of `index.html`.
-- Expected Cal.com event slugs: `intro-call` (15 min, free), `mock-interview` (60 min), `coaching` (90 min).
-- Until then, a request form shows instead (Formspree placeholder `YOUR_FORMSPREE_ID`, not yet set up).
-- Cal.com account tips: display name "Crack Tech", username like `cracktech`, Google Meet as location.
+- Cal.com username: `crack-tech-io` (`CAL_USERNAME` in the script near the bottom of `index.html`).
+- Inline embed with tabs: Free 15-min call, Mock interview, 1:1 coaching. Expected event slugs: `intro-call` (15 min, free), `mock-interview` (60 min), `coaching` (90 min). They must match `CAL_EVENTS`.
+- With payments paused, the paid event types should be set to "Requires confirmation" on Cal.com; the owner arranges payment by hand before confirming.
+- The calendar loads lazily when the visitor nears `#book`, and follows the site theme (brand colour `#4f5d2a`, dark `#b3c07a`).
+- The package builder's "Book a free call to discuss" opens the free-call tab and pre-fills the booking notes with the chosen package (`notes` in the embed config and `?notes=` on the direct link).
+- The request form (Formspree placeholder `YOUR_FORMSPREE_ID`) only shows if `CAL_USERNAME` is emptied again.
+- Google Meet: connect Google Calendar first (Apps > Google Calendar), then Settings > Conferencing > Add > Google Meet, set as default; set each event type's Location to Google Meet.
+- The cloud dev environment blocks cal.com by default, so the live calendar can't be tested there unless `cal.com`, `app.cal.com` and `api.cal.com` are allowed.
 
-## Payments: agreed direction
+## Payments and packages: current plan (simple start)
 
-- The user wants Wise. Wise card-payment links aren't available to new Wise Business customers, and no scheduler integrates Wise.
-- Preferred model: package first, then booking.
-  1. Anyone can view available slots.
-  2. Client buys a package and pays via Wise transfer, with a reference like CT-1042.
-  3. Once paid, the owner emails a package code and the number of sessions.
-  4. Paid session types on Cal.com require a "Package code" answer and are set to "Requires confirmation". The owner approves valid codes.
-  5. The free intro call stays open to everyone.
-- Later: the member portal tracks session credits automatically, and the Wise API or webhooks could detect payments.
-- Alternative if smoother checkout is wanted: Cal.com + Stripe, with payouts to Wise USD account details.
+- The business is a **sole proprietorship** in India (not a Pvt Ltd or LLP), so the owner may receive payments in their personal account; a separate account for the firm is recommended for clean books. GST registration applies above ₹20 lakh a year; file an LUT for clients abroad. Check details with the CA.
+- **Single sessions:** one booking at a time through Cal.com. The plan is to connect **PayPal in Cal.com** (Apps > PayPal) and set prices on `mock-interview` ($150) and `coaching` ($300), so clients pay at booking and "Requires confirmation" can be turned off. The site says "Pay securely by card or PayPal when you book."
+- **Custom packages:** the package pop-up is a price estimator. Its buttons open WhatsApp (`wa.me` link with the package pre-written) or email (`mailto:`), plus "Book a free call to discuss" (which pre-fills the Cal.com notes). Packages are agreed by message and paid by bank transfer (Wise Business supports sole proprietors in India) or PayPal. The owner then books the sessions or sends a Cal.com private link limited to the number of sessions.
+- Contact details go in `CONTACT` (`whatsapp`: international format, digits only; `email`) in the script. While they're empty, the WhatsApp and email buttons and footer links stay hidden.
+- Not viable or deferred: Stripe (invite-only in India, no Apple Pay); Razorpay pay-first with private-link credits (PR 6, on hold, includes draft policy pages); a full credits system (Cloudflare Worker + D1 + Cal.com webhooks and API, which needs the Cal.com Teams plan), planned for later.
 
 ## Open questions for the user
 
-- Cal.com username (once the account is created).
-- Package sizes and prices (e.g. 3 coaching sessions for $X, or a mix of coaching and mocks).
+- Business WhatsApp number and email (for `CONTACT`).
+- PayPal connected in Cal.com, with prices set on the paid event types.
+- Real package discount levels (the builder shows sample ones).
 - Whether GitHub Pages is on, and whether to connect cracktech.io.
 
 ## Next steps
 
-1. Update the site for the package-first flow: "Buy a package" buttons, a Wise payment instructions page, and "Have a package code? Book here" on the paid tabs.
-2. Switch on Cal.com once the username is provided.
-3. Later phases: member portal (session credits, bookings), admin portal, Wise payment automation.
+1. Fill in `CONTACT` once the user shares their WhatsApp and email.
+2. After PayPal is connected in Cal.com, check that a test booking takes payment.
+3. Turn on GitHub Pages and test the live calendar.
+4. Later: payments with lower fees (Razorpay or a Stripe invite), then a credits system and member portal.
 
 ## Working agreement for GitHub
 
 - One branch per change, clear commits, a pull request with a summary and screenshots.
 - Nothing goes to `main` without the user's OK.
+- The user is not a git expert: explain the commands you run in plain language.
