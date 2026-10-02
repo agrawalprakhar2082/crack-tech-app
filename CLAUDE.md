@@ -12,7 +12,7 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 ## Design decisions (already built)
 
 - Single static `index.html`, no build step, for GitHub Pages.
-- "Classy" ivory + olive theme. Light by default, with a dark-mode toggle that remembers the visitor's choice.
+- "Classy" ivory + olive theme. **Dark by default** (`data-theme="dark"` on `<html>`), with a toggle that remembers the visitor's choice in `localStorage["ct-theme"]`; a stored "light" switches to the light theme before first paint. Pages added later (e.g. the policy pages in PR 6) should follow the same default.
 - Fonts: Instrument Serif (headings), Geist (body), Geist Mono (small labels).
 - Sections: Hero with animated mock-interview card, How it works (Diagnose / Drill / Rehearse), Services (DSA, System design, Behavioral, Mock interviews), What interviewers score, Pricing, FAQ, Booking, Footer.
 - Navigation: sticky header (How it works, Services, Pricing, FAQ, Book a free call), active-section highlight, full-screen mobile menu, pricing buttons jump to booking with the session pre-selected.
