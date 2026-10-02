@@ -20,13 +20,18 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 - No unverifiable claims (removed "hundreds of FAANG offers"). Add real testimonials only if the user provides them.
 - Pricing: Mock interview $150 / 60 min; 1:1 coaching $300 / 90 min; Interview package "Custom".
 
-## Booking (built, switched off until configured)
+## Booking (Cal.com, switched on)
 
-- Cal.com inline embed with tabs: Free 15-min call, Mock interview, 1:1 coaching.
-- To switch on: set `CAL_USERNAME` in the script near the bottom of `index.html`.
-- Expected Cal.com event slugs: `intro-call` (15 min, free), `mock-interview` (60 min), `coaching` (90 min).
-- Until then, a request form shows instead (Formspree placeholder `YOUR_FORMSPREE_ID`, not yet set up).
-- Cal.com account tips: display name "Crack Tech", username like `cracktech`, Google Meet as location.
+- Cal.com username: `crack-tech-io` (`CAL_USERNAME` in the script near the bottom of `index.html`).
+- Inline embed with tabs: Free 15-min call, Mock interview, 1:1 coaching. Expected event slugs: `intro-call` (15 min, free), `mock-interview` (60 min), `coaching` (90 min). They must match `CAL_EVENTS`.
+- With payments paused, the paid event types should be set to "Requires confirmation" on Cal.com; the owner arranges payment by hand before confirming.
+- The calendar loads lazily when the visitor nears `#book`, and follows the site theme (brand colour `#4f5d2a`, dark `#b3c07a`).
+- The package builder's "Request this package" opens the free-call tab and pre-fills the booking notes with the chosen package (`notes` in the embed config and `?notes=` on the direct link).
+- The request form (Formspree placeholder `YOUR_FORMSPREE_ID`) only shows if `CAL_USERNAME` is emptied again.
+- Google Meet: connect Google Calendar first (Apps > Google Calendar), then Settings > Conferencing > Add > Google Meet, set as default; set each event type's Location to Google Meet.
+- The cloud dev environment blocks cal.com by default, so the live calendar can't be tested there unless `cal.com`, `app.cal.com` and `api.cal.com` are allowed.
+
+- Payments: on hold (see PR 6, a Razorpay pay-first draft). Stripe isn't viable because the company is registered in India.
 
 ## Payments: agreed direction
 
