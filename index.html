@@ -165,6 +165,12 @@
   .price li svg{flex:none;width:18px;height:18px;margin-top:3px;color:var(--olive)}
   .price .btn{width:100%}
   .note{margin-top:24px;font-size:14px;color:var(--muted-2);text-align:center}
+  .price .paid-link{display:block;text-align:center;margin-top:14px;font-size:14px;color:var(--muted);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+  .price .paid-link:hover{color:var(--olive)}
+  .pay-methods{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:28px}
+  .pm-chip{font:500 13px/1 var(--sans);color:var(--fg-2);background:var(--surface);border:1px solid var(--line-2);border-radius:999px;padding:8px 13px}
+  .pm-secure{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-left:6px}
+  .pm-secure svg{width:15px;height:15px;color:var(--olive)}
 
   .sample{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brass);border:1px dashed var(--brass);border-radius:999px;padding:2px 9px;margin-right:6px}
 
@@ -239,6 +245,16 @@
   .tab:hover{color:var(--fg)}
   .tab[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.08)}
   .tab small{color:var(--muted-2);font-family:var(--mono);font-size:12px;margin-left:6px}
+  .paid-panel{max-width:620px;margin:20px auto 12px;text-align:center;padding:8px 8px 4px}
+  .paid-panel h3{font-size:clamp(28px,3.4vw,38px);margin-bottom:12px}
+  .paid-panel h3 em{font-style:italic;color:var(--olive)}
+  .paid-panel > p{color:var(--muted);margin:0 auto 22px;max-width:520px}
+  .pp-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+  .form-hint{margin:-4px 0 0;padding:12px 14px;border-radius:12px;background:var(--olive-soft);font-size:14.5px;color:var(--fg-2)}
+  .form-hint a{color:var(--olive)}
+  .legal-links{display:flex;gap:18px;flex-wrap:wrap}
+  .legal-links a{color:inherit;text-underline-offset:3px}
+  .legal-links a:hover{color:var(--olive)}
   .cal-wrap{min-height:560px;position:relative}
   .cal-wrap .cal-loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--mono);font-size:13px}
   #cal-inline{width:100%;min-height:560px;overflow:auto}
@@ -505,7 +521,8 @@
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Real interview conditions</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Written scorecard and next steps</li>
           </ul>
-          <a href="#book" class="btn btn-outline" data-service="Mock interview">Book a mock</a>
+          <a href="#book" class="btn btn-outline" data-buy="mock" data-service="Mock interview">Buy a mock</a>
+          <a href="#book" class="paid-link" data-service="Mock interview">Already paid? Book your session</a>
         </div>
         <div class="price feat rv">
           <span class="pill">Most popular</span>
@@ -517,7 +534,8 @@
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Personal roadmap and practice plan</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Questions answered between sessions</li>
           </ul>
-          <a href="#book" class="btn btn-primary" data-service="1:1 coaching session">Book coaching <span class="arr">→</span></a>
+          <a href="#book" class="btn btn-primary" data-buy="coaching" data-service="1:1 coaching session">Buy coaching <span class="arr">→</span></a>
+          <a href="#book" class="paid-link" data-service="1:1 coaching session">Already paid? Book your session</a>
         </div>
         <div class="price rv">
           <span class="kind">Bundle</span>
@@ -531,7 +549,10 @@
           <button type="button" class="btn btn-outline" data-open-builder>Build my package</button>
         </div>
       </div>
-      <p class="note">Prices in USD. Payment details are shared once your session is confirmed.</p>
+      <div class="pay-methods" aria-label="Accepted payment methods">
+        <span class="pm-chip">Visa · Mastercard · Amex</span><span class="pm-chip">UPI</span><span class="pm-chip">Bank transfer</span><span class="pm-secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Secure checkout by Razorpay</span>
+      </div>
+      <p class="note" style="margin-top:12px">Prices in USD. Pay first, then book your sessions with the private link we email you. The free 15-minute call is always free.</p>
     </div>
   </section>
 
@@ -547,7 +568,7 @@
         <details><summary>Who will I be working with?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>A senior software engineer currently at a top tech company, who has spent 7+ years coaching candidates through coding, system design and behavioral rounds.</p></details>
         <details><summary>How is this different from practising on my own?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Practising alone tells you whether you got the answer. It doesn't tell you how an interviewer would score your communication, approach or testing, which is usually where offers are lost. Coaching gives you that feedback.</p></details>
         <details><summary>What happens on the free call?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Fifteen minutes on your target roles, your timeline and where you feel weakest. You leave with a suggested plan, whether or not you book anything.</p></details>
-        <details><summary>How do sessions and payment work?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Sessions are live over video. Once we agree on a time, you'll receive payment details. Sessions can be rescheduled with 24 hours' notice.</p></details>
+        <details><summary>How do sessions and payment work?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Sessions are live on Google Meet. Pay first by card (Visa, Mastercard, Amex), UPI or bank transfer, through Razorpay. We then email you a private booking link that holds your sessions, and you pick each time with it. For a custom package, we agree the plan on your free call and send you a payment link. See the <a href="refund-policy.html">refund and cancellation policy</a> for rescheduling and refunds.</p></details>
       </div>
     </div>
   </section>
@@ -559,12 +580,12 @@
           <div>
             <div class="kicker">Book a session</div>
             <h2>Let's plan your <em>next offer.</em></h2>
-            <p>Pick a time that suits you. Not sure what you need? Start with the free 15-minute call.</p>
+            <p>The free 15-minute call is open to everyone. Paid sessions are booked with the private link we email you after payment.</p>
           </div>
           <ol>
-            <li>Choose a session and a time</li>
-            <li>Get a calendar invite with a video link</li>
-            <li>Leave with a clear plan</li>
+            <li>Book a free call, or buy a session</li>
+            <li>Get your private booking link by email</li>
+            <li>Pick your times and join on Google Meet</li>
           </ol>
         </div>
 
@@ -575,8 +596,17 @@
             <button class="tab" role="tab" aria-selected="false" data-event="mock">Mock interview <small>$150</small></button>
             <button class="tab" role="tab" aria-selected="false" data-event="coaching">1:1 coaching <small>$300</small></button>
           </div>
-          <div class="cal-wrap"><div class="cal-loading" id="cal-loading">Loading calendar…</div><div id="cal-inline"></div></div>
-          <p class="cal-alt">Calendar not loading? <a href="#" id="cal-direct" target="_blank" rel="noopener">Open the booking page</a></p>
+          <div class="paid-panel" id="paid-panel" hidden>
+            <h3>Book your <em id="pp-name">session</em> with your private link.</h3>
+            <p>After you pay, we email you a private booking link that holds your sessions. Use it to pick each time. It stops working once your sessions are used.</p>
+            <div class="pp-actions">
+              <a href="#pricing" class="btn btn-primary" id="pp-buy">Buy a session <span class="arr">→</span></a>
+              <a href="#" class="btn btn-outline" data-tab="intro">Book the free call first</a>
+            </div>
+            <p class="fine">Already paid but can't find your link? Reply to your payment email and we'll resend it.</p>
+          </div>
+          <div class="cal-wrap" id="cal-wrap"><div class="cal-loading" id="cal-loading">Loading calendar…</div><div id="cal-inline"></div></div>
+          <p class="cal-alt" id="cal-alt">Calendar not loading? <a href="#" id="cal-direct" target="_blank" rel="noopener">Open the booking page</a></p>
         </div>
 
         <!-- Fallback request form, used until Cal.com is set up -->
@@ -593,6 +623,7 @@
                   <option>Interview package</option>
                 </select>
               </div>
+              <p class="form-hint full" id="f-hint" hidden></p>
               <div class="field full"><label for="f-msg">Target role, company or package details <span class="opt">(optional)</span></label><textarea id="f-msg" name="message" placeholder="e.g. Senior SWE, onsite in 6 weeks"></textarea></div>
               <input type="hidden" name="_subject" value="New Crack Tech call request">
               <div class="full"><button type="submit" class="btn btn-primary" style="width:100%">Request my free call <span class="arr">→</span></button></div>
@@ -650,7 +681,7 @@
       <div class="total"><dt>Your package</dt><dd id="pb-total">—</dd></div>
       <div><dt>Works out to</dt><dd id="pb-each">—</dd></div>
     </dl>
-    <p class="pb-fine"><span class="sample">Sample discounts</span> Prices in USD. Your package is confirmed on a free call before any payment.</p>
+    <p class="pb-fine"><span class="sample">Sample discounts</span> Prices in USD. We confirm your package on a free call, then send a secure Razorpay payment link (card or UPI), or bank details for a transfer.</p>
 
     <div class="pb-actions">
       <button type="button" class="btn btn-primary" id="pb-request">Request this package <span class="arr">→</span></button>
@@ -675,7 +706,7 @@
         <ul><li><a href="#book">Book a free call</a></li><li><a href="#book" data-service="Mock interview">Book a mock interview</a></li><li><a href="#top">Back to top ↑</a></li></ul>
       </div>
     </div>
-    <div class="legal"><span>© <span id="yr">2026</span> Crack Tech. All rights reserved.</span><span>Made for engineers, by an engineer.</span></div>
+    <div class="legal"><span>© <span id="yr">2026</span> Crack Tech. All rights reserved.</span><span class="legal-links"><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="refund-policy.html">Refunds &amp; cancellations</a><a href="contact.html">Contact</a></span></div>
   </div>
 </footer>
 
@@ -729,8 +760,22 @@
   // 2. Create three event types with these URL slugs (or change them below).
   // 3. Put your Cal.com username here, e.g. "cracktech". Leave empty to use the request form instead.
   const CAL_USERNAME = "";
-  const CAL_EVENTS = { intro: "intro-call", mock: "mock-interview", coaching: "coaching" };
+  // Only the free intro call is public. Paid event types are hidden on Cal.com and booked through private links
+  // (Event type > Advanced > Private links, with a usage limit equal to the sessions paid for).
+  const CAL_EVENTS = { intro: "intro-call" };
   const SERVICE_TO_EVENT = { "Mock interview": "mock", "1:1 coaching session": "coaching", "Interview package": "intro" };
+
+  // ---------------- Payments ----------------
+  // Razorpay Payment Page links (Razorpay Dashboard > Payment Pages), e.g. "https://rzp.io/rzp/abc123".
+  // While empty, the Buy buttons fall back to the request form with that session selected.
+  const PAY_LINKS = { mock: "", coaching: "" };
+  const PAID = { mock: { name: "mock interview", buy: "Buy a mock interview" }, coaching: { name: "coaching session", buy: "Buy a coaching session" } };
+  document.querySelectorAll('[data-buy]').forEach(a => {
+    const url = PAY_LINKS[a.dataset.buy];
+    if (!url) return;
+    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+    delete a.dataset.service; // go to Razorpay instead of the booking section
+  });
 
   const svc = $('#f-svc');
   let selectEvent = null;
@@ -752,8 +797,16 @@
     };
     const render = key => {
       current = key;
-      $('#cal-direct').href = `https://cal.com/${link(key)}`;
       document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.event === key));
+      const paid = PAID[key];
+      $('#paid-panel').hidden = !paid; $('#cal-wrap').hidden = !!paid; $('#cal-alt').hidden = !!paid;
+      if (paid) {
+        $('#pp-name').textContent = paid.name;
+        const b = $('#pp-buy'); b.firstChild.textContent = paid.buy + ' ';
+        if (PAY_LINKS[key]) { b.href = PAY_LINKS[key]; b.target = '_blank'; b.rel = 'noopener'; } else { b.href = '#pricing'; b.removeAttribute('target'); }
+        return;
+      }
+      $('#cal-direct').href = `https://cal.com/${link(key)}`;
       if (!loaded) return;
       const old = $('#cal-inline'), fresh = document.createElement('div');
       fresh.id = 'cal-inline'; old.replaceWith(fresh);
@@ -763,6 +816,7 @@
     };
     selectEvent = render;
     document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => render(t.dataset.event)));
+    document.querySelectorAll('[data-tab]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); render(a.dataset.tab); }));
     render('intro');
     // only load Cal.com when the visitor gets near the booking section
     const bio = new IntersectionObserver(es => { if (es[0].isIntersecting) { loadCal(); bio.disconnect(); } }, { rootMargin: '600px' });
@@ -771,10 +825,24 @@
     tBtn.addEventListener('click', () => { if (loaded) Cal.ns.ct("ui", { theme: calTheme() }); });
   }
 
+  // request form: explain the pay-first flow when a paid session is chosen
+  const hint = $('#f-hint');
+  const syncHint = () => {
+    const key = SERVICE_TO_EVENT[svc.value];
+    const paid = PAID[key];
+    hint.hidden = !paid;
+    if (!paid) return;
+    hint.innerHTML = PAY_LINKS[key]
+      ? `Paid sessions are booked after payment. <a href="${PAY_LINKS[key]}" target="_blank" rel="noopener">${paid.buy}</a>, and we'll email your private booking link.`
+      : `Paid sessions are booked after payment. Send this request and we'll email you a secure payment link, then your private booking link.`;
+  };
+  svc.addEventListener('change', syncHint);
+
   // pricing buttons open the matching booking option
   document.querySelectorAll('[data-service]').forEach(b => b.addEventListener('click', () => {
+    if (!b.dataset.service) return;
     if (selectEvent) selectEvent(SERVICE_TO_EVENT[b.dataset.service] || 'intro');
-    else svc.value = b.dataset.service;
+    else { svc.value = b.dataset.service; syncHint(); }
   }));
 
   // ---------------- Package builder ----------------
