@@ -1,0 +1,50 @@
+/* Shared styles for the policy pages (terms, privacy, refund policy, contact). Tokens mirror index.html. */
+:root{
+  --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --bg:#f6f3ec; --bg-2:#efeadf; --surface:#fffdf8; --line:#e2dccd; --line-2:#d3ccb9;
+  --fg:#1d2116; --fg-2:#3a3f30; --muted:#636756; --muted-2:#8d8f7f;
+  --olive:#4f5d2a; --brass:#9a7a3a;
+  color-scheme:light;
+}
+[data-theme="dark"]{
+  --bg:#13150e; --bg-2:#181b12; --surface:#1c1f15; --line:#2c3022; --line-2:#3a3f2d;
+  --fg:#eeebe0; --fg-2:#d7d3c4; --muted:#a3a593; --muted-2:#7c7f6d;
+  --olive:#b3c07a; --brass:#d1b06c;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16.5px;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--olive);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--olive);outline-offset:3px;border-radius:6px}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+header{border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg)}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:#4f5d2a;display:grid;place-items:center;flex:none}
+.brand-name{font-family:var(--serif);font-size:24px;line-height:1}
+.back{font-size:14.5px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--fg)}
+.draft{margin:24px 0 0;padding:12px 16px;border:1px dashed var(--brass);border-radius:12px;color:var(--brass);font-family:var(--mono);font-size:13px;line-height:1.5}
+main{padding:44px 0 64px}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--olive)}
+h1,h2{font-family:var(--serif);font-weight:400;letter-spacing:-.01em;line-height:1.08;margin:0}
+h1{font-size:clamp(40px,7vw,56px);margin:12px 0 8px}
+.updated{color:var(--muted-2);font-size:14px;margin:0 0 28px}
+h2{font-size:28px;margin:36px 0 10px}
+p,li{color:var(--fg-2)}
+ul{padding-left:22px}
+li{margin:6px 0}
+.ph{font-family:var(--mono);font-size:.9em;background:var(--bg-2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--brass)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px 22px;margin-top:20px}
+.card dl{margin:0}
+.card div{display:grid;grid-template-columns:180px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.card div:first-child{border-top:0}
+.card dt{color:var(--muted);font-size:14.5px}
+.card dd{margin:0}
+footer{border-top:1px solid var(--line);padding:24px 0 36px;font-size:14px;color:var(--muted-2)}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer nav{display:flex;gap:16px;flex-wrap:wrap}
+footer a{color:var(--fg-2)}
+@media (max-width:560px){.card div{grid-template-columns:1fr;gap:2px}}
