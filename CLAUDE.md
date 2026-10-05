@@ -40,19 +40,40 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 - Contact details go in `CONTACT` (`whatsapp`: international format, digits only; `email`) in the script. While they're empty, the WhatsApp and email buttons and footer links stay hidden.
 - Not viable or deferred: Stripe (invite-only in India, no Apple Pay); Razorpay pay-first with private-link credits (PR 6, closed; the branch `claude/razorpay-credits` keeps the work, including draft policy pages); a full credits system (Cloudflare Worker + D1 + Cal.com webhooks and API, which needs the Cal.com Teams plan), planned for later.
 
-## Open questions for the user
+## To-do list (parked, October 2026)
 
-- Business WhatsApp number and email (for `CONTACT`).
-- Which payment option is set up in Cal.com (PayPal or Cal Pay), and a confirmed test booking.
-- Real package discount levels (the builder shows sample ones).
-- Whether to connect cracktech.io to GitHub Pages.
+The user parked these to come back to later. Ask before starting any of them, and tick or remove items as they're done.
 
-## Next steps
+### Needs something from the user first
+- [ ] **Business WhatsApp number and email:** fill in `CONTACT` in `index.html`. That switches on the footer contact links and the package pop-up's "Discuss on WhatsApp" and "Email us" buttons.
+- [ ] **Confirm payments:** which option is set up in Cal.com (PayPal or Cal Pay), and do a test booking on the live site that takes payment. "Requires confirmation" should be off on the paid events once payment works. PayPal India can't take payments from Indian clients; offer them UPI or bank transfer by hand.
+- [ ] **Real package discounts:** replace the sample `TIERS` (5% / 10% / 15%) and remove the "Sample discounts" tag.
 
-1. Fill in `CONTACT` once the user shares their WhatsApp and email.
-2. Confirm a test booking takes payment on the live site.
-3. GitHub Pages is on (https://agrawalprakhar2082.github.io/crack-tech-io/); check the live calendar after each change.
-4. Later: payments with lower fees (Razorpay or a Stripe invite), then a credits system and member portal.
+### Business email: Cloudflare Email Routing (free)
+- [ ] Check that **cracktech.io** is still owned (registrar account), or buy a domain.
+- [ ] Add the domain to Cloudflare (Free plan) and switch the registrar's nameservers to Cloudflare's.
+- [ ] Email > Email Routing: create e.g. `hello@cracktech.io` forwarding to the owner's Gmail, verify the Gmail address, then "Add records and enable". Test by sending mail to it.
+- [ ] Optional: send as hello@ from Gmail (Settings > Accounts > Send mail as, via `smtp.gmail.com:587` with a Google App password), and add `include:_spf.google.com` to the SPF TXT record. Some sent mail may still go to spam.
+- [ ] Later upgrade: Google Workspace Starter (~₹270/user/month + 18% GST) for reliable sending.
+
+### Custom domain for the website
+- [ ] Point **cracktech.io** at GitHub Pages: DNS in Cloudflare, then Settings > Pages > Custom domain, and turn on Enforce HTTPS. Do this after the domain is on Cloudflare.
+
+### Coupons
+- [ ] **"Have a coupon?" box** in the booking section. Cal.com has no native coupon codes, so each coupon is a **hidden, discounted copy** of the paid event type (e.g. `coaching-launch20` at $240). The code reveals that event's link.
+  - Store the links **encrypted with the code** (e.g. AES-GCM with a key derived from the code), so the page source doesn't expose them.
+  - For limits or expiry, point a code at a Cal.com private link with a usage limit or expiry date.
+  - Needs from the user: the first code, the discount, which sessions, and the limit or expiry.
+- Calendly was considered for its built-in coupons and rejected: they only work with Stripe (invite-only in India), payments need its paid plan, and its free plan allows only one event type.
+
+### Later phases
+- [ ] Lower-fee payments: Razorpay (proprietorships supported; the work is kept on the `claude/razorpay-credits` branch, including draft policy pages: terms, privacy, refunds, contact) or a Stripe invite.
+- [ ] Credits system and member portal: Cloudflare Worker + D1 ledger; Cal.com webhooks plus the API to confirm or decline bookings by credit balance (the API needs the Cal.com Teams plan, ~$12–15/month); magic-link login; an admin page to grant credits.
+- [ ] Optional: make returning visitors who once chose "light" start in dark again (rename the `ct-theme` storage key).
+
+### Housekeeping
+- [ ] Delete merged branches on GitHub (the branches page), and turn on Settings > General > "Automatically delete head branches". Branch deletes are refused from the cloud environment, so the user does this.
+- [ ] To test the live calendar from the cloud environment, allow `cal.com`, `app.cal.com` and `api.cal.com` in the environment's network settings. `github.io` and domain-lookup (RDAP) services are blocked there too.
 
 ## Working agreement for GitHub
 
