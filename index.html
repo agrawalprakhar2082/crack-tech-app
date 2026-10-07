@@ -508,7 +508,7 @@
         <div class="price rv">
           <span class="kind">Practice</span>
           <h3>Mock interview</h3>
-          <div class="amt">$150 <small>/ 60 min</small></div>
+          <div class="amt">$149 <small>/ 60 min</small></div>
           <ul>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Coding (incl. code with AI), design or behavioral</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Real interview conditions</li>
@@ -520,7 +520,7 @@
           <span class="pill">Most popular</span>
           <span class="kind">Coaching</span>
           <h3>1:1 coaching session</h3>
-          <div class="amt">$300 <small>/ 90 min</small></div>
+          <div class="amt">$299 <small>/ 90 min</small></div>
           <ul>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Deep dive on your weakest area</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Personal roadmap and practice plan</li>
@@ -582,8 +582,8 @@
         <div class="book-body" id="cal-section" hidden>
           <div class="tabs" role="tablist" aria-label="Session type">
             <button class="tab" role="tab" aria-selected="true" data-event="intro">Free 15-min call</button>
-            <button class="tab" role="tab" aria-selected="false" data-event="mock">Mock interview <small>$150</small></button>
-            <button class="tab" role="tab" aria-selected="false" data-event="coaching">1:1 coaching <small>$300</small></button>
+            <button class="tab" role="tab" aria-selected="false" data-event="mock">Mock interview <small>$149</small></button>
+            <button class="tab" role="tab" aria-selected="false" data-event="coaching">1:1 coaching <small>$299</small></button>
           </div>
           <div class="cal-wrap"><div class="cal-loading" id="cal-loading">Loading calendar…</div><div id="cal-inline"></div></div>
           <p class="cal-alt">Calendar not loading? <a href="#" id="cal-direct" target="_blank" rel="noopener">Open the booking page</a></p>
@@ -794,7 +794,7 @@
 
   // ---------------- Package builder ----------------
   // Single-session prices and package discounts (by total sessions). Discounts are sample values: edit here.
-  const UNIT = { coaching: 300, mock: 150 };
+  const UNIT = { coaching: 299, mock: 149 };
   const TIERS = [ { min: 2, off: 0 }, { min: 3, off: .05 }, { min: 5, off: .10 }, { min: 8, off: .15 } ];
   const MAX_EACH = 10;
   const money = n => '$' + Math.round(n).toLocaleString('en-US');
