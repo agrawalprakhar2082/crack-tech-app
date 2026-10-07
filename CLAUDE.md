@@ -16,8 +16,9 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 - Fonts: Instrument Serif (headings), Geist (body), Geist Mono (small labels).
 - Sections: Hero with animated mock-interview card, How it works (Diagnose / Drill / Rehearse), Services (DSA, System design, Behavioral, Mock interviews), What interviewers score, Pricing, FAQ, Booking, Footer.
 - Navigation: sticky header (How it works, Services, Pricing, FAQ, Book a free call), active-section highlight, full-screen mobile menu, pricing buttons jump to booking with the session pre-selected.
-- Owner's identity is kept off the site: described only as "a senior engineer at a top tech company with 7+ years coaching".
-- No unverifiable claims (removed "hundreds of FAANG offers"). Add real testimonials only if the user provides them.
+- Owner's identity is kept off the site: described only as "a senior engineer at a top tech company with 10+ years coaching".
+- Claims: the hero shows "10+ years coaching engineers" and, below the facts row, "FAANG offers for Directors, Managers, Senior Engineers and college grads". Both were added at the owner's explicit request (October 2026); "500+ successful offers" was tried and replaced. The owner is responsible for being able to back these up. Don't add other unverifiable claims, and add testimonials only if the owner provides real ones.
+- AI positioning (October 2026): the site mentions **code-with-AI interviews** (coding card, mock card, pricing, hero) and **agentic AI system design** alongside **high-level (HLD)** and **low-level design (LLD)** (system design card). The behavioral card adds **Prepare with AI** (using AI tools to draft, stress-test and rehearse stories). AI topics use highlighted `.chips span.ai` chips (✦). There's an FAQ "Do you cover AI interviews?", and the title, meta and og descriptions mention AI.
 - Pricing: Mock interview $150 / 60 min; 1:1 coaching $300 / 90 min; Interview package "Custom".
 - Package builder: the Interview package card's "Build my package" opens a pop-up (`#builder`; `#build-package` opens it from a link) with steppers for coaching and mocks, and a live total with volume discounts (`UNIT` and `TIERS` in the script). The discounts are sample values (3–4 sessions 5%, 5–7 10%, 8+ 15%).
 
