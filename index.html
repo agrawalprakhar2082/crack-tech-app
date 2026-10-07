@@ -87,9 +87,9 @@
   .hero .lede{margin-bottom:38px}
   .cta-row{display:flex;gap:12px;flex-wrap:wrap}
   .facts{display:flex;margin-top:52px;border-top:1px solid var(--line);padding-top:24px}
-  .facts div{padding-right:28px;margin-right:28px;border-right:1px solid var(--line);font-size:14px;color:var(--muted)}
+  .facts div{flex:1 1 0;min-width:0;padding-right:18px;margin-right:18px;border-right:1px solid var(--line);font-size:13.5px;line-height:1.45;color:var(--muted)}
   .facts div:last-child{border-right:0;margin-right:0;padding-right:0}
-  .facts strong{display:block;font-family:var(--serif);font-weight:400;font-size:34px;color:var(--fg);line-height:1.1}
+  .facts strong{display:block;font-family:var(--serif);font-weight:400;font-size:32px;color:var(--fg);line-height:1.1;white-space:nowrap;margin-bottom:4px}
 
   /* interview card */
   .card-ide{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
@@ -306,7 +306,8 @@
     .sig,.sig:nth-child(3){padding:0 0 28px;border-left:0;border-bottom:1px solid var(--line-2)}
     .sig:last-child{border-bottom:0;padding-bottom:0}
     .facts{flex-wrap:wrap;gap:18px 0}
-    .facts div{padding-right:18px;margin-right:18px;border-right:0}
+    .facts{display:grid;grid-template-columns:1fr 1fr}
+    .facts div{padding-right:18px;margin-right:0;border-right:0}
     .facts strong{font-size:28px}
     .code{font-size:11.5px}.code .ln::before{width:28px;padding-right:10px}
     .score{grid-template-columns:1fr}
@@ -378,9 +379,10 @@
         <a href="#pricing" class="btn btn-outline">View pricing</a>
       </div>
       <div class="facts">
-        <div><strong>7+ years</strong>coaching engineers</div>
+        <div><strong>10+ years</strong>coaching engineers</div>
         <div><strong>1:1</strong>never a group class</div>
         <div><strong>AI-ready</strong>code with AI · agentic design</div>
+        <div><strong>500+</strong>successful offers</div>
       </div>
     </div>
 
@@ -549,7 +551,7 @@
       <div class="rv">
         <details open><summary>Who is this for?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Software engineers preparing for interviews at top tech companies, from new grads to senior engineers. Whether you're months away or have an onsite next week, the plan fits your timeline.</p></details>
         <details><summary>Do you cover AI interviews?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Yes. Some companies now run coding rounds where you work with an AI assistant, and design rounds about LLM-powered and agentic systems. We practise both: prompting, reviewing and testing AI-generated code under time pressure, and designing agentic AI systems (tools, memory, orchestration, evaluation and guardrails), alongside classic high-level and low-level design.</p></details>
-        <details><summary>Who will I be working with?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>A senior software engineer currently at a top tech company, who has spent 7+ years coaching candidates through coding, system design and behavioral rounds.</p></details>
+        <details><summary>Who will I be working with?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>A senior software engineer currently at a top tech company, who has spent 10+ years coaching candidates through coding, system design and behavioral rounds.</p></details>
         <details><summary>How is this different from practising on my own?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Practising alone tells you whether you got the answer. It doesn't tell you how an interviewer would score your communication, approach or testing, which is usually where offers are lost. Coaching gives you that feedback.</p></details>
         <details><summary>What happens on the free call?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Fifteen minutes on your target roles, your timeline and where you feel weakest. You leave with a suggested plan, whether or not you book anything.</p></details>
         <details><summary>How do sessions and payment work?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Sessions are live on Google Meet. You pay securely online when you book, and your session is confirmed straight away. For a custom package, message us on WhatsApp or email: we'll agree the plan together, then you can pay by bank transfer or a secure payment link. Sessions can be rescheduled with 24 hours' notice.</p></details>
