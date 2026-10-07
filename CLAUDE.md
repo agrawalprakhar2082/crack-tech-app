@@ -14,6 +14,7 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 - Single static `index.html`, no build step, for GitHub Pages.
 - "Classy" ivory + olive theme. **Dark by default** (`data-theme="dark"` on `<html>`), with a toggle that remembers the visitor's choice in `localStorage["ct-theme"]`; a stored "light" switches to the light theme before first paint. Pages added later (e.g. the policy pages on the `claude/razorpay-credits` branch) should follow the same default.
 - Fonts: Instrument Serif (headings), Geist (body), Geist Mono (small labels).
+- Brand assets live in `brand/` (icon, circle-safe avatar for Cal.com and similar, and wordmark logos for light and dark backgrounds, as PNG and SVG; see `brand/README.md`). Olive `#4f5d2a`, ivory `#f6f3ec`.
 - Sections: Hero with animated mock-interview card, How it works (Diagnose / Drill / Rehearse), Services (DSA, System design, Behavioral, Mock interviews), What interviewers score, Pricing, FAQ, Booking, Footer.
 - Navigation: sticky header (How it works, Services, Pricing, FAQ, Book a free call), active-section highlight, full-screen mobile menu, pricing buttons jump to booking with the session pre-selected.
 - Owner's identity is kept off the site: described only as "a senior engineer at a top tech company with 10+ years coaching".
