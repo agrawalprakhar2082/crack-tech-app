@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crack Tech — 1:1 coaching for tech interviews</title>
-<meta name="description" content="Private 1:1 coaching for coding, system design and behavioral interviews, from a senior engineer at a top tech company. Book a free 15-minute call.">
+<title>Crack Tech — 1:1 coaching for coding, system design &amp; AI interviews</title>
+<meta name="description" content="Private 1:1 coaching for coding (including code-with-AI interviews), system design (HLD, LLD and agentic AI systems) and behavioral interviews, from a senior engineer at a top tech company. Book a free 15-minute call.">
 <meta property="og:title" content="Crack Tech — 1:1 coaching for tech interviews">
-<meta property="og:description" content="The tech interview is a skill. Train for it with private coaching and realistic mock interviews.">
+<meta property="og:description" content="The tech interview is a skill. Train for it with private coaching and realistic mock interviews, including code-with-AI and agentic AI system design rounds.">
 <meta name="theme-color" content="#13150e">
 <!-- dark by default; a visitor who switched to light keeps it -->
 <script>try{if(localStorage.getItem("ct-theme")==="light")delete document.documentElement.dataset.theme}catch(e){}</script>
@@ -142,6 +142,8 @@
   .svc p{color:var(--muted);margin:0 0 22px;flex:1}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chips span{font-size:13px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--fg-2);background:var(--bg)}
+  .chips span.ai{border-color:var(--olive);background:var(--olive-soft);color:var(--fg)}
+  .chips span.ai::before{content:"✦ ";color:var(--olive)}
 
   /* signals */
   .signals{display:grid;grid-template-columns:repeat(4,1fr)}
@@ -368,9 +370,9 @@
 <main id="main">
   <div class="wrap hero">
     <div>
-      <div class="kicker">Private 1:1 interview coaching</div>
+      <div class="kicker">Private 1:1 interview coaching for the AI era</div>
       <h1>The tech interview is a skill. <em>Train for it.</em></h1>
-      <p class="lede">Personal coaching for coding, system design and behavioral rounds, from a senior engineer at a top tech company who knows exactly what interviewers write down.</p>
+      <p class="lede">Personal coaching for coding, system design and behavioral rounds, including the new code-with-AI interviews and agentic AI system design, from a senior engineer at a top tech company who knows exactly what interviewers write down.</p>
       <div class="cta-row">
         <a href="#book" class="btn btn-primary">Book a free 15-min call <span class="arr">→</span></a>
         <a href="#pricing" class="btn btn-outline">View pricing</a>
@@ -378,7 +380,7 @@
       <div class="facts">
         <div><strong>7+ years</strong>coaching engineers</div>
         <div><strong>1:1</strong>never a group class</div>
-        <div><strong>3 rounds</strong>coding · design · behavioral</div>
+        <div><strong>AI-ready</strong>code with AI · agentic design</div>
       </div>
     </div>
 
@@ -445,14 +447,14 @@
         <article class="svc rv">
           <div class="svc-top"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg></span><span class="tag">Coding</span></div>
           <h3>Data structures &amp; algorithms</h3>
-          <p>Learn the core patterns behind most coding questions and how to spot which one a problem is hiding.</p>
-          <div class="chips"><span>Arrays &amp; hashing</span><span>Two pointers</span><span>Trees &amp; graphs</span><span>Dynamic programming</span></div>
+          <p>Learn the core patterns behind most coding questions and how to spot which one a problem is hiding. Then practise code-with-AI interviews: prompting an AI assistant, reviewing and testing what it writes, and explaining your choices out loud.</p>
+          <div class="chips"><span class="ai">Code with AI interviews</span><span>Arrays &amp; hashing</span><span>Two pointers</span><span>Trees &amp; graphs</span><span>Dynamic programming</span></div>
         </article>
         <article class="svc rv">
           <div class="svc-top"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4.5a2 2 0 0 1 2 2V14"/></svg></span><span class="tag">Design</span></div>
           <h3>System design</h3>
-          <p>A repeatable framework for open-ended design rounds, from requirements to scale, with trade-offs you can defend.</p>
-          <div class="chips"><span>APIs &amp; data models</span><span>Caching</span><span>Queues</span><span>Sharding</span></div>
+          <p>A repeatable framework for open-ended design rounds, from requirements to scale: high-level design, low-level design, and agentic AI systems built on LLMs, with trade-offs you can defend.</p>
+          <div class="chips"><span class="ai">Agentic AI system design</span><span>High-level design (HLD)</span><span>Low-level design (LLD)</span><span>APIs &amp; data models</span><span>Caching, queues &amp; sharding</span></div>
         </article>
         <article class="svc rv">
           <div class="svc-top"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.4A8 8 0 1 1 21 12z"/></svg></span><span class="tag">Behavioral</span></div>
@@ -464,7 +466,7 @@
           <div class="svc-top"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="tag">Practice</span></div>
           <h3>Mock interviews</h3>
           <p>Full-length, company-style mocks run by someone who conducts real interviews, with a written scorecard after each one.</p>
-          <div class="chips"><span>Coding</span><span>System design</span><span>Behavioral</span><span>Written feedback</span></div>
+          <div class="chips"><span>Coding</span><span class="ai">Code with AI</span><span>System design</span><span>Behavioral</span><span>Written feedback</span></div>
         </article>
       </div>
     </div>
@@ -503,7 +505,7 @@
           <h3>Mock interview</h3>
           <div class="amt">$150 <small>/ 60 min</small></div>
           <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Coding, design or behavioral</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Coding (incl. code with AI), design or behavioral</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Real interview conditions</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Written scorecard and next steps</li>
           </ul>
@@ -546,6 +548,7 @@
       </div>
       <div class="rv">
         <details open><summary>Who is this for?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Software engineers preparing for interviews at top tech companies, from new grads to senior engineers. Whether you're months away or have an onsite next week, the plan fits your timeline.</p></details>
+        <details><summary>Do you cover AI interviews?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Yes. Some companies now run coding rounds where you work with an AI assistant, and design rounds about LLM-powered and agentic systems. We practise both: prompting, reviewing and testing AI-generated code under time pressure, and designing agentic AI systems (tools, memory, orchestration, evaluation and guardrails), alongside classic high-level and low-level design.</p></details>
         <details><summary>Who will I be working with?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>A senior software engineer currently at a top tech company, who has spent 7+ years coaching candidates through coding, system design and behavioral rounds.</p></details>
         <details><summary>How is this different from practising on my own?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Practising alone tells you whether you got the answer. It doesn't tell you how an interviewer would score your communication, approach or testing, which is usually where offers are lost. Coaching gives you that feedback.</p></details>
         <details><summary>What happens on the free call?<span class="pm"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span></summary><p>Fifteen minutes on your target roles, your timeline and where you feel weakest. You leave with a suggested plan, whether or not you book anything.</p></details>
