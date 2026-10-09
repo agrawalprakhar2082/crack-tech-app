@@ -25,7 +25,7 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 
 ## Booking (Cal.com, switched on)
 
-- Cal.com username: `crack-tech-io` (unchanged by the repo rename; `CAL_USERNAME` in the script near the bottom of `index.html`).
+- Cal.com username: `crack-tech-app` (renamed from `crack-tech-io` in October 2026 to match the repo; `CAL_USERNAME` in the script near the bottom of `index.html`).
 - Inline embed with tabs: Free 15-min call, Mock interview, 1:1 coaching. Expected event slugs: `intro-call` (15 min, free), `mock-interview` (60 min), `coaching` (90 min). They must match `CAL_EVENTS`.
 - Payment is taken by Cal.com at booking (set up by the owner in Cal.com, October 2026), so "Requires confirmation" should be off on the paid event types. If payment ever stops working, turn it back on to stop unpaid bookings being confirmed.
 - The calendar loads lazily when the visitor nears `#book`, and follows the site theme (brand colour `#4f5d2a`, dark `#b3c07a`).
