@@ -4,10 +4,10 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 
 ## Where things stand
 
-- Repo: github.com/agrawalprakhar2082/crack-tech-io (branch `main`). The homepage `index.html` is uploaded and is the current version.
-- The older repo `agrawalprakhar2082/crack-tech` still has the old page; crack-tech-io is the one we're using now.
+- Repo: github.com/agrawalprakhar2082/crack-tech-app (branch `main`). It was renamed from `crack-tech-io` in October 2026; GitHub redirects the old URLs, but use the new name. The homepage `index.html` is the current version.
+- The older repo `agrawalprakhar2082/crack-tech` still has the old page; crack-tech-app is the one we're using now.
 - Domain: **cracktech.app**, bought on Cloudflare (October 2026), so DNS is managed in Cloudflare. The `CNAME` file in the repo root tells GitHub Pages to serve the site there. .app domains require HTTPS (HSTS preload), so the site only loads once GitHub has issued its certificate. The GitHub Pages DNS records in Cloudflare must be **DNS only** (grey cloud).
-- GitHub Pages: on, deploying from `main`. The live site is **https://cracktech.app** (the old https://agrawalprakhar2082.github.io/crack-tech-io/ address redirects there). It rebuilds automatically after each merge (check the Actions tab).
+- GitHub Pages: on, deploying from `main`. The live site is **https://cracktech.app** (the github.io address https://agrawalprakhar2082.github.io/crack-tech-app/ redirects there). It rebuilds automatically after each merge (check the Actions tab).
 
 ## Design decisions (already built)
 
@@ -25,7 +25,7 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 
 ## Booking (Cal.com, switched on)
 
-- Cal.com username: `crack-tech-io` (`CAL_USERNAME` in the script near the bottom of `index.html`).
+- Cal.com username: `crack-tech-io` (unchanged by the repo rename; `CAL_USERNAME` in the script near the bottom of `index.html`).
 - Inline embed with tabs: Free 15-min call, Mock interview, 1:1 coaching. Expected event slugs: `intro-call` (15 min, free), `mock-interview` (60 min), `coaching` (90 min). They must match `CAL_EVENTS`.
 - Payment is taken by Cal.com at booking (set up by the owner in Cal.com, October 2026), so "Requires confirmation" should be off on the paid event types. If payment ever stops working, turn it back on to stop unpaid bookings being confirmed.
 - The calendar loads lazily when the visitor nears `#book`, and follows the site theme (brand colour `#4f5d2a`, dark `#b3c07a`).
