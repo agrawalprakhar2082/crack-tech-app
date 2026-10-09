@@ -6,8 +6,8 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 
 - Repo: github.com/agrawalprakhar2082/crack-tech-io (branch `main`). The homepage `index.html` is uploaded and is the current version.
 - The older repo `agrawalprakhar2082/crack-tech` still has the old page; crack-tech-io is the one we're using now.
-- Domain cracktech.io: the user thinks they still own it; not yet checked. It can be pointed at GitHub Pages later.
-- GitHub Pages: on, deploying from `main`. The live site is https://agrawalprakhar2082.github.io/crack-tech-io/ and rebuilds automatically after each merge (check the Actions tab).
+- Domain: **cracktech.app**, bought on Cloudflare (October 2026), so DNS is managed in Cloudflare. The `CNAME` file in the repo root tells GitHub Pages to serve the site there. .app domains require HTTPS (HSTS preload), so the site only loads once GitHub has issued its certificate. The GitHub Pages DNS records in Cloudflare must be **DNS only** (grey cloud).
+- GitHub Pages: on, deploying from `main`. The live site is **https://cracktech.app** (the old https://agrawalprakhar2082.github.io/crack-tech-io/ address redirects there). It rebuilds automatically after each merge (check the Actions tab).
 
 ## Design decisions (already built)
 
@@ -52,14 +52,13 @@ The user parked these to come back to later. Ask before starting any of them, an
 - [ ] **Real package discounts:** replace the sample `TIERS` (5% / 10% / 15%) and remove the "Sample discounts" tag.
 
 ### Business email: Cloudflare Email Routing (free)
-- [ ] Check that **cracktech.io** is still owned (registrar account), or buy a domain.
-- [ ] Add the domain to Cloudflare (Free plan) and switch the registrar's nameservers to Cloudflare's.
-- [ ] Email > Email Routing: create e.g. `hello@cracktech.io` forwarding to the owner's Gmail, verify the Gmail address, then "Add records and enable". Test by sending mail to it.
+- [x] Domain bought: **cracktech.app** on Cloudflare Registrar, so it is already on Cloudflare.
+- [ ] Email > Email Routing: create e.g. `hello@cracktech.app` forwarding to the owner's Gmail, verify the Gmail address, then "Add records and enable". Test by sending mail to it.
 - [ ] Optional: send as hello@ from Gmail (Settings > Accounts > Send mail as, via `smtp.gmail.com:587` with a Google App password), and add `include:_spf.google.com` to the SPF TXT record. Some sent mail may still go to spam.
 - [ ] Later upgrade: Google Workspace Starter (~₹270/user/month + 18% GST) for reliable sending.
 
 ### Custom domain for the website
-- [ ] Point **cracktech.io** at GitHub Pages: DNS in Cloudflare, then Settings > Pages > Custom domain, and turn on Enforce HTTPS. Do this after the domain is on Cloudflare.
+- [ ] Point **cracktech.app** at GitHub Pages: add the DNS records in Cloudflare (A records to 185.199.108–111.153, and `www` CNAME to `agrawalprakhar2082.github.io`, all DNS only), merge the `CNAME` PR, wait for the certificate, then turn on Settings > Pages > Enforce HTTPS. Optionally verify the domain (GitHub account Settings > Pages > Add a domain, TXT record).
 
 ### Coupons
 - [ ] **"Have a coupon?" box** in the booking section. Cal.com has no native coupon codes, so each coupon is a **hidden, discounted copy** of the paid event type (e.g. `coaching-launch20` at $240). The code reveals that event's link.

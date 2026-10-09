@@ -21,4 +21,4 @@ The Crack Tech mark is an olive rounded square with `</>` chevrons, taken from t
 ## Links
 
 Once merged, every file is also served by the live site, e.g.
-https://agrawalprakhar2082.github.io/crack-tech-io/brand/crack-tech-avatar-1024.png
+https://cracktech.app/brand/crack-tech-avatar-1024.png
