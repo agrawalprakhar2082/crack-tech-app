@@ -157,6 +157,34 @@
   .sig p{color:var(--muted);font-size:15.5px;margin:0 0 16px}
   .sig q{display:block;font-family:var(--serif);font-style:italic;font-size:19px;color:var(--fg-2)}
 
+  /* testimonials */
+  .orgs{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;margin:-16px 0 36px;padding:16px 0;border-block:1px solid var(--line)}
+  .orgs span{font-family:var(--serif);font-size:24px;color:var(--fg-2);line-height:1}
+  .orgs .orgs-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-right:4px}
+  .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+  .tcard{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px 26px 22px;display:flex;flex-direction:column;gap:14px}
+  .tcard blockquote{margin:0}
+  .t-head{font-family:var(--serif);font-size:23px;line-height:1.25;color:var(--fg);margin:0 0 12px}
+  .t-body{font-size:15px;color:var(--muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
+  .t-body p{margin:0 0 10px}
+  .tcard.open .t-body{display:block;-webkit-line-clamp:unset}
+  .t-more{align-self:flex-start;background:none;border:0;padding:0;font:500 14px var(--sans);color:var(--olive);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .t-tags{display:flex;flex-wrap:wrap;gap:6px}
+  .t-tags span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--fg-2);background:var(--bg)}
+  .tcard figcaption{display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--line)}
+  .t-av{flex:none;width:40px;height:40px;border-radius:50%;background:var(--olive-soft);color:var(--olive);display:grid;place-items:center;font:500 14px var(--sans)}
+  .t-av svg{width:20px;height:20px}
+  .t-who{display:flex;flex-direction:column;line-height:1.35;min-width:0}
+  .t-who strong{font-weight:500;font-size:15px}
+  .t-who small{font-size:13px;color:var(--muted)}
+  .t-who .t-prev{font-size:12px;opacity:.8;margin-top:1px}
+  .t-li{margin-left:auto;color:var(--muted);flex:none}
+  .t-li:hover{color:var(--olive)}
+  .t-li svg{width:18px;height:18px}
+  .t-all-wrap{text-align:center;margin-top:28px}
+  .book-quote{margin-top:18px!important;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.3;opacity:.95!important}
+  .book-quote span{display:block;font-family:var(--sans);font-style:normal;font-size:13.5px;opacity:.75;margin-top:4px}
+
   /* pricing */
   .prices{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
   .price{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:34px 30px 30px;display:flex;flex-direction:column;position:relative}
@@ -295,6 +323,7 @@
     .signals{grid-template-columns:1fr 1fr;gap:36px 0}
     .sig:nth-child(3){padding-left:0;border-left:0}
     .prices{grid-template-columns:1fr;gap:26px}
+    .tgrid{grid-template-columns:1fr 1fr}
     .faq{grid-template-columns:1fr;gap:28px}
     .book-copy{grid-template-columns:1fr;gap:28px}
   }
@@ -304,6 +333,8 @@
     .mobile-panel{padding:8px 16px 24px}
     section{padding:80px 0}
     .services{grid-template-columns:1fr}
+    .tgrid{grid-template-columns:1fr}
+    .orgs span{font-size:20px}
     .svc{padding:28px 24px}
     .signals{grid-template-columns:1fr}
     .sig,.sig:nth-child(3){padding:0 0 28px;border-left:0;border-bottom:1px solid var(--line-2)}
@@ -347,6 +378,7 @@
       <ul class="links">
         <li><a href="#how">How it works</a></li>
         <li><a href="#services">Services</a></li>
+        <li><a href="#stories">Stories</a></li>
         <li><a href="#pricing">Pricing</a></li>
         <li><a href="#faq">FAQ</a></li>
       </ul>
@@ -365,8 +397,9 @@
   <div class="mobile-panel" id="mpanel">
     <a class="m" href="#how">How it works <span>01</span></a>
     <a class="m" href="#services">Services <span>02</span></a>
-    <a class="m" href="#pricing">Pricing <span>03</span></a>
-    <a class="m" href="#faq">FAQ <span>04</span></a>
+    <a class="m" href="#stories">Stories <span>03</span></a>
+    <a class="m" href="#pricing">Pricing <span>04</span></a>
+    <a class="m" href="#faq">FAQ <span>05</span></a>
     <a href="#book" class="btn btn-primary">Book a free 15-min call <span class="arr">→</span></a>
   </div>
 </header>
@@ -495,6 +528,113 @@
     </div>
   </section>
 
+
+  <section id="stories">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <div>
+          <div class="kicker">What mentees say</div>
+          <h2>Real engineers. <em>Real offers.</em></h2>
+        </div>
+        <p class="lede">In their own words, from directors to new grads. Shared through our testimonial form; some asked to stay anonymous.</p>
+      </div>
+      <div class="orgs rv" aria-label="Where mentees work now"><span class="orgs-label">Mentees now at</span><span>Meta</span><span>Apple</span><span>Google</span><span>Amazon</span><span>Microsoft</span><span>Salesforce</span><span>LinkedIn</span></div>
+      <div class="tgrid">
+        <figure class="tcard rv">
+          <blockquote>
+            <p class="t-head">“Definitely one of the best investments I have made.”</p>
+            <div class="t-body"><p>A.P. is one of the best interviewing coaches I have met, and has definitely upped my game. I haven’t interviewed for 8 years and got rusty. A.P.’s structured approach starting from the fundamentals, combined with practices and simulations, ultimately enabled me to get the offers I wanted. He is not cheap, but it was definitely one of the best investments I have made.</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>Offers after 8 years away</span><span>10+ sessions</span></div>
+          <figcaption><span class="t-av">W</span><span class="t-who"><strong>Wing</strong><small>Engineering Director · Meta</small><small class="t-prev">Previously Microsoft</small></span></figcaption>
+        </figure>
+        <figure class="tcard rv">
+          <blockquote>
+            <p class="t-head">“A critical component of my interview prep.”</p>
+            <div class="t-body"><p>My sessions with A.P. were a critical component of my interview prep. It was my first time doing system design interviews and A.P. made the process much more approachable. He catered each session to a specific type of problem, and we worked through very interactively how to approach and break down each one.</p><p>I highly recommend A.P.’s tutoring, especially for those who have not done many (or any) actual system design interviews. His approach is a great way to supplement your self-studying, and I’m very satisfied with the amount I learned from 2–3 weeks of working with him.</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>System design</span><span>10+ sessions</span></div>
+          <figcaption><span class="t-av t-anon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="t-who"><strong>Anonymous mentee</strong><small>Staff Software Engineer · Meta</small></span></figcaption>
+        </figure>
+        <figure class="tcard rv">
+          <blockquote>
+            <p class="t-head">“I chose to have personalized 1:1 sessions with A.P. and that was the best decision.”</p>
+            <div class="t-body"><p>I chose to have personalized 1:1 sessions with A.P. and that was the best decision. His teaching approach is truly extraordinary, effortlessly simplifying difficult questions without me even realizing it. He has a comprehensive grasp of each topic he taught me, and I vividly remember the significant impact of my first recursion class and the final mock interview.</p><p>His mock sessions and constructive feedback played a vital role in addressing my weaknesses. Over time, with each session, I noticed a natural progression in my ability to simplify even the most challenging questions, mirroring A.P.’s approach. He consistently fueled my confidence and self-belief.</p><p>On my part, I dedicatedly followed his classes and assignments, placing trust in his teaching. Let me assure you, this approach is more than sufficient to crack the coding rounds for companies like Apple, Amazon, Microsoft and Facebook. I can’t express enough how much A.P. deserves credit for my success. Thanks a lot, A.P., for teaching me.</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>Coding rounds</span><span>10+ sessions</span></div>
+          <figcaption><span class="t-av">NG</span><span class="t-who"><strong>Neha Gour</strong><small>Now at Apple</small><small class="t-prev">Previously Microsoft, Walmart</small></span><a class="t-li" href="https://www.linkedin.com/in/neha-gour-60b46283" target="_blank" rel="noopener" aria-label="Neha Gour on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4v11H3zM9.5 9.75h3.8v1.6h.06c.53-1 1.82-2.05 3.75-2.05 4 0 4.74 2.6 4.74 6v5.45h-4v-4.83c0-1.15-.02-2.64-1.6-2.64-1.6 0-1.85 1.25-1.85 2.55v4.92h-4z"/></svg></a></figcaption>
+        </figure>
+        <figure class="tcard rv">
+          <blockquote>
+            <p class="t-head">“I achieved my goals and received an offer from Google in these challenging times.”</p>
+            <div class="t-body"><p>A.P. is a great mentor! I strongly recommend him to anyone seeking help in System Design, Algorithms and Data Structures. Over the course of more than 15 sessions, I have had the privilege of learning from A.P.’s expertise, and I cannot speak highly enough of his contribution.</p><p>My main area of interest was System Design, and I was striving to prepare for upcoming interviews and gain knowledge in that area. During the three-month course, we discussed a wide range of topics, from basic high-level design concepts to advanced system architectures. A.P. guided our discussions with patience, clarity and depth of knowledge.</p><p>Despite my being proficient with algorithms and data structures, we spent several sessions on difficult topics to improve my confidence. This was especially helpful before actual interviews. A.P. has a great ability to teach even the hardest topics in a simple manner.</p><p>In summary, I can confidently say that I have achieved my goals and received an offer from Google in these challenging times. If I ever need help with something like this again, I won’t hesitate to contact him.</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>Offer · Google</span><span>System design + DSA</span><span>15+ sessions</span></div>
+          <figcaption><span class="t-av t-anon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="t-who"><strong>Anonymous mentee</strong><small>Software Engineer · Google</small></span></figcaption>
+        </figure>
+        <figure class="tcard rv">
+          <blockquote>
+            <p class="t-head">“His mentorship helped me succeed, and I got offers from Amazon, Walmart Labs and Salesforce.”</p>
+            <div class="t-body"><p>A.P. is a great mentor to have. For someone like me who wanted to make a transition to FAANG, his mentorship helped me succeed and I got offers from Amazon, Walmart Labs and Salesforce, where I am working currently. He is really dedicated and passionate about teaching and works really hard at your areas of improvement. I would strongly recommend him!</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>Offers · Amazon, Walmart Labs, Salesforce</span><span>10+ sessions</span></div>
+          <figcaption><span class="t-av">S</span><span class="t-who"><strong>Shimpa</strong><small>Lead, Software Engineering (LMTS) · Salesforce</small><small class="t-prev">Previously Oracle, BNY Mellon</small></span></figcaption>
+        </figure>
+        <figure class="tcard rv">
+          <blockquote>
+            <p class="t-head">“I successfully passed all the interviews at my first try.”</p>
+            <div class="t-body"><p>I highly recommend taking sessions with A.P.! He did an awesome job helping me prepare for Google interviews. With his assistance I successfully passed all the interviews at my first try. All the materials and questions were very close to real ones, which helped me cope with stress in the interview.</p><p>I took the design sessions with him later to nail down my skills, and they are full of hands-on experience that I found very useful in my career.</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>Offer · Google</span><span>10+ sessions</span></div>
+          <figcaption><span class="t-av">AD</span><span class="t-who"><strong>Anastasiia Dudarenko</strong><small>Software Engineer · Google</small><small class="t-prev">Previously EPAM, Accenture</small></span><a class="t-li" href="https://www.linkedin.com/in/anastasia-dudarenko-104530145" target="_blank" rel="noopener" aria-label="Anastasiia Dudarenko on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4v11H3zM9.5 9.75h3.8v1.6h.06c.53-1 1.82-2.05 3.75-2.05 4 0 4.74 2.6 4.74 6v5.45h-4v-4.83c0-1.15-.02-2.64-1.6-2.64-1.6 0-1.85 1.25-1.85 2.55v4.92h-4z"/></svg></a></figcaption>
+        </figure>
+        <figure class="tcard rv" hidden>
+          <blockquote>
+            <p class="t-head">“I have 0 rejections from any interview after training with A.P. and got multiple offers.”</p>
+            <div class="t-body"><p>I really enjoyed the sessions with A.P. He is super knowledgeable and organized, and I have 0 rejections from any interview after training with A.P. and got multiple offers.</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>Multiple offers</span><span>10+ sessions</span></div>
+          <figcaption><span class="t-av">SL</span><span class="t-who"><strong>Suyi L.</strong><small>Now at Meta</small><small class="t-prev">Previously Bloomberg, Amazon</small></span></figcaption>
+        </figure>
+        <figure class="tcard rv" hidden>
+          <blockquote>
+            <p class="t-head">“A.P. knows system design inside and out.”</p>
+            <div class="t-body"><p>A.P. knows system design inside and out. He is the only person who can make the concepts easy to understand. If you have an interview deadline and don’t want to go through system design books, go with A.P.!</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>System design</span><span>6–10 sessions</span></div>
+          <figcaption><span class="t-av">RM</span><span class="t-who"><strong>Rongrong M.</strong><small>Software Engineer · Amazon</small><small class="t-prev">Previously VMware</small></span></figcaption>
+        </figure>
+        <figure class="tcard rv" hidden>
+          <blockquote>
+            <p class="t-head">“He helps you understand the concepts in depth and simplifies the design.”</p>
+            <div class="t-body"><p>A.P. is an amazing mentor. He helps you understand the concepts in depth and simplifies the design. He also gives valuable feedback during mocks. He is flexible with his schedule.</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>System design · Mocks</span><span>10+ sessions</span></div>
+          <figcaption><span class="t-av t-anon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="t-who"><strong>Anonymous mentee</strong><small>Senior Software Engineer · LinkedIn</small></span></figcaption>
+        </figure>
+        <figure class="tcard rv" hidden>
+          <blockquote>
+            <p class="t-head">“He explains concepts in such a way that you really understand them.”</p>
+            <div class="t-body"><p>A.P. is extremely knowledgeable and passionate about software engineering and engineering interviews. He explains concepts in such a way that you really understand them. I would highly recommend him to anyone I know who is looking to improve their skills.</p></div>
+          </blockquote>
+          <button type="button" class="t-more" hidden>Read more</button>
+          <div class="t-tags"><span>Fundamentals</span><span>10+ sessions</span></div>
+          <figcaption><span class="t-av">EG</span><span class="t-who"><strong>Erica Grunfeld</strong><small>Senior Software Engineer · The Farmer’s Dog</small><small class="t-prev">Previously Goldman Sachs, Bank of America</small></span><a class="t-li" href="https://www.linkedin.com/in/erica-grunfeld-56a306133" target="_blank" rel="noopener" aria-label="Erica Grunfeld on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4v11H3zM9.5 9.75h3.8v1.6h.06c.53-1 1.82-2.05 3.75-2.05 4 0 4.74 2.6 4.74 6v5.45h-4v-4.83c0-1.15-.02-2.64-1.6-2.64-1.6 0-1.85 1.25-1.85 2.55v4.92h-4z"/></svg></a></figcaption>
+        </figure>
+      </div>
+      <div class="t-all-wrap"><button type="button" class="btn btn-outline" id="t-all">Show all 10 stories</button></div>
+    </div>
+  </section>
+
   <section id="pricing">
     <div class="wrap">
       <div class="sec-head rv">
@@ -570,6 +710,7 @@
             <div class="kicker">Book a session</div>
             <h2>Let's plan your <em>next offer.</em></h2>
             <p>Pick a time that suits you. Not sure what you need? Start with the free 15-minute call.</p>
+            <p class="book-quote">“Definitely one of the best investments I have made.” <span>— Engineering Director, Meta</span></p>
           </div>
           <ol>
             <li>Choose a session and a time</li>
@@ -733,7 +874,7 @@
   const spy = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
   }), {rootMargin:'-45% 0px -50% 0px'});
-  ['how','services','signals','pricing','faq','book'].forEach(id => spy.observe(document.getElementById(id)));
+  ['how','services','signals','stories','pricing','faq','book'].forEach(id => spy.observe(document.getElementById(id)));
 
   // ---------------- Booking ----------------
   // 1. Create a free account at cal.com.
@@ -886,6 +1027,24 @@
     }
     $('#book').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
   });
+
+  // ---------------- Testimonials ----------------
+  // "Read more" only where the text is actually cut off; "Show all" reveals the hidden cards.
+  const syncMore = () => document.querySelectorAll('.tcard:not([hidden])').forEach(c => {
+    const b = c.querySelector('.t-body'), more = c.querySelector('.t-more');
+    if (c.classList.contains('open')) return;
+    more.hidden = b.scrollHeight <= b.clientHeight + 2;
+  });
+  document.querySelectorAll('.t-more').forEach(btn => btn.addEventListener('click', () => {
+    const c = btn.closest('.tcard'), open = c.classList.toggle('open');
+    btn.textContent = open ? 'Show less' : 'Read more';
+  }));
+  const tAll = $('#t-all');
+  tAll.addEventListener('click', () => {
+    document.querySelectorAll('.tcard[hidden]').forEach(c => { c.hidden = false; c.classList.add('in'); });
+    tAll.parentElement.hidden = true; syncMore();
+  });
+  addEventListener('resize', syncMore); document.fonts && document.fonts.ready.then(syncMore); syncMore();
 
   // gentle reveal on scroll
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.1});
