@@ -182,6 +182,9 @@
   .t-li{margin-left:auto;color:var(--muted);flex:none}
   .t-li:hover{color:var(--olive)}
   .t-li svg{width:18px;height:18px}
+  .t-many{text-align:center;margin:40px auto 0;font-family:var(--serif);font-size:clamp(24px,3vw,32px);line-height:1.2;color:var(--fg-2)}
+  .t-many em{font-style:italic;color:var(--olive)}
+  .orgs .orgs-more{font-style:italic;color:var(--muted)}
   .t-all-wrap{text-align:center;margin-top:28px}
   .book-quote{margin-top:18px!important;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.3;opacity:.95!important}
   .book-quote span{display:block;font-family:var(--sans);font-style:normal;font-size:13.5px;opacity:.75;margin-top:4px}
@@ -542,7 +545,7 @@
         </div>
         <p class="lede">In their own words, from directors to new grads. Shared through our testimonial form; some asked to stay anonymous.</p>
       </div>
-      <div class="orgs rv" aria-label="Where mentees work now"><span class="orgs-label">Mentees now at</span><div class="orgs-list"><span>Meta</span><span>Apple</span><span>Google</span><span>Amazon</span><span>Microsoft</span><span>Salesforce</span><span>LinkedIn</span></div></div>
+      <div class="orgs rv" aria-label="Companies where mentees landed offers"><span class="orgs-label">Offers landed at</span><div class="orgs-list"><span>Meta</span><span>Apple</span><span>Google</span><span>Amazon</span><span>Microsoft</span><span>Salesforce</span><span class="orgs-more">&amp; more</span></div></div>
       <div class="tgrid">
         <figure class="tcard rv">
           <blockquote>
@@ -618,15 +621,6 @@
         </figure>
         <figure class="tcard rv" hidden>
           <blockquote>
-            <p class="t-head">“He helps you understand the concepts in depth and simplifies the design.”</p>
-            <div class="t-body"><p>A.P. is an amazing mentor. He helps you understand the concepts in depth and simplifies the design. He also gives valuable feedback during mocks. He is flexible with his schedule.</p></div>
-          </blockquote>
-          <button type="button" class="t-more" hidden>Read more</button>
-          <div class="t-tags"><span>System design · Mocks</span><span>10+ sessions</span></div>
-          <figcaption><span class="t-av t-anon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="t-who"><strong>Anonymous mentee</strong><small>Senior Software Engineer · LinkedIn</small></span></figcaption>
-        </figure>
-        <figure class="tcard rv" hidden>
-          <blockquote>
             <p class="t-head">“He explains concepts in such a way that you really understand them.”</p>
             <div class="t-body"><p>A.P. is extremely knowledgeable and passionate about software engineering and engineering interviews. He explains concepts in such a way that you really understand them. I would highly recommend him to anyone I know who is looking to improve their skills.</p></div>
           </blockquote>
@@ -635,7 +629,8 @@
           <figcaption><span class="t-av">EG</span><span class="t-who"><strong>Erica Grunfeld</strong><small>Senior Software Engineer · The Farmer’s Dog</small><small class="t-prev">Previously Goldman Sachs, Bank of America</small></span><a class="t-li" href="https://www.linkedin.com/in/erica-grunfeld-56a306133" target="_blank" rel="noopener" aria-label="Erica Grunfeld on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4v11H3zM9.5 9.75h3.8v1.6h.06c.53-1 1.82-2.05 3.75-2.05 4 0 4.74 2.6 4.74 6v5.45h-4v-4.83c0-1.15-.02-2.64-1.6-2.64-1.6 0-1.85 1.25-1.85 2.55v4.92h-4z"/></svg></a></figcaption>
         </figure>
       </div>
-      <div class="t-all-wrap"><button type="button" class="btn btn-outline" id="t-all">Show all 10 stories</button></div>
+      <p class="t-many rv"><em>…and many more</em> engineers who cracked their next offer.</p>
+      <div class="t-all-wrap"><button type="button" class="btn btn-outline" id="t-all">Show all 9 stories</button></div>
     </div>
   </section>
 
