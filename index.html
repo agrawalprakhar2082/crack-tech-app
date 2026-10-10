@@ -148,14 +148,6 @@
   .chips span.ai{border-color:var(--olive);background:var(--olive-soft);color:var(--fg)}
   .chips span.ai::before{content:"✦ ";color:var(--olive)}
 
-  /* signals */
-  .signals{display:grid;grid-template-columns:repeat(4,1fr)}
-  .sig{padding:0 28px;border-left:1px solid var(--line-2)}
-  .sig:first-child{padding-left:0;border-left:0}
-  .sig .n{font-family:var(--mono);font-size:12px;color:var(--olive)}
-  .sig h3{font-size:27px;margin:14px 0 10px}
-  .sig p{color:var(--muted);font-size:15.5px;margin:0 0 16px}
-  .sig q{display:block;font-family:var(--serif);font-style:italic;font-size:19px;color:var(--fg-2)}
 
   /* testimonials */
   .orgs{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;margin:-16px 0 36px;padding:16px 0;border-block:1px solid var(--line)}
@@ -325,8 +317,6 @@
     .sec-head{grid-template-columns:1fr;gap:20px}
     .steps{grid-template-columns:1fr}
     .step,.step + .step{padding:28px 0;border-left:0;border-bottom:1px solid var(--line-2)}
-    .signals{grid-template-columns:1fr 1fr;gap:36px 0}
-    .sig:nth-child(3){padding-left:0;border-left:0}
     .prices{grid-template-columns:1fr;gap:26px}
     .tgrid{grid-template-columns:1fr 1fr}
     .faq{grid-template-columns:1fr;gap:28px}
@@ -339,14 +329,12 @@
     section{padding:80px 0}
     .services{grid-template-columns:1fr}
     .tgrid{grid-template-columns:1fr}
+    .tgrid:not(.all) .t-desk{display:none}
     .orgs{gap:10px}
     .orgs-list{justify-content:flex-start;gap:8px 18px}
     .orgs span{font-size:20px}
     .orgs .orgs-label{flex-basis:100%}
     .svc{padding:28px 24px}
-    .signals{grid-template-columns:1fr}
-    .sig,.sig:nth-child(3){padding:0 0 28px;border-left:0;border-bottom:1px solid var(--line-2)}
-    .sig:last-child{border-bottom:0;padding-bottom:0}
     .facts{flex-wrap:wrap;gap:18px 0}
     .facts{display:grid;grid-template-columns:1fr 1fr}
     .facts div{padding-right:18px;margin-right:0;border-right:0}
@@ -511,33 +499,14 @@
         <article class="svc rv">
           <div class="svc-top"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="tag">Practice</span></div>
           <h3>Mock interviews</h3>
-          <p>Full-length, company-style mocks run by someone who conducts real interviews, with a written scorecard after each one.</p>
+          <p>Full-length, company-style mocks run by someone who conducts real interviews, with a written scorecard after each one on all four things interviewers grade: communication, problem solving, code quality and testing. The answer is only a quarter of it.</p>
           <div class="chips"><span>Coding</span><span class="ai">Code with AI</span><span>System design</span><span>Behavioral</span><span>Written feedback</span></div>
         </article>
       </div>
     </div>
   </section>
 
-  <section class="band" id="signals" style="padding:96px 0">
-    <div class="wrap">
-      <div class="sec-head rv" style="margin-bottom:48px">
-        <div>
-          <div class="kicker">What interviewers score</div>
-          <h2>Solving it is only <em>a quarter</em> of the grade.</h2>
-        </div>
-        <p class="lede">Most candidates practise the answer, but interviewers grade the whole process. We train all four signals.</p>
-      </div>
-      <div class="signals rv">
-        <div class="sig"><span class="n">01</span><h3>Communication</h3><p>Clarify, think out loud and keep the interviewer with you.</p><q>Before I code, can I confirm the input?</q></div>
-        <div class="sig"><span class="n">02</span><h3>Problem solving</h3><p>Start simple, then justify every optimisation with real trade-offs.</p><q>This is O(n²). We can do better.</q></div>
-        <div class="sig"><span class="n">03</span><h3>Code quality</h3><p>Clear names, small functions and no off-by-one surprises.</p><q>Let me pull this into a helper.</q></div>
-        <div class="sig"><span class="n">04</span><h3>Testing</h3><p>Walk through edge cases before you're asked. It's the most often missed.</p><q>Empty input, one item, duplicates…</q></div>
-      </div>
-    </div>
-  </section>
-
-
-  <section id="stories">
+  <section id="stories" class="band">
     <div class="wrap">
       <div class="sec-head rv">
         <div>
@@ -575,7 +544,7 @@
           <div class="t-tags"><span>Coding rounds</span><span>10+ sessions</span></div>
           <figcaption><span class="t-av">NG</span><span class="t-who"><strong>Neha Gour</strong><small>Senior Software Engineer · Apple</small><small class="t-prev">Previously Microsoft, Walmart</small></span><a class="t-li" href="https://www.linkedin.com/in/neha-gour-60b46283" target="_blank" rel="noopener" aria-label="Neha Gour on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4v11H3zM9.5 9.75h3.8v1.6h.06c.53-1 1.82-2.05 3.75-2.05 4 0 4.74 2.6 4.74 6v5.45h-4v-4.83c0-1.15-.02-2.64-1.6-2.64-1.6 0-1.85 1.25-1.85 2.55v4.92h-4z"/></svg></a></figcaption>
         </figure>
-        <figure class="tcard rv">
+        <figure class="tcard rv t-desk">
           <blockquote>
             <p class="t-head">“I achieved my goals and received an offer from Google in these challenging times.”</p>
             <div class="t-body"><p>A.P. is a great mentor! I strongly recommend him to anyone seeking help in System Design, Algorithms and Data Structures. Over the course of more than 15 sessions, I have had the privilege of learning from A.P.’s expertise, and I cannot speak highly enough of his contribution.</p><p>My main area of interest was System Design, and I was striving to prepare for upcoming interviews and gain knowledge in that area. During the three-month course, we discussed a wide range of topics, from basic high-level design concepts to advanced system architectures. A.P. guided our discussions with patience, clarity and depth of knowledge.</p><p>Despite my being proficient with algorithms and data structures, we spent several sessions on difficult topics to improve my confidence. This was especially helpful before actual interviews. A.P. has a great ability to teach even the hardest topics in a simple manner.</p><p>In summary, I can confidently say that I have achieved my goals and received an offer from Google in these challenging times. If I ever need help with something like this again, I won’t hesitate to contact him.</p></div>
@@ -584,7 +553,7 @@
           <div class="t-tags"><span>Offer · Google</span><span>System design + DSA</span><span>15+ sessions</span></div>
           <figcaption><span class="t-av t-anon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="t-who"><strong>Anonymous mentee</strong><small>Software Engineer · Google</small></span></figcaption>
         </figure>
-        <figure class="tcard rv">
+        <figure class="tcard rv t-desk">
           <blockquote>
             <p class="t-head">“His mentorship helped me succeed, and I got offers from Amazon, Walmart Labs and Salesforce.”</p>
             <div class="t-body"><p>A.P. is a great mentor to have. For someone like me who wanted to make a transition to FAANG, his mentorship helped me succeed and I got offers from Amazon, Walmart Labs and Salesforce, where I am working currently. He is really dedicated and passionate about teaching and works really hard at your areas of improvement. I would strongly recommend him!</p></div>
@@ -593,7 +562,7 @@
           <div class="t-tags"><span>Offers · Amazon, Walmart Labs, Salesforce</span><span>10+ sessions</span></div>
           <figcaption><span class="t-av">S</span><span class="t-who"><strong>Shimpa</strong><small>Lead, Software Engineering (LMTS) · Salesforce</small><small class="t-prev">Previously Oracle, BNY Mellon</small></span></figcaption>
         </figure>
-        <figure class="tcard rv">
+        <figure class="tcard rv t-desk">
           <blockquote>
             <p class="t-head">“I successfully passed all the interviews at my first try.”</p>
             <div class="t-body"><p>I highly recommend taking sessions with A.P.! He did an awesome job helping me prepare for Google interviews. With his assistance I successfully passed all the interviews at my first try. All the materials and questions were very close to real ones, which helped me cope with stress in the interview.</p><p>I took the design sessions with him later to nail down my skills, and they are full of hands-on experience that I found very useful in my career.</p></div>
@@ -874,7 +843,7 @@
   const spy = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
   }), {rootMargin:'-45% 0px -50% 0px'});
-  ['how','services','signals','stories','pricing','faq','book'].forEach(id => spy.observe(document.getElementById(id)));
+  ['how','services','stories','pricing','faq','book'].forEach(id => spy.observe(document.getElementById(id)));
 
   // ---------------- Booking ----------------
   // 1. Create a free account at cal.com.
@@ -1042,7 +1011,7 @@
   }));
   // Cards in a row share one height; while one is expanded, its row-mates keep their own height.
   const syncRows = () => {
-    const cards = [...document.querySelectorAll('.tcard:not([hidden])')];
+    const cards = [...document.querySelectorAll('.tcard:not([hidden])')].filter(c => c.offsetParent);
     cards.forEach(c => c.classList.remove('loose'));
     const openTops = new Set(cards.filter(c => c.classList.contains('open')).map(c => c.offsetTop));
     cards.forEach(c => { if (!c.classList.contains('open') && openTops.has(c.offsetTop)) c.classList.add('loose'); });
@@ -1050,6 +1019,7 @@
   const tAll = $('#t-all');
   tAll.addEventListener('click', () => {
     document.querySelectorAll('.tcard[hidden]').forEach(c => { c.hidden = false; c.classList.add('in'); });
+    $('.tgrid').classList.add('all');
     tAll.parentElement.hidden = true; syncMore(); syncRows();
   });
   addEventListener('resize', () => { syncMore(); syncRows(); }); document.fonts && document.fonts.ready.then(syncMore); syncMore();
