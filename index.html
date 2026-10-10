@@ -162,7 +162,7 @@
   .orgs span{font-family:var(--serif);font-size:24px;color:var(--fg-2);line-height:1}
   .orgs-list{flex:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 22px}
   .orgs .orgs-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-right:4px}
-  .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+  .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
   .tcard{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px 26px 22px;display:flex;flex-direction:column;gap:14px}
   .tcard blockquote{margin:0}
   .t-head{font-family:var(--serif);font-size:23px;line-height:1.25;color:var(--fg);margin:0 0 12px}
@@ -170,7 +170,8 @@
   .t-body p{margin:0 0 10px}
   .tcard.open .t-body{display:block;-webkit-line-clamp:unset}
   .t-more{align-self:flex-start;background:none;border:0;padding:0;font:500 14px var(--sans);color:var(--olive);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-  .t-tags{display:flex;flex-wrap:wrap;gap:6px}
+  .t-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+  .tcard.loose{align-self:start}
   .t-tags span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--fg-2);background:var(--bg)}
   .tcard figcaption{display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--line)}
   .t-av{flex:none;width:40px;height:40px;border-radius:50%;background:var(--olive-soft);color:var(--olive);display:grid;place-items:center;font:500 14px var(--sans)}
@@ -1037,13 +1038,21 @@
   document.querySelectorAll('.t-more').forEach(btn => btn.addEventListener('click', () => {
     const c = btn.closest('.tcard'), open = c.classList.toggle('open');
     btn.textContent = open ? 'Show less' : 'Read more';
+    syncRows();
   }));
+  // Cards in a row share one height; while one is expanded, its row-mates keep their own height.
+  const syncRows = () => {
+    const cards = [...document.querySelectorAll('.tcard:not([hidden])')];
+    cards.forEach(c => c.classList.remove('loose'));
+    const openTops = new Set(cards.filter(c => c.classList.contains('open')).map(c => c.offsetTop));
+    cards.forEach(c => { if (!c.classList.contains('open') && openTops.has(c.offsetTop)) c.classList.add('loose'); });
+  };
   const tAll = $('#t-all');
   tAll.addEventListener('click', () => {
     document.querySelectorAll('.tcard[hidden]').forEach(c => { c.hidden = false; c.classList.add('in'); });
-    tAll.parentElement.hidden = true; syncMore();
+    tAll.parentElement.hidden = true; syncMore(); syncRows();
   });
-  addEventListener('resize', syncMore); document.fonts && document.fonts.ready.then(syncMore); syncMore();
+  addEventListener('resize', () => { syncMore(); syncRows(); }); document.fonts && document.fonts.ready.then(syncMore); syncMore();
 
   // gentle reveal on scroll
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.1});
