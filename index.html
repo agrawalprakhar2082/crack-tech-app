@@ -359,10 +359,21 @@
     *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
     .rv{opacity:1;transform:none}
   }
+  /* monthly offer */
+  .promo{background:var(--olive);color:var(--on-olive);font-size:14px;text-align:center;padding:9px 16px;line-height:1.4}
+  .promo a{color:inherit;font-weight:500;text-underline-offset:3px;white-space:nowrap}
+  .promo .promo-code{font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.08em;color:inherit;opacity:1;border:1px dashed currentColor;border-radius:6px;padding:1px 7px;margin-right:4px}
+  [data-unit] s{opacity:.6;margin-right:4px}
+  @media (max-width:640px){ .promo{font-size:13px} .promo .save{display:none} }
+  .amt s,.tab s{opacity:.55;font-size:.55em;margin-right:6px;text-decoration-thickness:1.5px}
+  .tab s{font-size:1em;margin-right:3px}
+  .offer-tag{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--olive);border:1px solid var(--olive);border-radius:999px;padding:3px 10px;align-self:flex-start}
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
+
+<div class="promo" id="promo" hidden></div>
 
 <header id="top">
   <div class="wrap nav">
@@ -617,7 +628,7 @@
         <div class="price rv">
           <span class="kind">Practice</span>
           <h3>Mock interview</h3>
-          <div class="amt">$149 <small>/ 60 min</small></div>
+          <div class="amt" data-price="mock">$149 <small>/ 60 min</small></div>
           <ul>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Coding (incl. code with AI), design or behavioral</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Real interview conditions</li>
@@ -629,7 +640,7 @@
           <span class="pill">Most popular</span>
           <span class="kind">Coaching</span>
           <h3>1:1 coaching session</h3>
-          <div class="amt">$299 <small>/ 90 min</small></div>
+          <div class="amt" data-price="coaching">$299 <small>/ 90 min</small></div>
           <ul>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Deep dive on your weakest area</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Personal roadmap and practice plan</li>
@@ -692,8 +703,8 @@
         <div class="book-body" id="cal-section" hidden>
           <div class="tabs" role="tablist" aria-label="Session type">
             <button class="tab" role="tab" aria-selected="true" data-event="intro">Free 15-min call</button>
-            <button class="tab" role="tab" aria-selected="false" data-event="mock">Mock interview <small>$149</small></button>
-            <button class="tab" role="tab" aria-selected="false" data-event="coaching">1:1 coaching <small>$299</small></button>
+            <button class="tab" role="tab" aria-selected="false" data-event="mock">Mock interview <small data-price="mock">$149</small></button>
+            <button class="tab" role="tab" aria-selected="false" data-event="coaching">1:1 coaching <small data-price="coaching">$299</small></button>
           </div>
           <div class="cal-wrap"><div class="cal-loading" id="cal-loading">Loading calendar…</div><div id="cal-inline"></div></div>
           <p class="cal-alt">Calendar not loading? <a href="#" id="cal-direct" target="_blank" rel="noopener">Open the booking page</a></p>
@@ -955,13 +966,37 @@
   });
   const openBuilder = () => { draw(); dlg.showModal(); };
   document.querySelectorAll('[data-open-builder]').forEach(b => b.addEventListener('click', openBuilder));
+  // ---------------- Monthly offer ----------------
+  // Update once a month: name, short title, last day (inclusive) and offer prices.
+  // Change the Cal.com event prices to match. The package builder uses the offer prices too.
+  // After the end date, or with code "", the banner disappears and normal prices (UNIT) show again.
+  const PROMO = { code: "FALLCOLORS", title: "Fall offer", ends: "2026-10-31", price: { coaching: 269, mock: 129 } };
+  const promoEnd = new Date(PROMO.ends + 'T23:59:59');
+  const promoOn = !!PROMO.code && Date.now() <= promoEnd;
+  if (promoOn) {
+    const until = promoEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const LIST = { ...UNIT }, save = k => money(LIST[k] - PROMO.price[k]);
+    const bar = $('#promo');
+    bar.innerHTML = `<span class="promo-code">${PROMO.code}</span> ${PROMO.title}: 1:1 coaching ${money(PROMO.price.coaching)}<span class="save"> (save ${save('coaching')})</span> and mock interviews ${money(PROMO.price.mock)}<span class="save"> (save ${save('mock')})</span>, until ${until}. <a href="#pricing">See prices →</a>`;
+    bar.hidden = false;
+    document.querySelectorAll('[data-price]').forEach(el => {
+      const k = el.dataset.price, unit = el.querySelector('small');
+      el.innerHTML = `<s>${money(LIST[k])}</s>${money(PROMO.price[k])} `;
+      if (unit) el.append(unit);
+      if (el.classList.contains('amt')) el.insertAdjacentHTML('afterend', `<span class="offer-tag">${PROMO.title} · ends ${until}</span>`);
+    });
+    // Package estimates use the offer prices too, with volume discounts on top.
+    Object.assign(UNIT, PROMO.price);
+    document.querySelectorAll('[data-unit]').forEach(el => { el.innerHTML = `<s>${money(LIST[el.dataset.unit])}</s>${money(UNIT[el.dataset.unit])}`; });
+  }
+
   // ---------------- Contact ----------------
   // WhatsApp number in international format, digits only (e.g. "919876543210"), and business email.
   // While empty, the matching buttons and footer links stay hidden.
   const CONTACT = { whatsapp: "", email: "" };
   const packageLine = () => {
     const q = quote();
-    return `Package: ${summary()}, ${money(q.total)}${q.off ? ` (${q.t.off * 100}% off ${money(q.sub)})` : ''}`;
+    return `Package: ${summary()}, ${money(q.total)}${q.off ? ` (${q.t.off * 100}% off ${money(q.sub)})` : ''}${promoOn ? `, at ${PROMO.code} offer prices` : ''}`;
   };
   const waLink = text => `https://wa.me/${CONTACT.whatsapp}` + (text ? `?text=${encodeURIComponent(text)}` : '');
   const mailLink = (subject, body) => `mailto:${CONTACT.email}?subject=${encodeURIComponent(subject)}` + (body ? `&body=${encodeURIComponent(body)}` : '');
