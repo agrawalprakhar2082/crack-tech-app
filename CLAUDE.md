@@ -24,7 +24,7 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
   - Respect each mentee's anonymity answer: "No" means full name plus LinkedIn; "Yes" means role and company only, shown as "Anonymous mentee". Eric asked for exactly "Staff Software Engineer at Meta", with no initials. The four 2023 responses predate the anonymity question, so they show first name or first name + last initial.
   - Never show emails. Only fix typos and grammar, never change meaning.
   - Skipped: Aviv (answer was just "Yes") and Elina (one-line comment).
-  - Current companies: from the form, unless the owner gives newer ones. Neha is now a Senior Software Engineer at Apple and Suyi is at Meta (owner, October 2026). Suyi's new title is unknown, so the card shows "Now at Meta". LinkedIn can't be read from the cloud environment, so updates come from the owner.
+  - Current companies: from the form, unless the owner gives newer ones. Neha is now a Senior Software Engineer at Apple and Suyi a Senior Software Engineer at Meta (owner, October 2026). LinkedIn can't be read from the cloud environment, so updates come from the owner.
   - Named mentees show a "Previously …" line from the form's past-companies answer. Anonymous mentees never show past companies (they could identify them). Anastasiia's answer "EPAM, VP, PBC, Accenture" is shown as "EPAM, Accenture" until the owner clarifies "VP, PBC".
   - The "Mentees now at" row lists only the current companies of the mentees shown.
   - The booking panel quotes Wing ("…one of the best investments…").
