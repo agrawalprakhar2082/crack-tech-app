@@ -24,7 +24,9 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
   - Respect each mentee's anonymity answer: "No" means full name plus LinkedIn; "Yes" means role and company only, shown as "Anonymous mentee". Eric asked for exactly "Staff Software Engineer at Meta", with no initials. The four 2023 responses predate the anonymity question, so they show first name or first name + last initial.
   - Never show emails. Only fix typos and grammar, never change meaning.
   - Skipped: Aviv (answer was just "Yes") and Elina (one-line comment).
-  - The "Mentees now at" row lists only companies taken from the responses.
+  - Current companies: from the form, unless the owner gives newer ones. Neha is now at Apple and Suyi at Meta (owner, October 2026); their new titles are unknown, so they show "Now at Apple" / "Now at Meta". LinkedIn can't be read from the cloud environment, so updates come from the owner.
+  - Named mentees show a "Previously …" line from the form's past-companies answer. Anonymous mentees never show past companies (they could identify them). Anastasiia's answer "EPAM, VP, PBC, Accenture" is shown as "EPAM, Accenture" until the owner clarifies "VP, PBC".
+  - The "Mentees now at" row lists only the current companies of the mentees shown.
   - The booking panel quotes Wing ("…one of the best investments…").
 - AI positioning (October 2026): the site mentions **code-with-AI interviews** (coding card, mock card, pricing, hero) and **agentic AI system design** alongside **high-level (HLD)** and **low-level design (LLD)** (system design card). The behavioral card adds **Prepare with AI** (using AI tools to draft, stress-test and rehearse stories). AI topics use highlighted `.chips span.ai` chips (✦). There's an FAQ "Do you cover AI interviews?", and the title, meta and og descriptions mention AI.
 - Pricing: Mock interview $149 / 60 min; 1:1 coaching $299 / 90 min (changed from $150 / $300 in October 2026); Interview package "Custom".
