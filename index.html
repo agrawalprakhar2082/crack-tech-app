@@ -368,6 +368,29 @@
   .amt s,.tab s{opacity:.55;font-size:.55em;margin-right:6px;text-decoration-thickness:1.5px}
   .tab s{font-size:1em;margin-right:3px}
   .offer-tag{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--olive);border:1px solid var(--olive);border-radius:999px;padding:3px 10px;align-self:flex-start}
+  /* coach */
+  .coach{display:grid;grid-template-columns:5fr 7fr;gap:24px;align-items:start}
+  .coach-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:30px;display:flex;flex-direction:column;gap:24px}
+  .coach-id{display:flex;align-items:center;gap:18px}
+  .coach-mono{flex:none;width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:var(--olive);color:var(--on-olive);font-family:var(--serif);font-size:34px;letter-spacing:.02em}
+  .coach-id strong{display:block;font-family:var(--serif);font-weight:400;font-size:32px;line-height:1.1}
+  .coach-id > div > span{display:block;font-size:14.5px;color:var(--muted);margin-top:4px}
+  .coach-facts{margin:0;display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--line)}
+  .coach-facts div{padding:16px 12px 16px 0}
+  .coach-facts div + div{padding-left:14px;border-left:1px solid var(--line)}
+  .coach-facts dt{font-family:var(--serif);font-size:22px;line-height:1.1}
+  .coach-facts dd{margin:4px 0 0;font-size:13px;color:var(--muted);line-height:1.35}
+  .coach-orgs{margin:0;font-size:14.5px;color:var(--muted)}
+  .coach-copy{padding:8px 0 0 12px;display:flex;flex-direction:column}
+  .coach-copy h3{font-size:28px;margin:0 0 8px}
+  .coach-copy ul{list-style:none;padding:0;margin:0 0 24px}
+  .coach-copy li{padding:12px 0;border-bottom:1px solid var(--line);font-size:15.5px;color:var(--muted)}
+  .coach-copy li b{color:var(--fg);font-weight:500}
+  .coach-why{margin-top:auto;border:1px dashed var(--line-2);border-radius:12px;padding:16px 18px}
+  .coach-why strong{font-weight:500}
+  .coach-why p{margin:6px 0 0;font-size:14.5px;color:var(--muted)}
+  @media (max-width:1020px){ .coach{grid-template-columns:1fr} .coach-copy{padding:8px 0 0} }
+  @media (max-width:640px){ .coach-card{padding:22px} .coach-mono{width:64px;height:64px;font-size:26px} .coach-id strong{font-size:26px} .coach-facts{grid-template-columns:1fr} .coach-facts div,.coach-facts div + div{padding:12px 0;border-left:0} .coach-facts div + div{border-top:1px solid var(--line)} }
 </style>
 </head>
 <body>
@@ -517,7 +540,42 @@
     </div>
   </section>
 
-  <section id="stories" class="band">
+  <section id="coach" class="band">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <div>
+          <div class="kicker">Your coach</div>
+          <h2>Coached by someone who <em>still interviews.</em></h2>
+        </div>
+        <p class="lede">Every session is with A.P., not a rotating bench of tutors. The same person diagnoses you, drills you and runs your final mock.</p>
+      </div>
+      <div class="coach rv">
+        <div class="coach-card">
+          <div class="coach-id"><span class="coach-mono" aria-hidden="true">A.P.</span><div><strong>A.P.</strong><span>Senior software engineer at a top tech company</span></div></div>
+          <dl class="coach-facts">
+            <div><dt>10+ years</dt><dd>coaching engineers</dd></div>
+            <div><dt>Interviewer</dt><dd>conducts real interviews today</dd></div>
+            <div><dt>All levels</dt><dd>new grads to directors</dd></div>
+          </dl>
+          <p class="coach-orgs">Mentees landed offers at Meta, Apple, Google, Amazon, Microsoft and Salesforce.</p>
+        </div>
+        <div class="coach-copy">
+          <h3>What you get from working with A.P.</h3>
+          <ul>
+            <li><b>The interviewer’s view.</b> Feedback in the words a hiring committee reads, not generic tips.</li>
+            <li><b>One plan, end to end.</b> Coding (including code with AI), system design (HLD, LLD and agentic AI) and behavioral, joined up.</li>
+            <li><b>Honest calibration.</b> Where you stand against your target level, and what it will take to close the gap.</li>
+          </ul>
+          <div class="coach-why">
+            <strong>Why only initials?</strong>
+            <p>Coaching is kept separate from A.P.’s day job, so the full name stays off this site. On your free 15-minute call, A.P. shares a LinkedIn profile so you can check the background before you pay.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="stories">
     <div class="wrap">
       <div class="sec-head rv">
         <div>
