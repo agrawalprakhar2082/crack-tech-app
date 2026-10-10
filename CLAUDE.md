@@ -34,6 +34,11 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 - Monthly offer (from October 2026): `PROMO` in the script (`code`, `title`, `ends` = last day, `price`). While it runs, a banner shows above the header, the pricing cards and booking tabs show ~~list~~ offer prices with an "ends" tag, and the package builder uses the offer prices (its WhatsApp/email/free-call notes say "at CODE offer prices"). After `ends`, or with `code: ""`, everything reverts to `UNIT` by itself. The owner changes the Cal.com event prices to match each month (the site never charges anything itself). Plan: FALLCOLORS (Oct, $269 / $129), then e.g. THANKFUL (Nov), HAPPYHOLIDAYS (Dec), NEWYEARNEWJOB (Jan), OFFERSEASON as a fallback. The name is shown as the offer's title; visitors don't type a code (Cal.com has no coupon box).
 - Package builder: the Interview package card's "Build my package" opens a pop-up (`#builder`; `#build-package` opens it from a link) with steppers for coaching and mocks, and a live total with volume discounts (`UNIT` and `TIERS` in the script). The discounts are sample values (3–4 sessions 5%, 5–7 10%, 8+ 15%).
 
+## Analytics
+
+- Cloudflare Web Analytics (October 2026): the beacon snippet sits just before `</body>` in `index.html` (token `3edb0d5b74ba49fbbd020cb86b027147`, which is public by design). The site is DNS-only on Cloudflare, so automatic injection doesn't apply; the snippet must stay in the page. Cookieless, so no cookie banner. It counts visits, referrers, countries, devices and speed, not clicks; Plausible is the option if click tracking is needed.
+- View it at dash.cloudflare.com/?to=/:account/web-analytics. Any new HTML page needs the same snippet.
+
 ## Booking (Cal.com, switched on)
 
 - Cal.com username: `crack-tech-app` (renamed from `crack-tech-io` in October 2026 to match the repo; `CAL_USERNAME` in the script near the bottom of `index.html`).
