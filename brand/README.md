@@ -10,6 +10,8 @@ The Crack Tech mark is an olive rounded square with `</>` chevrons, taken from t
 | `crack-tech-icon.svg` | The icon as a vector, for print or design tools |
 | `crack-tech-logo-for-light-backgrounds.png` | Icon + "Crack Tech" wordmark in dark text |
 | `crack-tech-logo-for-dark-backgrounds.png` | Icon + "Crack Tech" wordmark in light text |
+| `crack-tech-linkedin-cover.png`, `crack-tech-linkedin-cover@2x.png` | LinkedIn company page cover (1128 × 191; upload the @2x file). Content sits right of centre because LinkedIn places the logo over the bottom-left |
+| `social-kit.md` | Text for the LinkedIn company page and the Medium profile, plus first posts and article ideas |
 
 ## Brand
 
