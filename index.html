@@ -372,7 +372,8 @@
   .coach{display:grid;grid-template-columns:5fr 7fr;gap:24px;align-items:start}
   .coach-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:30px;display:flex;flex-direction:column;gap:24px}
   .coach-id{display:flex;align-items:center;gap:18px}
-  .coach-mono{flex:none;width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:var(--olive);color:var(--on-olive);font-family:var(--serif);font-size:34px;letter-spacing:.02em}
+  .coach-mono{flex:none;width:84px;height:84px;border-radius:24px;display:grid;place-items:center;background:#4f5d2a;box-shadow:inset 0 0 0 1px rgba(246,243,236,.08)}
+  .coach-mono svg{width:46px;height:46px}
   .coach-id strong{display:block;font-family:var(--serif);font-weight:400;font-size:32px;line-height:1.1}
   .coach-id > div > span{display:block;font-size:14.5px;color:var(--muted);margin-top:4px}
   .coach-facts{margin:0;display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--line)}
@@ -390,7 +391,7 @@
   .coach-why strong{font-weight:500}
   .coach-why p{margin:6px 0 0;font-size:14.5px;color:var(--muted)}
   @media (max-width:1020px){ .coach{grid-template-columns:1fr} .coach-copy{padding:8px 0 0} }
-  @media (max-width:640px){ .coach-card{padding:22px} .coach-mono{width:64px;height:64px;font-size:26px} .coach-id strong{font-size:26px} .coach-facts{grid-template-columns:1fr} .coach-facts div,.coach-facts div + div{padding:12px 0;border-left:0} .coach-facts div + div{border-top:1px solid var(--line)} }
+  @media (max-width:640px){ .coach-card{padding:22px} .coach-mono{width:64px;height:64px;border-radius:18px} .coach-mono svg{width:36px;height:36px} .coach-id strong{font-size:26px} .coach-facts{grid-template-columns:1fr} .coach-facts div,.coach-facts div + div{padding:12px 0;border-left:0} .coach-facts div + div{border-top:1px solid var(--line)} }
   /* floating WhatsApp button */
   .wa-fab{position:fixed;right:22px;bottom:22px;z-index:65;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:#25d366;color:#fff;box-shadow:0 10px 28px rgba(0,0,0,.28);transition:transform .2s}
   .wa-fab[hidden]{display:none}
@@ -561,7 +562,7 @@
       </div>
       <div class="coach rv">
         <div class="coach-card">
-          <div class="coach-id"><span class="coach-mono" aria-hidden="true">P</span><div><strong>Prakhar</strong><span>Software engineer with 10+ years of industry experience at one of the top-tier tech companies</span></div></div>
+          <div class="coach-id"><span class="coach-mono" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Prakhar</strong><span>Software engineer with 10+ years of industry experience at one of the top-tier tech companies</span></div></div>
           <dl class="coach-facts">
             <div><dt>10+ years</dt><dd>coaching engineers</dd></div>
             <div><dt>Interviewer</dt><dd>conducts real interviews today</dd></div>
