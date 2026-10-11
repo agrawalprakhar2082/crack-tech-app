@@ -1026,9 +1026,9 @@
   document.querySelectorAll('[data-open-builder]').forEach(b => b.addEventListener('click', openBuilder));
   // ---------------- Monthly offer ----------------
   // Update once a month: name, short title, last day (inclusive) and offer prices.
-  // Change the Cal.com event prices to match. The package builder uses the offer prices too.
+  // Change the Cal.com event prices to match. packages: true also applies the offer prices in the package builder.
   // After the end date, or with code "", the banner disappears and normal prices (UNIT) show again.
-  const PROMO = { code: "FALLCOLORS", title: "Fall offer", ends: "2026-10-31", price: { coaching: 269, mock: 129 } };
+  const PROMO = { code: "FALLCOLORS", title: "Fall offer", ends: "2026-10-31", price: { coaching: 269, mock: 129 }, packages: false };
   const promoEnd = new Date(PROMO.ends + 'T23:59:59');
   const promoOn = !!PROMO.code && Date.now() <= promoEnd;
   if (promoOn) {
@@ -1043,9 +1043,11 @@
       if (unit) el.append(unit);
       if (el.classList.contains('amt')) el.insertAdjacentHTML('afterend', `<span class="offer-tag">${PROMO.title} · ends ${until}</span>`);
     });
-    // Package estimates use the offer prices too, with volume discounts on top.
-    Object.assign(UNIT, PROMO.price);
-    document.querySelectorAll('[data-unit]').forEach(el => { el.innerHTML = `<s>${money(LIST[el.dataset.unit])}</s>${money(UNIT[el.dataset.unit])}`; });
+    // Optionally, package estimates use the offer prices too, with volume discounts on top.
+    if (PROMO.packages) {
+      Object.assign(UNIT, PROMO.price);
+      document.querySelectorAll('[data-unit]').forEach(el => { el.innerHTML = `<s>${money(LIST[el.dataset.unit])}</s>${money(UNIT[el.dataset.unit])}`; });
+    }
   }
 
   // ---------------- Contact ----------------
@@ -1054,7 +1056,7 @@
   const CONTACT = { whatsapp: "", email: "" };
   const packageLine = () => {
     const q = quote();
-    return `Package: ${summary()}, ${money(q.total)}${q.off ? ` (${q.t.off * 100}% off ${money(q.sub)})` : ''}${promoOn ? `, at ${PROMO.code} offer prices` : ''}`;
+    return `Package: ${summary()}, ${money(q.total)}${q.off ? ` (${q.t.off * 100}% off ${money(q.sub)})` : ''}${promoOn && PROMO.packages ? `, at ${PROMO.code} offer prices` : ''}`;
   };
   const waLink = text => `https://wa.me/${CONTACT.whatsapp}` + (text ? `?text=${encodeURIComponent(text)}` : '');
   const mailLink = (subject, body) => `mailto:${CONTACT.email}?subject=${encodeURIComponent(subject)}` + (body ? `&body=${encodeURIComponent(body)}` : '');
