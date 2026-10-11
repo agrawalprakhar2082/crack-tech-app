@@ -55,7 +55,7 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 - The business is a **sole proprietorship** in India (not a Pvt Ltd or LLP), so the owner may receive payments in their personal account; a separate account for the firm is recommended for clean books. GST registration applies above ₹20 lakh a year; file an LUT for clients abroad. Check details with the CA.
 - **Single sessions:** one booking at a time through Cal.com, **paid at booking**. Payment is configured in Cal.com (PayPal app or Cal Pay; confirm which with the owner), with prices on `mock-interview` ($149) and `coaching` ($299); the Cal.com prices must match the site. The site deliberately doesn't name the provider: "Pay securely online when you book." PayPal India can't take payments from clients in India; offer them UPI or bank transfer by hand.
 - **Custom packages:** the package pop-up is a price estimator. Its buttons open WhatsApp (`wa.me` link with the package pre-written) or email (`mailto:`), plus "Book a free call to discuss" (which pre-fills the Cal.com notes). Packages are agreed by message and paid by bank transfer (Wise Business supports sole proprietors in India) or PayPal. The owner then books the sessions or sends a Cal.com private link limited to the number of sessions.
-- WhatsApp (October 2026): `CONTACT.whatsapp = "919425903134"` (+91 94259 03134). It switches on a floating WhatsApp button (`#wa-fab`, bottom right, opens wa.me with a pre-written message), the footer link and the package pop-up's "Discuss on WhatsApp". Email is still empty.
+- WhatsApp (October 2026): `CONTACT.whatsapp = "919425903134"` (+91 94259 03134). It switches on a floating WhatsApp button (`#wa-fab`, bottom right, opens wa.me with a pre-written message), the footer link and the package pop-up's "Discuss on WhatsApp". Email: hello@cracktech.app.
 - Contact details go in `CONTACT` (`whatsapp`: international format, digits only; `email`) in the script. While they're empty, the WhatsApp and email buttons and footer links stay hidden.
 - Not viable or deferred: Stripe (invite-only in India, no Apple Pay); Razorpay pay-first with private-link credits (PR 6, closed; the branch `claude/razorpay-credits` keeps the work, including draft policy pages); a full credits system (Cloudflare Worker + D1 + Cal.com webhooks and API, which needs the Cal.com Teams plan), planned for later.
 
@@ -65,7 +65,7 @@ The user parked these to come back to later. Ask before starting any of them, an
 
 ### Needs something from the user first
 - [x] **WhatsApp number:** added (Oct 11, 2026), with a floating button.
-- [ ] **Business email:** fill in `CONTACT.email` in `index.html` (e.g. hello@cracktech.app once Email Routing works). That switches on the footer email link and the package pop-up's "Email us" button.
+- [x] **Business email:** `CONTACT.email = "hello@cracktech.app"` (Oct 11, 2026). It switches on the footer email link and the package pop-up's "Email us" button. Mail is delivered by Cloudflare Email Routing to the owner's Gmail.
 - [ ] **Confirm payments:** which option is set up in Cal.com (PayPal or Cal Pay), and do a test booking on the live site that takes payment. "Requires confirmation" should be off on the paid events once payment works. PayPal India can't take payments from Indian clients; offer them UPI or bank transfer by hand.
 - [ ] **Real package discounts:** replace the sample `TIERS` (5% / 10% / 15%) and remove the "Sample discounts" tag.
 

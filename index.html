@@ -1062,7 +1062,7 @@
   // ---------------- Contact ----------------
   // WhatsApp number in international format, digits only (e.g. "919876543210"), and business email.
   // While empty, the matching buttons and footer links stay hidden.
-  const CONTACT = { whatsapp: "919425903134", email: "" };
+  const CONTACT = { whatsapp: "919425903134", email: "hello@cracktech.app" };
   const packageLine = () => {
     const q = quote();
     return `Package: ${summary()}, ${money(q.total)}${q.off ? ` (${q.t.off * 100}% off ${money(q.sub)})` : ''}${promoOn && PROMO.packages ? `, at ${PROMO.code} offer prices` : ''}`;
@@ -1075,7 +1075,7 @@
     // floating WhatsApp button, bottom right
     const fab = $('#wa-fab'); fab.href = waLink("Hi Crack Tech, I'd like to know more about interview coaching."); fab.hidden = false;
   }
-  if (CONTACT.email) { mailFooter.hidden = false; mailFooter.querySelector('a').href = mailLink('Crack Tech enquiry'); }
+  if (CONTACT.email) { mailFooter.hidden = false; const m = mailFooter.querySelector('a'); m.href = mailLink('Crack Tech enquiry'); m.textContent = CONTACT.email; }
   const syncContact = () => {
     const ok = !$('#pb-request').disabled;
     const msg = `Hi Crack Tech, I'd like to discuss a custom package.\n${packageLine()}`;
