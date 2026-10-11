@@ -65,7 +65,7 @@ The user parked these to come back to later. Ask before starting any of them, an
 
 ### Needs something from the user first
 - [x] **WhatsApp number:** added (Oct 11, 2026), with a floating button.
-- [x] **Business email:** `CONTACT.email = "hello@cracktech.app"` (Oct 11, 2026). It switches on the footer email link and the package pop-up's "Email us" button. Mail is delivered by Cloudflare Email Routing to the owner's Gmail.
+- [x] **Business email:** `CONTACT.email = "hello@cracktech.app"` (Oct 11, 2026). It switches on the footer email link, the package pop-up's "Email us" button and a small floating email button (`#mail-fab`) above the WhatsApp one. Mail is delivered by Cloudflare Email Routing to the owner's Gmail.
 - [ ] **Confirm payments:** which option is set up in Cal.com (PayPal or Cal Pay), and do a test booking on the live site that takes payment. "Requires confirmation" should be off on the paid events once payment works. PayPal India can't take payments from Indian clients; offer them UPI or bank transfer by hand.
 - [ ] **Real package discounts:** replace the sample `TIERS` (5% / 10% / 15%) and remove the "Sample discounts" tag.
 
