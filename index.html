@@ -298,6 +298,11 @@
   .foot ul{list-style:none;padding:0;margin:0}
   .foot li{padding:4px 0}
   .foot a{text-decoration:none;color:var(--fg-2);font-size:15px}.foot a:hover{color:var(--olive)}
+  .social{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .social[hidden],.social a[hidden]{display:none}
+  .foot .social a{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border:1px solid var(--line);border-radius:999px;font-size:14px;color:var(--fg-2)}
+  .foot .social a:hover{border-color:var(--olive);color:var(--olive)}
+  .social svg{width:16px;height:16px;flex:none}
   .legal{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted-2)}
 
   /* reveal */
@@ -874,6 +879,10 @@
       <div>
         <a href="#" class="brand" aria-label="Crack Tech, back to top"><span class="brand-mark"><svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="brand-name">Crack Tech</span></a>
         <p>Private 1:1 coaching for coding, system design and behavioral interviews.</p>
+        <div class="social" id="social" hidden>
+          <a data-social="linkedin" target="_blank" rel="noopener" aria-label="Crack Tech on LinkedIn" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4v11H3zM9.5 9.75h3.8v1.6h.06c.53-1 1.82-2.05 3.75-2.05 4 0 4.74 2.6 4.74 6v5.45h-4v-4.83c0-1.15-.02-2.64-1.6-2.64-1.6 0-1.85 1.25-1.85 2.55v4.92h-4z"/></svg>LinkedIn</a>
+          <a data-social="medium" target="_blank" rel="noopener" aria-label="Crack Tech articles on Medium" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="6.8" cy="12" rx="6.3" ry="6.4"/><ellipse cx="17" cy="12" rx="3.2" ry="6"/><ellipse cx="22.2" cy="12" rx="1.3" ry="5.4"/></svg>Medium</a>
+        </div>
       </div>
       <div>
         <h4>Explore</h4>
@@ -1075,6 +1084,14 @@
       document.querySelectorAll('[data-unit]').forEach(el => { el.innerHTML = `<s>${money(LIST[el.dataset.unit])}</s>${money(UNIT[el.dataset.unit])}`; });
     }
   }
+
+  // ---------------- Social profiles ----------------
+  // Full profile URLs. While a value is empty, its footer link stays hidden.
+  const SOCIAL = { linkedin: "", medium: "https://medium.com/@cracktech.app" };
+  document.querySelectorAll('[data-social]').forEach(a => {
+    const url = SOCIAL[a.dataset.social];
+    if (url) { a.href = url; a.hidden = false; $('#social').hidden = false; }
+  });
 
   // ---------------- Contact ----------------
   // WhatsApp number in international format, digits only (e.g. "919876543210"), and business email.
