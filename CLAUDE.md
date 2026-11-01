@@ -12,6 +12,7 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 ## Design decisions (already built)
 
 - Single static `index.html`, no build step, for GitHub Pages.
+- Blog (November 2026): `/blog/` lists articles, and each article has a summary page linking to the full piece on Medium. GitHub Pages serves the generated files in `blog/`, so it needs no build. To add an article, edit `_blog/posts.rb` and run `ruby _blog/build.rb` locally (see `_blog/README.md`). The script copies the header, footer, styles and analytics snippet from `index.html`, so re-run it after changing those. Cover images load from Medium's CDN.
 - "Classy" ivory + olive theme. **Dark by default** (`data-theme="dark"` on `<html>`), with a toggle that remembers the visitor's choice in `localStorage["ct-theme"]`; a stored "light" switches to the light theme before first paint. Pages added later (e.g. the policy pages on the `claude/razorpay-credits` branch) should follow the same default.
 - Fonts: Instrument Serif (headings), Geist (body), Geist Mono (small labels).
 - Brand assets live in `brand/` (icon, circle-safe avatar for Cal.com and similar, and wordmark logos for light and dark backgrounds, as PNG and SVG; see `brand/README.md`). Olive `#4f5d2a`, ivory `#f6f3ec`.
