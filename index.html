@@ -1065,7 +1065,7 @@
   // Update once a month: name, short title, last day (inclusive) and offer prices.
   // Change the Cal.com event prices to match. packages: true also applies the offer prices in the package builder.
   // After the end date, or with code "", the banner disappears and normal prices (UNIT) show again.
-  const PROMO = { code: "FALLCOLORS", title: "Fall offer", ends: "2026-10-31", price: { coaching: 269, mock: 129 }, packages: false };
+  const PROMO = { code: "THANKSGIVING", title: "Thanksgiving offer", ends: "2026-11-30", price: { coaching: 269, mock: 129 }, packages: false };
   const promoEnd = new Date(PROMO.ends + 'T23:59:59');
   const promoOn = !!PROMO.code && Date.now() <= promoEnd;
   if (promoOn) {
