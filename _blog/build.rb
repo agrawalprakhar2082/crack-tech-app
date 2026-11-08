@@ -144,7 +144,7 @@ posts.each do |p|
     video = <<~HTML
       <section class="article-video" aria-label="Video walkthrough">
         <h2>Watch the walkthrough</h2>
-        <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/#{id}" title="#{h(p[:video_title] || p[:title])}" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+        <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/#{id}#{p[:video_start] ? "?start=#{Integer(p[:video_start])}" : ""}" title="#{h(p[:video_title] || p[:title])}" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
         #{p[:video_note] ? %(<p class="note">#{h(p[:video_note])}</p>) : ""}
       </section>
     HTML

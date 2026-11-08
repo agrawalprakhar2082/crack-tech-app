@@ -10,6 +10,10 @@ POSTS = [
     minutes: 6,
     image: "https://cracktech.app/blog/images/estimation-10-5-trick.jpg",
     medium: "https://medium.com/@cracktech.app/back-of-the-envelope-estimation-for-system-design-interviews-the-10%E2%81%B5-trick-f653fa3ead69",
+    youtube: "https://youtu.be/ZU1uMp7jlsQ",
+    video_start: 150,
+    video_title: "Design Google Calendar: System Design Interview Walkthrough",
+    video_note: "The worked example from the Google Calendar walkthrough. It starts at the estimation chapter (2:30).",
     teaser: "The 5-minute estimation method for system design interviews. No calculator needed.",
     summary: [
       "Most candidates either skip estimations or spend ten minutes multiplying huge numbers and lose track of what they're calculating. Interviewers don't want exact numbers. They want the right size, and they want to see it change the design.",
@@ -93,6 +97,8 @@ POSTS = [
     minutes: 7,
     image: "https://cdn-images-1.medium.com/max/1024/1*O3WDJHrAwfYXzEuSXz0Ifg.png",
     medium: "https://medium.com/@cracktech.app/designing-google-calendar-a-system-design-walkthrough-6d662403e5ed",
+    youtube: "https://youtu.be/ZU1uMp7jlsQ",
+    video_note: "About 14 minutes, with chapters. Prefer reading? The full article is on Medium.",
     teaser: "A read-heavy workload, fan-out on every write, and reminders that must fire on the exact minute.",
     summary: [
       "Create a meeting, invite people, show a grid of boxes. It sounds simple, but underneath are some of the most interesting problems in system design: fan-out on every write, notifications for every invitee, reminders for hundreds of millions of people, and recurring events that never really end.",
