@@ -42,6 +42,8 @@ beacon = home[%r{<script defer src="https://static\.cloudflareinsights\.com.*?</
 write("blog/site.css", css)
 write("blog/blog.css", read("_blog/blog.css"))
 write("blog/blog.js", read("_blog/blog.js"))
+# Images stored with the site (e.g. covers not hosted on Medium's CDN)
+Dir[File.join(ROOT, "_blog/images/*")].each { |f| FileUtils.mkdir_p(File.join(ROOT, "blog/images")); FileUtils.cp(f, File.join(ROOT, "blog/images", File.basename(f))) }
 
 page = lambda do |title:, description:, path:, image: nil, type: "website", body:|
   og_image = image ? %(\n<meta property="og:image" content="#{h(image)}">) : ""
