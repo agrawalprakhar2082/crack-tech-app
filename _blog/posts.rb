@@ -3,6 +3,27 @@
 # edit it, then run:  ruby _blog/build.rb
 POSTS = [
   {
+    slug: "estimation-10-5-trick",
+    title: "Back-of-the-Envelope Estimation for System Design Interviews: The 10⁵ Trick",
+    category: "System Design",
+    date: "2026-11-08",
+    minutes: 6,
+    image: "https://cracktech.app/blog/images/estimation-10-5-trick.jpg",
+    medium: "https://medium.com/@cracktech.app/back-of-the-envelope-estimation-for-system-design-interviews-the-10%E2%81%B5-trick-f653fa3ead69",
+    teaser: "The 5-minute estimation method for system design interviews. No calculator needed.",
+    summary: [
+      "Most candidates either skip estimations or spend ten minutes multiplying huge numbers and lose track of what they're calculating. Interviewers don't want exact numbers. They want the right size, and they want to see it change the design.",
+      "The article gives three things to remember, a five-line template, a two-minute worked example for Google Calendar, and a table that turns the numbers into design decisions, with a one-page cheat sheet at the end."
+    ],
+    takeaways: [
+      "A day has 86,400 seconds. Round it to 10⁵, and any “per day” number becomes “per second” by dropping five zeros.",
+      "Thousand, million, billion and trillion line up with KB, MB, GB and TB, so you add powers of ten instead of multiplying long numbers.",
+      "Write five lines: users, actions per day, per second, peak (2–3 times the average) and storage for a year.",
+      "Then say what the numbers mean: “Reads are 15 times writes, so I'll cache and shape the data for reads.”",
+      "Round everything, design for the peak, write your assumptions down, and never leave a number unused."
+    ]
+  },
+  {
     slug: "ai-agent-jargon",
     title: "AI Agent Jargon for Software Engineers: 20 Terms Mapped to Things You Already Know",
     category: "Agentic AI",

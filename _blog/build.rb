@@ -42,6 +42,8 @@ beacon = home[%r{<script defer src="https://static\.cloudflareinsights\.com.*?</
 write("blog/site.css", css)
 write("blog/blog.css", read("_blog/blog.css"))
 write("blog/blog.js", read("_blog/blog.js"))
+# Images stored with the site (e.g. covers not hosted on Medium's CDN)
+Dir[File.join(ROOT, "_blog/images/*")].each { |f| FileUtils.mkdir_p(File.join(ROOT, "blog/images")); FileUtils.cp(f, File.join(ROOT, "blog/images", File.basename(f))) }
 
 page = lambda do |title:, description:, path:, image: nil, type: "website", body:|
   og_image = image ? %(\n<meta property="og:image" content="#{h(image)}">) : ""
@@ -82,8 +84,17 @@ page = lambda do |title:, description:, path:, image: nil, type: "website", body
   HTML
 end
 
+# A post's optional video: a YouTube link or 11-character video ID.
+def youtube_id(post)
+  return nil unless post[:youtube]
+  id = post[:youtube][%r{(?:v=|youtu\.be/|embed/|shorts/|live/)([\w-]{11})}, 1] || post[:youtube]
+  abort "Unrecognised YouTube link for #{post[:slug]}: #{post[:youtube]}" unless id.match?(/\A[\w-]{11}\z/)
+  id
+end
+
 def meta(post)
-  %(<div class="post-meta"><span class="cat">#{h(post[:category])}</span><time datetime="#{post[:date]}">#{nice_date(post[:date])}</time><span>#{post[:minutes]} min read</span></div>)
+  video = youtube_id(post) ? %(<span class="vid">▶ Video</span>) : ""
+  %(<div class="post-meta"><span class="cat">#{h(post[:category])}</span><time datetime="#{post[:date]}">#{nice_date(post[:date])}</time><span>#{post[:minutes]} min read</span>#{video}</div>)
 end
 
 posts = POSTS.sort_by { |p| p[:date] }.reverse
@@ -128,6 +139,16 @@ write("blog/index.html", page.call(
 posts.each do |p|
   paragraphs = p[:summary].map { |s| "<p>#{h(s)}</p>" }.join("\n")
   points = p[:takeaways].map { |t| "<li><span>#{h(t)}</span></li>" }.join("\n")
+  video = ""
+  if (id = youtube_id(p))
+    video = <<~HTML
+      <section class="article-video" aria-label="Video walkthrough">
+        <h2>Watch the walkthrough</h2>
+        <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/#{id}" title="#{h(p[:video_title] || p[:title])}" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+        #{p[:video_note] ? %(<p class="note">#{h(p[:video_note])}</p>) : ""}
+      </section>
+    HTML
+  end
   write("blog/#{p[:slug]}/index.html", page.call(
     title: "#{p[:title]} — Crack Tech",
     description: p[:teaser],
@@ -144,7 +165,7 @@ posts.each do |p|
           <div class="article-summary">
       #{paragraphs}
           </div>
-          <section class="takeaways" aria-label="Key takeaways">
+      #{video}    <section class="takeaways" aria-label="Key takeaways">
             <h2>Key takeaways</h2>
             <ul>
       #{points}
