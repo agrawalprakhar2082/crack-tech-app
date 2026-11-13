@@ -39,8 +39,8 @@
   const waLink = text => `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(text)}`;
   const mailLink = subject => `mailto:${CONTACT.email}?subject=${encodeURIComponent(subject)}`;
   const waFooter = $('[data-contact="whatsapp"]'), mailFooter = $('[data-contact="email"]');
-  waFooter.hidden = false; waFooter.querySelector('a').href = waLink("Hi Crack Tech, I have a question about coaching.");
-  const fab = $('#wa-fab'); fab.href = waLink("Hi Crack Tech, I'd like to know more about interview coaching."); fab.hidden = false;
+  waFooter.hidden = false; waFooter.querySelector('a').href = waLink("Hi Crack Tech, I have a question about mentorship.");
+  const fab = $('#wa-fab'); fab.href = waLink("Hi Crack Tech, I'd like to know more about interview mentorship."); fab.hidden = false;
   mailFooter.hidden = false; const m = mailFooter.querySelector('a'); m.href = mailLink('Crack Tech enquiry'); m.textContent = CONTACT.email;
   const mf = $('#mail-fab'); mf.href = mailLink('Crack Tech enquiry'); mf.hidden = false;
   const medium = $('[data-social="medium"]');
