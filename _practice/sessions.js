@@ -1,6 +1,7 @@
 // Practice sessions shown on /practice/. Each session must add up to 45 minutes.
 // kind: "text" (written answer, dictation allowed) or "code" (monospace editor, no dictation).
 // look: what interviewers look for (shown on demand). given: code shown to the candidate.
+// board: true adds the whiteboard (Excalidraw). Check totals with: node _practice/check.js
 window.PRACTICE_SESSIONS = [
   {
     id: "behavioral-leadership",
@@ -49,7 +50,7 @@ window.PRACTICE_SESSIONS = [
           "Clear about 'I' versus 'we'",
           "Explains why it was hard: technical or organisational",
           "Impact in numbers: users, latency, revenue, time saved",
-          "Fits in four minutes, with depth on request"] } ] },
+          "Fits in about four minutes, with more depth when asked"] } ] },
       { name: "A mistake", min: 12, prompts: [
         { q: "Tell me about a mistake you made that affected others. What happened next?", look: [
           "A real mistake with consequences, owned without blame-shifting",
@@ -66,13 +67,13 @@ window.PRACTICE_SESSIONS = [
         { q: "Give an example of how you made someone else, or your team, better.", look: [
           "Specific person or practice, with an outcome (promotion, new skill, fewer incidents)",
           "Multiplier: templates, reviews, standards others adopted",
-          "Coached rather than did it for them"] } ] }
+          "Guided them to do it, rather than doing it for them"] } ] }
     ]
   },
   {
     id: "design-calendar",
     track: "System design",
-    tag: "High-level design",
+    tag: "High-level design", board: true,
     title: "Design a calendar app",
     blurb: "Meetings, invites and reminders for hundreds of millions of users. Full walkthrough on our blog after you finish.",
     after: { label: "Compare with our walkthrough", href: "/blog/design-calendar-system/" },
@@ -98,7 +99,7 @@ window.PRACTICE_SESSIONS = [
           "Participants table keyed by (user, start time, meeting): one range scan per user",
           "Explains denormalising the start time and its cost on updates"] } ] },
       { name: "High-level design", min: 13, prompts: [
-        { q: "Describe the components and the write path, read path and async path. Draw it on paper if that helps, and describe it here.", look: [
+        { q: "Draw the components on the whiteboard, then describe the write path, read path and async path here.", look: [
           "Stateless services behind a gateway, sharded databases, a read-through cache",
           "Change data capture into an event stream instead of dual writes",
           "Fan-out workers for notifications; push to apps, email with .ics to non-users"] } ] },
@@ -113,7 +114,7 @@ window.PRACTICE_SESSIONS = [
   {
     id: "design-rate-limiter",
     track: "System design",
-    tag: "Low-level design",
+    tag: "Low-level design", board: true,
     title: "Design a rate limiter library",
     blurb: "Classes, interfaces, an algorithm and real code. A low-level design round in 45 minutes.",
     blocks: [
@@ -123,7 +124,7 @@ window.PRACTICE_SESSIONS = [
           "In-process first, distributed as a follow-up",
           "Returns allow/deny plus retry-after; thread-safe"] } ] },
       { name: "Classes & interfaces", min: 10, prompts: [
-        { q: "List the classes and interfaces with their main methods, and how they relate.", look: [
+        { q: "List the classes and interfaces with their main methods, and how they relate. Sketch a class diagram on the whiteboard if it helps.", look: [
           "A RateLimiter interface (allow(key)) with strategy implementations",
           "A rule/config object and a clock you can inject for tests",
           "Storage behind an interface so a Redis version can be added later"], kind: "text" } ] },
@@ -149,7 +150,7 @@ window.PRACTICE_SESSIONS = [
   {
     id: "design-ai-agent",
     track: "System design",
-    tag: "Agentic AI design",
+    tag: "Agentic AI design", board: true,
     title: "Design an AI customer-support agent",
     blurb: "An LLM agent that answers questions, looks up orders and issues refunds. Tools, guardrails, evaluation and cost.",
     after: { label: "Read: the model isn't the agent", href: "/blog/the-model-isnt-the-agent/" },
@@ -199,7 +200,7 @@ window.PRACTICE_SESSIONS = [
           "Asks: is the input sorted? do touching meetings like [1,4] and [4,5] count as overlapping?",
           "Plan: sort by start, then one pass merging into the last interval"] } ] },
       { name: "Problem 1: code", min: 12, prompts: [
-        { q: "Write merge(meetings). Assume touching meetings should merge.", kind: "code", look: [
+        { q: "Write a function merge(meetings) that returns the merged list. Touching meetings, like [1,4] and [4,5], should merge.", kind: "code", look: [
           "Sorts by start time",
           "Compares with <= so touching intervals merge",
           "Extends the end with max(), handling a meeting inside another",
@@ -213,7 +214,7 @@ window.PRACTICE_SESSIONS = [
           "Sort by start and keep a min-heap of end times, or sort starts and ends separately",
           "A room is freed when the earliest end is ≤ the next start"] } ] },
       { name: "Problem 2: code", min: 13, prompts: [
-        { q: "Write min_rooms(meetings).", kind: "code", look: [
+        { q: "Write a function min_rooms(meetings) that returns the number of rooms needed.", kind: "code", look: [
           "Correct heap or two-pointer logic",
           "A meeting ending at 10 frees its room for one starting at 10",
           "Returns the maximum rooms in use, not the final count"] } ] },
