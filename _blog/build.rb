@@ -202,10 +202,12 @@ practice_assets = %w[practice.css sessions.js practice.js].to_h do |f|
   write("practice/#{f}", text)
   [f, "/practice/#{f}?v=#{Digest::SHA1.hexdigest(text)[0, 8]}"]
 end
+FileUtils.cp(File.join(ROOT, "_practice/og.png"), File.join(ROOT, "practice/og.png"))
 write("practice/index.html", page.call(
   title: "Practice interviews — Crack Tech",
   description: "Free 45-minute practice sessions for behavioral, system design and coding interviews. Write or dictate your answers, draw your design, code in your language, then send it for review.",
   path: "/practice/",
+  image: "#{SITE}/practice/og.png",
   header: header_for.call("/practice/", "Practice"),
   styles: [practice_assets["practice.css"]],
   scripts: [practice_assets["sessions.js"], practice_assets["practice.js"]],
@@ -215,7 +217,7 @@ write("practice/index.html", page.call(
         <div class="practice-head">
           <div class="kicker">Practice</div>
           <h1>Practise like it's <em>the real round.</em></h1>
-          <p class="lede">Seven 45-minute sessions built like real interview loops: two behavioral, three system design and two coding. Answer against the clock, then send your answers for review.</p>
+          <p class="lede">Seven 45-minute sessions built like real interview rounds: two behavioral, three system design and two coding. Answer against the clock, then send your answers for review.</p>
           <ol class="psteps">
             <li><b>Pick a session</b><span>Each one follows a real 45-minute agenda.</span></li>
             <li><b>Answer against the clock</b><span>Type or dictate. Code in your language. Draw your design.</span></li>

@@ -43,7 +43,12 @@
 .phase{font:500 12.5px/1.3 var(--mono);color:var(--olive)}
 .mic-live{font:500 12.5px/1.3 var(--mono);color:var(--muted)}
 .mic-live.on{color:var(--coral)}
-.saved{margin-left:auto;font:12px/1.3 var(--mono);color:var(--muted)}
+.saved{margin-left:auto;font:12px/1.3 var(--mono);color:var(--muted);white-space:nowrap}
+.saved.bad{color:var(--coral)}
+.phase:empty,.mic-live:empty{display:none}
+.icon-btn.armed{width:auto;padding:0 12px;border-color:var(--coral);color:var(--coral);font:500 13px/1 var(--sans)}
+.link-btn.armed{color:var(--coral)}
+.tab-warn{margin:14px 0 0;padding:10px 14px;border-radius:12px;border:1px solid var(--coral);color:var(--coral);font-size:14.5px;max-width:760px}
 
 /* ---------- workspace ---------- */
 .work{padding-bottom:40px}
@@ -52,12 +57,16 @@
 .work-head .lede{max-width:680px}
 .hint{color:var(--muted);font-size:15.5px;margin:18px 0 0;max-width:760px}
 .agenda{list-style:none;display:flex;gap:6px;margin:28px 0 0;padding:0;overflow-x:auto;scrollbar-width:thin}
-.agenda li{flex:var(--m) 0 0;min-width:92px;border-radius:10px;background:var(--bg-2);border:1px solid var(--line);padding:10px 12px;font-size:13.5px;line-height:1.3;transition:background .3s,border-color .3s}
+.agenda li{flex:var(--m) 0 0;min-width:92px;display:flex}
+.agenda button{flex:1;text-align:left;font:inherit;font-size:13.5px;line-height:1.3;color:var(--fg);border-radius:10px;background:var(--bg-2);border:1px solid var(--line);padding:10px 12px;cursor:pointer;transition:background .3s,border-color .3s}
+.agenda button:hover{border-color:var(--olive)}
 .agenda b{display:block;font:500 11px/1.2 var(--mono);color:var(--olive);margin-bottom:4px;white-space:nowrap}
-.agenda li.past{opacity:.55}
-.agenda li.now{background:var(--olive-soft);border-color:var(--olive);box-shadow:inset 0 0 0 1px var(--olive)}
+.agenda li.past button{opacity:.6}
+.agenda li.now button{background:var(--olive-soft);border-color:var(--olive);box-shadow:inset 0 0 0 1px var(--olive)}
 
 .block,.board,.submit{margin-top:48px}
+/* Jumps (agenda, whiteboard) land below the sticky header and timer bar. */
+html.in-session{scroll-padding-top:150px}
 .block-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:16px}
 .block-head h2{font-size:clamp(28px,3.4vw,36px);display:flex;align-items:baseline;gap:14px}
 .block-head .num{font:500 13px/1 var(--mono);color:var(--olive);letter-spacing:.06em}
@@ -73,7 +82,7 @@
 .interim{font-style:italic;color:var(--muted);font-size:15px;min-height:0}
 .interim:empty{display:none}
 .prompt-tools{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
-.count{margin-left:auto;font:12px var(--mono);color:var(--muted-2)}
+.count{margin-left:auto;font:12px var(--mono);color:var(--muted)}
 .mic .dot{width:8px;height:8px;border-radius:50%;background:var(--muted-2);flex:none}
 .mic.on{border-color:var(--coral);color:var(--coral)}
 .mic.on .dot{background:var(--coral);animation:pulse 1.4s ease-in-out infinite}
@@ -93,9 +102,9 @@ details.look .pnote{margin:8px 0 0;font-size:13.5px;color:var(--muted)}
 .editor-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .lang-pick{display:flex;align-items:center;gap:10px;font:500 12.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .lang-pick select{font:500 14.5px/1 var(--sans);text-transform:none;letter-spacing:0;color:var(--fg);background:var(--bg);border:1px solid var(--line-2);border-radius:10px;padding:8px 30px 8px 12px;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%;background-size:5px 5px;background-repeat:no-repeat;cursor:pointer}
-.editor-note{font-size:12.5px;color:var(--muted-2);font-family:var(--mono)}
+.editor-note{font-size:12.5px;color:var(--muted);font-family:var(--mono)}
 .given{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg-2)}
-.given-label{font:500 11.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--brass);padding:10px 14px;border-bottom:1px solid var(--line)}
+.given-label{font:500 11.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--line)}
 .given pre{margin:0;padding:12px 14px;overflow:auto;font:14px/1.6 var(--mono)}
 .prompt .CodeMirror{height:auto;min-height:280px;border:1px solid var(--line-2);border-radius:12px;font:14.5px/1.6 var(--mono);transition:border-color .2s}
 .prompt .CodeMirror-focused{border-color:var(--olive);box-shadow:0 0 0 3px color-mix(in srgb,var(--olive) 22%,transparent)}
@@ -105,7 +114,7 @@ details.look .pnote{margin:8px 0 0;font-size:13.5px;color:var(--muted)}
 .cm-s-ct.CodeMirror{background:var(--bg);color:var(--fg)}
 .cm-given.cm-s-ct.CodeMirror{background:var(--bg-2)}
 .cm-s-ct .CodeMirror-gutters{background:transparent;border-right:1px solid var(--line)}
-.cm-s-ct .CodeMirror-linenumber{color:var(--muted-2);padding:0 10px 0 6px}
+.cm-s-ct .CodeMirror-linenumber{color:var(--muted);padding:0 10px 0 6px}
 .cm-s-ct .CodeMirror-cursor{border-left:2px solid var(--olive)}
 .cm-s-ct .CodeMirror-selected,.cm-s-ct .CodeMirror-focused .CodeMirror-selected{background:color-mix(in srgb,var(--olive) 22%,transparent)}
 .cm-s-ct .CodeMirror-line::selection,.cm-s-ct .CodeMirror-line>span::selection,.cm-s-ct .CodeMirror-line>span>span::selection{background:color-mix(in srgb,var(--olive) 26%,transparent)}
@@ -113,12 +122,12 @@ details.look .pnote{margin:8px 0 0;font-size:13.5px;color:var(--muted)}
 .cm-s-ct span.cm-def{color:var(--fg);font-weight:600}
 .cm-s-ct span.cm-string,.cm-s-ct span.cm-string-2{color:var(--brass)}
 .cm-s-ct span.cm-number,.cm-s-ct span.cm-atom{color:var(--coral)}
-.cm-s-ct span.cm-comment{color:var(--muted-2);font-style:italic}
+.cm-s-ct span.cm-comment{color:var(--muted);font-style:italic}
 .cm-s-ct span.cm-builtin,.cm-s-ct span.cm-type,.cm-s-ct span.cm-variable-3{color:var(--olive-2)}
 .cm-s-ct span.cm-meta,.cm-s-ct span.cm-qualifier{color:var(--muted)}
 .cm-s-ct span.cm-operator{color:var(--fg-2)}
 .cm-s-ct .CodeMirror-matchingbracket{color:var(--fg)!important;background:var(--olive-soft);outline:1px solid var(--olive)}
-.CodeMirror pre.CodeMirror-placeholder{color:var(--muted-2)}
+.prompt .CodeMirror pre.CodeMirror-placeholder.CodeMirror-line-like{color:var(--muted);font-style:italic}
 
 /* whiteboard */
 .board-tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
@@ -180,8 +189,12 @@ html.in-session #mail-fab,html.in-session #wa-fab{display:none!important}
   .wb-back span{display:none}
   .wb-back{font-size:18px}
   .clock{font-size:21px}
-  .saved{flex-basis:100%;margin-left:0;order:9}
-  .phase,.mic-live{order:8}
+  /* In a session, only the timer bar stays fixed on phones, so answers get the screen. */
+  html.in-session header#top{position:relative}
+  .work-bar{top:0}
+  .work-bar-in{min-height:52px}
+  .phase,.mic-live{flex-basis:100%;order:9}
+  html.in-session{scroll-padding-top:66px}
   .prompt{padding:16px}
   .prompt .q{font-size:16.5px}
   .submit.submit{padding:18px}

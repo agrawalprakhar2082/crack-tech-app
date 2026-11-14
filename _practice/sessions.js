@@ -82,7 +82,8 @@ window.PRACTICE_SESSIONS = [
         { q: "List the functional and non-functional requirements you'd confirm with the interviewer.", look: [
           "Create, update, delete meetings; invite people (including non-users); day/week/month views; reminders",
           "Non-functional: availability, latency for calendar views, scale, consistency",
-          "Says why each matters, e.g. read-your-writes for the organiser"] } ] },
+          "Says why each matters, e.g. read-your-writes for the organiser",
+          "Asks whether recurring meetings and time zones are in scope"] } ] },
       { name: "Estimates", min: 5, prompts: [
         { q: "Estimate reads and writes per second and storage per year. State your assumptions. Then say what the numbers mean for the design.", look: [
           "A day is about 10⁵ seconds; quick maths, not precision",
@@ -97,7 +98,9 @@ window.PRACTICE_SESSIONS = [
         { q: "Design the tables and keys. How does 'show my week' stay a single fast query?", look: [
           "Meetings table keyed by meeting ID",
           "Participants table keyed by (user, start time, meeting): one range scan per user",
-          "Explains denormalising the start time and its cost on updates"] } ] },
+          "Explains denormalising the start time and its cost on updates",
+          "Recurring meetings: one series row with a recurrence rule (RRULE) plus exceptions; expand into instances per requested window, or materialise a few months ahead",
+          "Time zones: store times in UTC plus the organiser's IANA zone (e.g. Asia/Kolkata), so a weekly 10:00 meeting stays at 10:00 across daylight saving changes"] } ] },
       { name: "High-level design", min: 13, prompts: [
         { q: "Draw the components on the whiteboard, then describe the write path, read path and async path here.", look: [
           "Stateless services behind a gateway, sharded databases, a read-through cache",
@@ -137,7 +140,7 @@ window.PRACTICE_SESSIONS = [
       { name: "Code it", min: 12, prompts: [
         { q: "Write the core class for your chosen algorithm in the language you'll use in the interview.", kind: "code", look: [
           "Correct refill or window maths, using an injected clock",
-          "Per-key state created lazily",
+          "Per-key state created lazily, and idle keys evicted (TTL or LRU) so memory doesn't grow forever",
           "Thread safety (lock per key or atomic operations)",
           "Readable names, no dead code"] } ] },
       { name: "Concurrency & scale", min: 8, prompts: [
@@ -182,10 +185,10 @@ window.PRACTICE_SESSIONS = [
           "Grounded answers with sources; 'I don't know' plus hand-off when unsure",
           "Audit log of every action"] } ] },
       { name: "Evaluation & cost", min: 7, prompts: [
-        { q: "How do you test it before launch and monitor it after? Estimate the model cost per day.", look: [
+        { q: "How do you test it before launch and monitor it after? Estimate the model cost per day for 50,000 conversations.", look: [
           "Offline eval set from real tickets; check tool calls and policy compliance, not just text",
           "Online: escalation rate, refunds issued, user ratings, sampled reviews",
-          "Cost: conversations × model calls × tokens; small model for simple turns"] } ] }
+          "Cost: e.g. 50,000 conversations × ~4 model calls × ~3,000 tokens ≈ 600M tokens a day; a small model for simple turns"] } ] }
     ]
   },
   {
@@ -210,7 +213,7 @@ window.PRACTICE_SESSIONS = [
           "Empty list, one meeting, touching, nested, unsorted input",
           "O(n log n) time for the sort, O(n) space for the output"] } ] },
       { name: "Problem 2: plan", min: 5, prompts: [
-        { q: "Now return the minimum number of rooms needed so no two overlapping meetings share a room. Example: [[0,30],[5,10],[15,20]] → 2. What's your approach?", look: [
+        { q: "Now return the minimum number of rooms needed so no two overlapping meetings share a room. Example: [[0,30],[5,10],[15,20]] → 2. What's your approach? (Unlike Problem 1, where touching meetings merge, here a meeting ending at 10 frees its room for one starting at 10.)", look: [
           "Sort by start and keep a min-heap of end times, or sort starts and ends separately",
           "A room is freed when the earliest end is ≤ the next start"] } ] },
       { name: "Problem 2: code", min: 13, prompts: [
@@ -233,8 +236,9 @@ window.PRACTICE_SESSIONS = [
     blocks: [
       { name: "Clarify", min: 5, prompts: [
         { q: "Problem: given a list of words and k, return the k most frequent words, sorted by frequency (highest first). Words with the same frequency are sorted alphabetically. What do you clarify, and which edge cases do you write down?", look: [
-          "Tie-breaking: alphabetical order for equal counts",
-          "Case sensitivity, empty input, k larger than the number of distinct words",
+          "Case sensitivity ('The' vs 'the') and punctuation",
+          "Empty input, k = 0, and k larger than the number of distinct words",
+          "Input size: do all distinct words fit in memory?",
           "Writes the edge cases down before prompting"] } ] },
       { name: "Plan & prompt", min: 5, prompts: [
         { q: "In one sentence, what's your approach? Then write the exact prompt you'd give the AI assistant.", look: [
@@ -247,7 +251,7 @@ window.PRACTICE_SESSIONS = [
           look: [
             "Spots that most_common() breaks ties by first appearance, not alphabetically",
             "Example that fails: ['b', 'a'] with k = 1 returns ['b'], expected ['a']",
-            "Fix: sorted(counts, key=lambda w: (-counts[w], w))[:k], or a heap with the same key",
+            "Fix: sorted(counts, key=lambda w: (-counts[w], w))[:k], or heapq.nsmallest(k, counts, key=lambda w: (-counts[w], w)), or a size-k min-heap whose eviction puts the alphabetically later word first",
             "Explains the fix out loud, not just pastes it"] } ] },
       { name: "Tests", min: 8, prompts: [
         { q: "Write the tests that would catch the bug and the edge cases you listed.", kind: "code", look: [
@@ -256,7 +260,7 @@ window.PRACTICE_SESSIONS = [
           "Empty list"] } ] },
       { name: "Complexity & trade-offs", min: 7, prompts: [
         { q: "State time and space complexity for sorting versus a heap of size k. When would you pick each?", look: [
-          "Sort: O(n log n) on distinct words; heap: O(n log k)",
+          "With n words and m distinct words: sort is O(n + m log m); a size-k heap is O(n + m log k)",
           "Heap wins when k is much smaller than the number of distinct words",
           "Mentions readability as a fair reason to sort in an interview"] } ] },
       { name: "Follow-up", min: 8, prompts: [
