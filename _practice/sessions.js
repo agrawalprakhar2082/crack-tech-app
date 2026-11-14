@@ -100,7 +100,7 @@ window.PRACTICE_SESSIONS = [
           "Participants table keyed by (user, start time, meeting): one range scan per user",
           "Explains denormalising the start time and its cost on updates",
           "Recurring meetings: one series row with a recurrence rule (RRULE) plus exceptions; expand into instances per requested window, or materialise a few months ahead",
-          "Time zones: store times in UTC plus the organiser's IANA zone (e.g. Asia/Kolkata), so a weekly 10:00 meeting stays at 10:00 across daylight saving changes"] } ] },
+          "Time zones: the series keeps local wall time plus the organiser's IANA zone (e.g. 10:00 Asia/Kolkata) with its RRULE, and expanded instances are stored in UTC; storing the series in UTC alone drifts by an hour across daylight saving changes"] } ] },
       { name: "High-level design", min: 13, prompts: [
         { q: "Draw the components on the whiteboard, then describe the write path, read path and async path here.", look: [
           "Stateless services behind a gateway, sharded databases, a read-through cache",

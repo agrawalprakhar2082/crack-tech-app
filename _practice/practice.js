@@ -127,17 +127,19 @@
   }
 
   /* ======================= Workspace ======================= */
-  let cur = null, state = null, saveT = null, tickT = null, ticks = 0;
+  let cur = null, state = null, saveT = null, tickT = null;
+  let dirty = false, stale = false, applying = false; // unsaved local edits; another tab changed this session; applying another tab's data
   const editors = {};          // prompt id -> CodeMirror instance
   const blank = () => ({ answers: {}, elapsed: 0, runningSince: null, seenAt: null, sentAt: null, lang: "python", note: "" });
 
   function open(id) {
     const s = SESSIONS.find(x => x.id === id);
     if (!s) return close();
-    flush();
+    leaveSession();
     stopDictation(true); destroyBoard();
     Object.keys(editors).forEach(k => delete editors[k]);
-    cur = s; state = Object.assign(blank(), store.get(sKey(id)) || {});
+    cur = s; state = Object.assign(blank(), store.get(sKey(id)) || {}); dirty = false; stale = false;
+    try { sessionStorage.setItem("ct-practice:open", id); } catch (e) {}
     if (!LANGS[state.lang]) state.lang = "python";
     let awayNote = "";
     if (state.runningSince && state.seenAt && Date.now() - state.seenAt > AWAY_PAUSE_MS) {
@@ -183,14 +185,15 @@
       // The "review the AI's code" answer starts as a copy of the AI's code to edit.
       ta.value = state.answers[p.id] || (p.given || "");
       count(p.id);
-      ta.addEventListener("input", () => { state.answers[p.id] = ta.value; count(p.id); queueSave(); });
+      ta.addEventListener("input", () => { if (!applying) { state.answers[p.id] = ta.value; queueSave(); } count(p.id); });
       if (p.kind === "code") ta.addEventListener("keydown", tabKey);
       else autoGrow(ta);
     });
     $$(".lang").forEach(sel => { sel.value = state.lang; sel.addEventListener("change", () => setLang(sel.value)); });
     $$(".agenda button").forEach(b => b.addEventListener("click", () => {
       const el = $("#block-" + b.dataset.block); el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-      const first = el.querySelector("textarea, .CodeMirror textarea, [contenteditable]"); if (first) setTimeout(() => first.focus({ preventScroll: true }), 400);
+      const p = cur.blocks[+b.dataset.block].prompts[0];
+      setTimeout(() => { if (editors[p.id]) editors[p.id].focus(); else { const ta = $("#a-" + p.id); if (ta) ta.focus({ preventScroll: true }); } }, 400);
     }));
     const prof = store.get(PROFILE_KEY) || {};
     ["name", "email", "target"].forEach(f => { const el = $("#f-" + f); el.value = prof[f] || ""; el.addEventListener("input", saveProfile); });
@@ -269,8 +272,8 @@
   }
 
   function close() {
-    flush();
-    if (cur && state && state.runningSince) { state.elapsed = elapsed(); state.runningSince = null; save(); } // leaving the session pauses its timer
+    leaveSession();
+    try { sessionStorage.removeItem("ct-practice:open"); } catch (e) {}
     stopDictation(true); destroyBoard();
     clearInterval(tickT); cur = null;
     $("#work").hidden = true; $("#work").innerHTML = ""; $("#list").hidden = false;
@@ -329,37 +332,105 @@
 
   /* ======================= Saving ======================= */
   let lastSave = true;
-  function queueSave() { clearTimeout(saveT); saveT = setTimeout(save, 500); }
+  function queueSave() { dirty = true; clearTimeout(saveT); saveT = setTimeout(save, 500); }
+  // Writes this tab's whole session. Never runs while another tab's newer changes are unresolved.
   function save() {
     if (!cur) return true;
     clearTimeout(saveT);
+    if (stale) { paintSaved(); return "stale"; }
     state.seenAt = Date.now();
     const r = store.set(sKey(cur.id), state);
     if (r !== true && lastSave === true) flash(`${saveProblem(r)}, so your answers aren't being saved here. Download them to keep them.`, true);
-    lastSave = r;
+    lastSave = r; if (r === true) dirty = false;
     paintSaved();
     return r;
   }
+  // Change only some fields of the stored copy (read, modify, write), so a tab
+  // with old data in memory never overwrites another tab's newer answers.
+  function patchStored(fn) {
+    if (!cur) return;
+    const st = store.get(sKey(cur.id)); if (!st) return;
+    fn(st); store.set(sKey(cur.id), st);
+  }
+  function touchSeen() { const now = Date.now(); state.seenAt = now; patchStored(st => { st.seenAt = now; }); }
   // Write everything pending right now: before switching or leaving a session, and when the page hides.
   function flush() {
     if (!cur || !state) return;
-    clearTimeout(saveT); save(); flushBoard();
+    clearTimeout(saveT);
+    if (dirty) save(); else touchSeen();
+    flushBoard();
+  }
+  // Leaving a session (back to the list, or to another session): write pending work and pause its timer.
+  function leaveSession() {
+    if (!cur || !state) return;
+    flush();
+    if (state.runningSince) {
+      const now = Date.now();
+      state.elapsed = elapsed(); state.runningSince = null;
+      patchStored(st => { if (st.runningSince) { st.elapsed += now - st.runningSince; st.runningSince = null; } });
+    }
   }
   function paintSaved() {
     const el = $("#saved"); if (!el || !state) return;
-    el.classList.toggle("bad", lastSave !== true);
-    el.textContent = lastSave !== true ? "Not saved" : state.sentAt ? "Sent " + new Date(state.sentAt).toLocaleDateString() : state.seenAt ? "Saved " + new Date(state.seenAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
+    el.classList.toggle("bad", lastSave !== true || stale);
+    el.textContent = stale ? "Not saving (see note)" : lastSave !== true ? "Not saved" : state.sentAt ? "Sent " + new Date(state.sentAt).toLocaleDateString() : state.seenAt ? "Saved " + new Date(state.seenAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
   }
   function saveProfile() {
     store.set(PROFILE_KEY, { name: $("#f-name").value.trim(), email: $("#f-email").value.trim(), target: $("#f-target").value.trim() });
   }
   function flash(msg, bad) { const el = $("#status"); if (!el) return; el.textContent = msg; el.classList.toggle("bad", !!bad); }
 
-  // The same session open in two tabs would overwrite itself: warn.
+  // The same session open in another tab: never overwrite its newer data silently.
+  // With no unsaved edits here, this tab takes the other tab's data; otherwise it stops
+  // saving and asks which version to keep.
+  const contentKey = st => JSON.stringify([st.answers || {}, st.note || "", st.lang, st.elapsed || 0, st.runningSince || null, st.sentAt || null]);
   addEventListener("storage", e => {
-    if (!cur || (e.key !== sKey(cur.id) && e.key !== bKey(cur.id))) return;
-    const w = $("#tabWarn"); if (w) w.hidden = false;
+    if (!cur) return;
+    if (e.key === sKey(cur.id)) {
+      const theirs = store.get(e.key); if (!theirs) return;
+      if (contentKey(theirs) === contentKey(state)) { state.seenAt = theirs.seenAt; return; }
+      if (dirty || stale) return markStale();
+      adopt(theirs); tabNote("updated");
+    } else if (e.key === bKey(cur.id)) {
+      const theirs = store.get(e.key); if (!theirs) return;
+      if (board && board.pending) return markStale();
+      adoptBoard(theirs); tabNote("updated");
+    }
   });
+  function markStale() { stale = true; clearTimeout(saveT); paintSaved(); tabNote("stale"); }
+  function tabNote(kind) {
+    const w = $("#tabWarn"); if (!w) return;
+    w.hidden = false; w.classList.toggle("stale", kind === "stale");
+    w.innerHTML = kind === "stale"
+      ? `<b>This session changed in another tab while you were editing here.</b> This tab has stopped saving so nothing gets overwritten. Which answers do you want to keep?<span class="tab-actions"><button class="btn btn-primary btn-sm" type="button" data-keep="theirs">Load the other tab's answers</button><button class="btn btn-outline btn-sm" type="button" data-keep="mine">Keep this tab's answers</button></span>`
+      : "This session is also open in another tab. This tab now shows its latest answers.";
+    w.querySelectorAll("[data-keep]").forEach(b => b.onclick = () => {
+      stale = false;
+      if (b.dataset.keep === "theirs") { adopt(store.get(sKey(cur.id)) || blank()); const sb = store.get(bKey(cur.id)); if (sb) adoptBoard(sb); }
+      else { save(); if (board && board.pending) writeBoard(board.pending); }
+      tabNote("updated"); w.textContent = b.dataset.keep === "theirs" ? "Loaded the answers from the other tab." : "Kept this tab's answers. Close the other tab to avoid mixing them up.";
+    });
+  }
+  // Show another tab's saved data here without marking it as a local edit.
+  function adopt(theirs) {
+    state = Object.assign(blank(), theirs); dirty = false;
+    applying = true;
+    cur.prompts.forEach(p => {
+      const v = state.answers[p.id] || (p.given || "");
+      if (editors[p.id]) { if (editors[p.id].getValue() !== v) editors[p.id].setValue(v); }
+      else { const ta = $("#a-" + p.id); if (ta && ta.value !== v) { ta.value = v; ta.dispatchEvent(new Event("input")); } }
+      count(p.id);
+    });
+    applying = false;
+    if (LANGS[state.lang]) applyLang(state.lang);
+    const note = $("#f-note"); if (note) note.value = state.note || "";
+    paintSaved(); tick();
+  }
+  function adoptBoard(theirs) {
+    const sc = liveOnly(theirs); memScene[cur.id] = sc;
+    if (board && board.api && board.lib) { board.version = board.lib.getSceneVersion(sc.elements); board.api.updateScene({ elements: sc.elements }); board.pending = null; }
+    paintBoardNote();
+  }
 
   /* ======================= Timer ======================= */
   const elapsed = () => state.elapsed + (state.runningSince ? Date.now() - state.runningSince : 0);
@@ -385,7 +456,8 @@
     cur.blocks.forEach((_, i) => { const el = $("#ag-" + i); if (el) { el.classList.toggle("now", ms > 0 && i === at); el.classList.toggle("past", ms > 0 && (at < 0 || i < at)); } });
     $("#phase").textContent = !ms ? "" : at < 0 ? "Time's up: wrap up and send" : `Now: ${cur.blocks[at].name}`;
     // Remember when the page was last open, so a timer left running can be paused at that point.
-    if (state.runningSince && ++ticks % 15 === 0) { state.seenAt = Date.now(); store.set(sKey(cur.id), state); }
+    // (By time, not by tick count: background tabs tick less often.)
+    if (state.runningSince && Date.now() - (state.seenAt || 0) > 15000) touchSeen();
   }
 
   /* ======================= Code editor (CodeMirror 5) ======================= */
@@ -420,7 +492,7 @@
           viewportMargin: Infinity, inputStyle: "contenteditable", screenReaderLabel: p.q.slice(0, 160),
           extraKeys: { Tab: c => c.somethingSelected() ? c.indentSelection("add") : c.replaceSelection("    ", "end"), "Shift-Tab": c => c.indentSelection("subtract"), Esc: c => c.getInputField().blur() }
         });
-        cm.on("change", () => { state.answers[p.id] = cm.getValue(); count(p.id); queueSave(); });
+        cm.on("change", () => { if (!applying) { state.answers[p.id] = cm.getValue(); queueSave(); } count(p.id); });
         editors[p.id] = cm;
         $("#en-" + p.id).textContent = p.given ? "Starts as the AI's code: edit it · Esc leaves the editor" : "Tab indents · Esc leaves the editor";
         if (p.given) {
@@ -436,7 +508,9 @@
   }
   function setLang(lang) {
     if (!LANGS[lang]) return;
-    state.lang = lang; queueSave();
+    state.lang = lang; queueSave(); applyLang(lang);
+  }
+  function applyLang(lang) {
     $$(".lang").forEach(s => { s.value = lang; });
     Object.values(editors).forEach(cm => { cm.setOption("mode", LANGS[lang].mode); cm.setOption("placeholder", `Write your ${LANGS[lang].label} code here`); });
   }
@@ -545,7 +619,13 @@
       // Images are turned off: they would quickly fill browser storage and the review email.
       UIOptions: { tools: { image: false }, canvasActions: { loadScene: true, saveToActiveFile: false, export: false, saveAsImage: true, toggleTheme: false, changeViewBackgroundColor: true, clearCanvas: true } },
       name: cur ? cur.title : "Practice"
-    }));
+    }, mainMenu(lib)));
+  }
+  // The canvas menu with only the drawing actions (no links to Excalidraw's socials).
+  function mainMenu(lib) {
+    const M = lib.MainMenu, D = M && M.DefaultItems, h = React.createElement;
+    if (!D) return null;
+    return h(M, null, h(D.LoadScene), h(D.SaveAsImage), h(D.ClearCanvas), h(D.Help), h(D.ChangeCanvasBackground));
   }
   function queueBoardSave(elements, appState, files) {
     if (!board || !board.lib) return;
@@ -564,6 +644,7 @@
   function writeBoard(id) {
     if (board) clearTimeout(board.saveT);
     const sc = memScene[id]; if (!sc) return;
+    if (stale) { if (board) board.pending = id; return; }
     const r = store.set(bKey(id), Object.assign({ savedAt: Date.now() }, sc));
     if (board) board.pending = r === true ? null : id; // keep trying (on the next change, leave or hide) if storage was full
     if (cur && cur.id === id) {
@@ -650,8 +731,13 @@
           if (done.has(i)) continue;
           done.add(i);
           let text = res[0].transcript.trim();
-          // Some phones repeat everything said so far in each new final result.
-          if (r.lastFinal && text.toLowerCase().startsWith(r.lastFinal.toLowerCase())) { const rest = text.slice(r.lastFinal.length); r.lastFinal = text; text = rest; }
+          // Some phones repeat everything said so far in each new final result. Treat a final as
+          // a repeat only when it extends the previous one at a word boundary and that one had
+          // at least two words (or repeats were already seen in this run), so normal separate
+          // phrases like "I" then "I led the migration" are kept.
+          const prev = r.lastFinal, low = text.toLowerCase(), plow = prev.toLowerCase();
+          if (prev && (r.cumulative || prev.split(/\s+/).length >= 2) && low.startsWith(plow + " ")) { r.cumulative = true; r.lastFinal = text; text = text.slice(prev.length); }
+          else if (prev && r.cumulative && low === plow) text = "";
           else r.lastFinal = text;
           appendText(id, text);
         } else interim += res[0].transcript;
@@ -850,13 +936,15 @@
   /* ======================= Routing ======================= */
   // Session links are #<session-id>; an empty hash is the list. Any other hash
   // (like the skip link's #main) leaves the page as it is.
-  function route() {
-    const id = decodeURIComponent(location.hash.slice(1));
+  function route(first) {
+    let id = decodeURIComponent(location.hash.slice(1));
+    // After a reload on a non-session hash (e.g. #main), reopen the session that was open.
+    if (first === true && id && !SESSIONS.some(s => s.id === id)) { try { id = sessionStorage.getItem("ct-practice:open") || id; } catch (e) {} }
     if (id && SESSIONS.some(s => s.id === id)) { if (!cur || cur.id !== id) open(id); }
     else if (!id && (cur || $("#list").hidden)) close();
   }
   addEventListener("hashchange", route);
   addEventListener("pagehide", flush);
   addEventListener("keydown", e => { if (e.key === "Escape" && document.documentElement.classList.contains("board-full") && !(board && document.activeElement && $("#boardCanvas").contains(document.activeElement))) setFull(false); });
-  renderList(); route();
+  renderList(); route(true);
 })();

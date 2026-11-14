@@ -48,7 +48,10 @@
 .phase:empty,.mic-live:empty{display:none}
 .icon-btn.armed{width:auto;padding:0 12px;border-color:var(--coral);color:var(--coral);font:500 13px/1 var(--sans)}
 .link-btn.armed{color:var(--coral)}
-.tab-warn{margin:14px 0 0;padding:10px 14px;border-radius:12px;border:1px solid var(--coral);color:var(--coral);font-size:14.5px;max-width:760px}
+.tab-warn{margin:14px 0 0;padding:10px 14px;border-radius:12px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--fg-2);font-size:14.5px;max-width:760px}
+.tab-warn.stale{border-color:var(--coral);background:color-mix(in srgb,var(--coral) 8%,var(--bg))}
+.tab-warn b{color:var(--fg)}
+.tab-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 
 /* ---------- workspace ---------- */
 .work{padding-bottom:40px}
