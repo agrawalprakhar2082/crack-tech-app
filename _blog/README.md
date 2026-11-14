@@ -11,3 +11,13 @@ To show a video on an article's page, add `youtube: "<YouTube link>"` to its ent
 To host a cover image with the site instead of on Medium, put it in `_blog/images/` and set `image:` to `https://cracktech.app/blog/images/<file>`; the build copies it to `blog/images/`.
 
 Files in `blog/` are generated, so edit `_blog/` rather than `blog/`.
+
+## Practice page
+
+`ruby _blog/build.rb` also builds the Practice page (`/practice/`) from `_practice/`:
+
+- `_practice/sessions.js`: the practice sessions (questions, timings, "what interviewers look for"). Each session must add up to 45 minutes; the build runs `node _practice/check.js` to check this when Node is installed.
+- `_practice/practice.js`: the app (timer, autosave, dictation, code editor, whiteboard, send for review). `FORM_ENDPOINT` at the top sets where answers are sent.
+- `_practice/practice.css`: its styles.
+
+Files in `practice/` are generated, so edit `_practice/` rather than `practice/`.

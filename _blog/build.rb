@@ -35,7 +35,13 @@ def relink(html)
 end
 css = home[%r{<style>(.*?)</style>}m, 1]
 favicon = home[/<link rel="icon"[^>]*>/]
-header = relink(home[%r{<header id="top">.*?</header>}m]).sub('<li><a href="/blog/">Blog</a></li>', '<li><a href="/blog/" class="active" aria-current="page">Blog</a></li>')
+base_header = relink(home[%r{<header id="top">.*?</header>}m])
+# The header with one top-level page (Blog or Practice) marked as current.
+header_for = lambda do |path, label|
+  base_header.sub(%(<li><a href="#{path}">#{label}</a></li>), %(<li><a href="#{path}" class="active" aria-current="page">#{label}</a></li>))
+             .sub(%(<a class="m" href="#{path}">), %(<a class="m" href="#{path}" aria-current="page">))
+end
+blog_header = header_for.call("/blog/", "Blog")
 fabs = home[%r{<a id="mail-fab".*?</a>\s*<a id="wa-fab".*?</a>}m]
 footer = relink(home[%r{<footer>.*?</footer>}m])
 beacon = home[%r{<script defer src="https://static\.cloudflareinsights\.com.*?</script>}]
@@ -45,7 +51,7 @@ write("blog/blog.js", read("_blog/blog.js"))
 # Images stored with the site (e.g. covers not hosted on Medium's CDN)
 Dir[File.join(ROOT, "_blog/images/*")].each { |f| FileUtils.mkdir_p(File.join(ROOT, "blog/images")); FileUtils.cp(f, File.join(ROOT, "blog/images", File.basename(f))) }
 
-page = lambda do |title:, description:, path:, image: nil, type: "website", body:|
+page = lambda do |title:, description:, path:, image: nil, type: "website", body:, header: blog_header, styles: [], scripts: []|
   og_image = image ? %(\n<meta property="og:image" content="#{h(image)}">) : ""
   <<~HTML
     <!DOCTYPE html>
@@ -67,7 +73,7 @@ page = lambda do |title:, description:, path:, image: nil, type: "website", body
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/blog/site.css">
-    <link rel="stylesheet" href="/blog/blog.css">
+    <link rel="stylesheet" href="/blog/blog.css">#{styles.map { |href| %(\n<link rel="stylesheet" href="#{href}">) }.join}
     </head>
     <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -77,7 +83,7 @@ page = lambda do |title:, description:, path:, image: nil, type: "website", body
     </main>
     #{fabs}
     #{footer}
-    <script src="/blog/blog.js"></script>
+    <script src="/blog/blog.js"></script>#{scripts.map { |src| %(\n<script src="#{src}"></script>) }.join}
     #{beacon}
     </body>
     </html>
@@ -186,4 +192,44 @@ posts.each do |p|
   ))
 end
 
-puts "Built #{posts.size} articles in blog/"
+# Practice page: content in _practice/sessions.js, app in _practice/practice.js (see CLAUDE.md).
+require "digest"
+if system("node --version > /dev/null 2>&1")
+  system("node", File.join(ROOT, "_practice/check.js")) or abort "Fix _practice/sessions.js (see the message above)"
+end
+practice_assets = %w[practice.css sessions.js practice.js].to_h do |f|
+  text = read("_practice/#{f}")
+  write("practice/#{f}", text)
+  [f, "/practice/#{f}?v=#{Digest::SHA1.hexdigest(text)[0, 8]}"]
+end
+FileUtils.cp(File.join(ROOT, "_practice/og.png"), File.join(ROOT, "practice/og.png"))
+write("practice/index.html", page.call(
+  title: "Practice interviews — Crack Tech",
+  description: "Free 45-minute practice sessions for behavioral, system design and coding interviews. Write or dictate your answers, draw your design, code in your language, then send it for review.",
+  path: "/practice/",
+  image: "#{SITE}/practice/og.png",
+  header: header_for.call("/practice/", "Practice"),
+  styles: [practice_assets["practice.css"]],
+  scripts: [practice_assets["sessions.js"], practice_assets["practice.js"]],
+  body: <<~HTML
+    <div id="list">
+      <div class="wrap">
+        <div class="practice-head">
+          <div class="kicker">Practice</div>
+          <h1>Practise like it's <em>the real round.</em></h1>
+          <p class="lede">Seven 45-minute sessions built like real interview rounds: two behavioral, three system design and two coding. Answer against the clock, then send your answers for review.</p>
+          <ol class="psteps">
+            <li><b>Pick a session</b><span>Each one follows a real 45-minute agenda.</span></li>
+            <li><b>Answer against the clock</b><span>Type or dictate. Code in your language. Draw your design.</span></li>
+            <li><b>Send it for review</b><span>Your answers are saved in this browser until you send them.</span></li>
+          </ol>
+        </div>
+        <div id="tracks"></div>
+        <noscript><p class="hint">The practice sessions need JavaScript. Please turn it on, or <a href="/#book">book a mock interview</a> instead.</p></noscript>
+      </div>
+    </div>
+    <div id="work" hidden></div>
+  HTML
+))
+
+puts "Built #{posts.size} articles in blog/ and the practice page in practice/"
