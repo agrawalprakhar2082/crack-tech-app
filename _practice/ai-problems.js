@@ -377,7 +377,11 @@
     },
     statement: [
       "The given function calls a flaky service once. Make it resilient. Call `service.call()`; return its result on success. When it fails with a `ServiceError`:",
-      "1. If the error isn't retryable (`retryable` is false), raise or throw it at once. 2. If you've used `policy.attempts` attempts, raise or throw the last error. 3. Otherwise the delay before attempt k + 1 (k = attempts so far) is `rand() × min(cap, base × 2^(k − 1))`: exponential backoff with full jitter, capped. Call `rand()` exactly once per retry, here. 4. If `clock.now()` + delay would reach the overall deadline (the time of the first call + `policy.timeout`), give up and raise or throw the last error without sleeping. 5. Otherwise `clock.sleep(delay)` and try again.",
+      "1. If the error isn't retryable (`retryable` is false), raise or throw it at once.",
+      "2. If you've used `policy.attempts` attempts, raise or throw the last error.",
+      "3. Otherwise the delay before attempt k + 1 (k = attempts so far) is `rand() × min(cap, base × 2^(k − 1))`: exponential backoff with full jitter, capped. Call `rand()` exactly once per retry, here.",
+      "4. If `clock.now()` + delay would reach the overall deadline (the time of the first call + `policy.timeout`), give up and raise or throw the last error without sleeping.",
+      "5. Otherwise `clock.sleep(delay)` and try again.",
       "The tests use a fake service, clock and rand, so they're deterministic: each test lists the service's outcomes as [kind, seconds the attempt takes, value] (the last one repeats) and the values rand returns. They check the result or error, the number of attempts and every delay you slept."],
     input: ["`service`, `clock`, `rand`: provided by the test (see the given code's comments).", "`policy`: attempts (≥ 1), base and cap (seconds), timeout (seconds)."],
     output: "Your function's result (or the error kind you raised), the number of attempts and the list of delays slept.",

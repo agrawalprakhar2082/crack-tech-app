@@ -38,8 +38,14 @@
   const CASE_MS = 5000;
   const PY_LOAD_MS = 90000;
   const PYODIDE = ["https://cdn.jsdelivr.net/pyodide/v0.26.4/full/", CDN + "pyodide@0.26.4/"];
+  // AI coding rounds: the live assistant (a small model on Cloudflare Workers AI, through the
+  // practice-review Worker's POST /ai route; see worker/practice-review/README.md). While
+  // empty, or when it doesn't answer or is rate-limited, the offline scripted assistant
+  // (assistant.js) answers instead, and the chat says so.
+  const AI_ENDPOINT = "";
+  const AI_TIMEOUT_MS = 20000;
   // Built files (the build adds ?v= to each, so new versions aren't served from cache).
-  const FILES = { js: "/practice/runner-js.js?v=82753dd5", py: "/practice/runner-py.js?v=009fd3f8", harness: "/practice/harness.py?v=7d1900ef", hidden: "/practice/hidden/", hiddenV: "aa796d37" };
+  const FILES = { js: "/practice/runner-js.js?v=1be87613", py: "/practice/runner-py.js?v=009fd3f8", harness: "/practice/harness.py?v=ee957cc6", hidden: "/practice/hidden/", hiddenV: "47c2c734" };
 
   const LANGS = {
     python:     { label: "Python",     mode: "python",          fence: "python",     file: "python/python" },
@@ -107,9 +113,10 @@
     s.blocks.forEach((b, bi) => b.prompts.forEach((p, pi) => {
       p.id = bi + "-" + pi; p.block = bi; s.prompts.push(p);
       if (p.problem && PROBLEMS[p.problem]) p.prob = PROBLEMS[p.problem];
+      if (p.testsFor && PROBLEMS[p.testsFor]) p.testsProb = PROBLEMS[p.testsFor];
     }));
     s.hasCode = s.prompts.some(p => p.kind === "code");
-    s.hasTests = s.prompts.some(p => p.prob);
+    s.hasTests = s.prompts.some(p => p.prob || p.testsProb);
     s.total = s.prompts.length;
   });
 
@@ -137,7 +144,8 @@
   // The function name in each language: snake_case in Python, PascalCase in C#.
   const fnName = (prob, lang) => lang === "python" ? snake(prob.fn) : lang === "csharp" ? prob.fn[0].toUpperCase() + prob.fn.slice(1) : prob.fn;
   function starter(prob, lang) {
-    if (prob.starters) return prob.starters[lang] || "";
+    if (prob.starters && prob.starters[lang]) return prob.starters[lang];
+    if (prob.otherLangs === "note" || prob.starters) return otherNote(lang);
     const t = ty => TYPES[ty][lang], name = fnName(prob, lang), ps = prob.params, ret = t(prob.returns);
     const typed = sep => ps.map(([n, ty]) => sep(n, ty)).join(", ");
     const cppArg = (n, ty) => (/\[\]|string/.test(ty) ? `${t(ty)}& ` : `${t(ty)} `) + n;
@@ -160,12 +168,14 @@
     const spec = prob.cls ? { cls: prob.cls } : { fn: lang === "python" ? snake(prob.fn) : prob.fn };
     if (prob.keep) spec.keep = prob.keep;
     if (prob.inplace !== undefined) spec.inplace = prob.inplace;
+    if (prob.env) spec.env = true;
     const trees = (prob.params || []).map((p, i) => p[1] === "tree" ? i : -1).filter(i => i >= 0);
     if (trees.length) spec.trees = trees;
     return spec;
   }
   // Code that is only a starter (in any language) doesn't count as an answer.
-  const isStarter = (p, code) => !!p.prob && Object.keys(LANGS).some(l => starter(p.prob, l).trim() === code.trim());
+  const isStarter = (p, code) => (!!p.prob && Object.keys(LANGS).some(l => starter(p.prob, l).trim() === code.trim())) ||
+    (!!p.testsProb && Object.keys(LANGS).some(l => testStarter(p.testsProb, l).trim() === code.trim()));
   // An answer counts only when it has text, and isn't just the code we pre-filled.
   const answerOf = (p, st) => {
     const a = ((st && st.answers && st.answers[p.id]) || "").trim();
@@ -180,7 +190,8 @@
     { name: "Behavioral", note: "Stories with structure: situation, what you did, and the result." },
     { name: "System design", note: "Notes for each step, plus a whiteboard to draw your design." },
     { name: "Coding", note: "A code editor in your language, with tests and complexity." },
-    { name: "Coding practice sets", note: "Fifteen sets of two questions, easier to harder. Run your code against sample and hidden tests in Python or JavaScript." }
+    { name: "Coding practice sets", note: "Fifteen sets of two questions, easier to harder. Run your code against sample and hidden tests in Python or JavaScript." },
+    { name: "AI coding rounds", note: "Six rounds where you work with an AI assistant: catch its bug, extend code, debug, test first, refactor, add resilience. The assistant is a small model and can be wrong." }
   ];
   function renderList() {
     $("#tracks").innerHTML = TRACKS.map(t => {
@@ -204,7 +215,7 @@
   let dirty = false, stale = false, applying = false; // unsaved local edits; another tab changed this session; applying another tab's data
   const editors = {};          // prompt id -> CodeMirror instance
   // runs: prompt id -> language -> { last, submit }: the latest test results in each language.
-  const blank = () => ({ answers: {}, elapsed: 0, runningSince: null, seenAt: null, sentAt: null, lang: "python", note: "", runs: {} });
+  const blank = () => ({ answers: {}, elapsed: 0, runningSince: null, seenAt: null, sentAt: null, lang: "python", note: "", runs: {}, log: [], score: {} });
 
   function open(id) {
     const s = SESSIONS.find(x => x.id === id);
@@ -253,6 +264,7 @@
           ${b.problem && PROBLEMS[b.problem] ? problemCard(PROBLEMS[b.problem], s, bi) : ""}
           ${b.prompts.map(p => promptCard(p)).join("")}
         </section>`).join("")}
+        ${s.ai ? scorecard() : ""}
         ${submitPanel(s)}
       </div>`;
 
@@ -260,7 +272,7 @@
       const ta = $("#a-" + p.id);
       // The "review the AI's code" answer starts as a copy of the AI's code to edit;
       // runnable questions start with the function signature in the chosen language.
-      ta.value = state.answers[p.id] || (p.given || "") || (p.prob ? starter(p.prob, state.lang) : "");
+      ta.value = state.answers[p.id] || (p.given || "") || (p.prob ? starter(p.prob, state.lang) : "") || (p.testsProb ? testStarter(p.testsProb, state.lang) : "");
       count(p.id);
       ta.addEventListener("input", () => { if (!applying) { state.answers[p.id] = ta.value; queueSave(); } count(p.id); });
       if (p.kind === "code") ta.addEventListener("keydown", tabKey);
@@ -286,6 +298,7 @@
     setupDictation();
     if (s.hasCode) setupEditors();
     if (s.hasTests) setupRuns();
+    if (s.ai) { if (!Array.isArray(state.log)) state.log = []; if (!state.score || typeof state.score !== "object") state.score = {}; setupChat(); setupScorecard(); }
     paintSaved();
     if (awayNote) { flash(awayNote); save(); }
     clearInterval(tickT); ticks = 0; tickT = setInterval(tick, 1000); tick();
@@ -299,6 +312,7 @@
     if (s.track !== "Coding") parts.push(SR ? "Type, or press <b>Dictate</b> and speak." : "Type your answers. (Dictation works in Chrome, Edge and Safari.)");
     if (s.board) parts.push("Draw your design on the whiteboard.");
     if (s.hasCode) parts.push("Pick your language for the code editor.");
+    if (s.ai) parts.push("Ask the assistant in the panel beside the editor. It's a deliberately small model (or a scripted offline one) and it can be wrong, so check its work. Your prompts, its replies and your test runs are logged and sent with your answers, with your self-scorecard.");
     if (s.hasTests) parts.push("<b>Run</b> checks your code against the sample tests and <b>Submit</b> adds the hidden tests, in Python or JavaScript, right in your browser.");
     parts.push("Everything saves in this browser as you go.");
     return parts.join(" ");
@@ -312,7 +326,7 @@
       ${p.given ? `<div class="given"><div class="given-label">The AI's code (Python)</div><pre><code id="g-${p.id}">${esc(p.given)}</code></pre></div>` : ""}
       ${code ? `<div class="editor-top">${langSel}<span class="editor-note" id="en-${p.id}"></span></div>` : ""}
       <textarea id="a-${p.id}" class="${code ? "ta-code" : "ta-text"}" spellcheck="${code ? "false" : "true"}" rows="${code ? 12 : 5}" placeholder="${code ? "Write your code here" : "Your answer"}" aria-labelledby="q-${p.id}"></textarea>
-      ${p.prob ? runArea(p) : ""}
+      ${p.prob ? runArea(p) : p.testsProb ? checkArea(p) : ""}
       <div class="interim" id="i-${p.id}" aria-hidden="true"></div>
       <div class="prompt-tools">
         ${code ? "" : `<button class="btn btn-outline btn-sm mic" type="button" data-p="${p.id}" aria-pressed="false" aria-describedby="q-${p.id}" hidden><span class="dot"></span><span class="mic-label">Dictate</span></button><span class="mic-state" id="ms-${p.id}" aria-live="polite"></span>`}
@@ -320,7 +334,7 @@
       </div>
       <details class="look"><summary>What interviewers look for</summary><ul>${p.look.map(l => `<li>${esc(l)}</li>`).join("")}</ul>
         <p class="pnote">Answer first, then compare.</p></details>
-    </article>`;
+    </article>`.replace(/^/, p.chat ? '<div class="ai-grid">' : "") + (p.chat ? chatPanel(p) + "</div>" : "");
   }
 
   // The problem statement, shown at the top of each question's first block.
@@ -329,7 +343,7 @@
     const multi = Array.isArray(v) && v.length > 1 && v.every(Array.isArray) && one.length > 70;
     return `${name} = ${multi ? "[\n  " + v.map(r => J.show(r, 100000, lang)).join(",\n  ") + "\n]" : one}`;
   }
-  const argNames = prob => prob.cls ? ["ops", "args"] : prob.params.map(p => p[0]);
+  const argNames = prob => prob.cls ? ["ops", "args"] : prob.env ? ["scenario", "policy"] : prob.params.map(p => p[0]);
   function problemCard(prob, s, bi) {
     const qn = s.blocks.slice(0, bi + 1).filter(b => b.problem).length;
     const ex = prob.samples.map((t, i) => `<div class="ex">
@@ -342,6 +356,7 @@
       <div class="problem-kicker">Question ${qn}</div>
       <h3 id="pt-${bi}">${esc(prob.title)}</h3>
       ${prob.statement.map(t => `<p>${rich(t)}</p>`).join("")}
+      ${prob.given ? `<div class="given"><div class="given-label">Given code (${LANGS[RUNNABLE[state.lang] ? state.lang : "python"].label})</div><pre><code data-given="${esc(s.blocks[bi].problem)}">${esc(prob.starters[RUNNABLE[state.lang] ? state.lang : "python"])}</code></pre></div>` : ""}
       <div class="problem-io">
         <div><h4>Input</h4><ul>${prob.input.map(t => `<li>${rich(t)}</li>`).join("")}</ul></div>
         <div><h4>Output</h4><p>${rich(prob.output)}</p></div>
@@ -502,7 +517,7 @@
   // The same session open in another tab: never overwrite its newer data silently.
   // With no unsaved edits here, this tab takes the other tab's data; otherwise it stops
   // saving and asks which version to keep.
-  const contentKey = st => JSON.stringify([st.answers || {}, st.note || "", st.lang, st.elapsed || 0, st.runningSince || null, st.sentAt || null, st.runs || {}]);
+  const contentKey = st => JSON.stringify([st.answers || {}, st.note || "", st.lang, st.elapsed || 0, st.runningSince || null, st.sentAt || null, st.runs || {}, st.log || [], st.score || {}]);
   addEventListener("storage", e => {
     if (!cur) return;
     if (e.key === sKey(cur.id)) {
@@ -536,7 +551,7 @@
     if (!state.runs || typeof state.runs !== "object") state.runs = {};
     applying = true;
     cur.prompts.forEach(p => {
-      const v = state.answers[p.id] || (p.given || "") || (p.prob ? starter(p.prob, state.lang) : "");
+      const v = state.answers[p.id] || (p.given || "") || (p.prob ? starter(p.prob, state.lang) : "") || (p.testsProb ? testStarter(p.testsProb, state.lang) : "");
       if (editors[p.id]) { if (editors[p.id].getValue() !== v) editors[p.id].setValue(v); }
       else { const ta = $("#a-" + p.id); if (ta && ta.value !== v) { ta.value = v; ta.dispatchEvent(new Event("input")); } }
       count(p.id);
@@ -544,6 +559,7 @@
     applying = false;
     if (LANGS[state.lang]) applyLang(state.lang);
     const note = $("#f-note"); if (note) note.value = state.note || "";
+    if (cur.ai) { if (!Array.isArray(state.log)) state.log = []; if (!state.score || typeof state.score !== "object") state.score = {}; setupScorecard(); }
     paintSaved(); tick();
   }
   function adoptBoard(theirs) {
@@ -634,10 +650,10 @@
     state.lang = lang;
     // Untouched starter code follows the language; code you've written stays as it is.
     cur.prompts.forEach(p => {
-      if (!p.prob) return;
+      if (!p.prob && !p.testsProb) return;
       const code = codeOf(p);
       if (code.trim() && !isStarter(p, code)) return;
-      const next = starter(p.prob, lang);
+      const next = p.prob ? starter(p.prob, lang) : testStarter(p.testsProb, lang);
       if (editors[p.id]) editors[p.id].setValue(next);
       else { const ta = $("#a-" + p.id); if (ta) { ta.value = next; ta.dispatchEvent(new Event("input")); } }
       state.answers[p.id] = next;
@@ -648,7 +664,8 @@
     $$(".lang").forEach(s => { s.value = lang; });
     Object.values(editors).forEach(cm => { cm.setOption("mode", LANGS[lang].mode); cm.setOption("placeholder", `Write your ${LANGS[lang].label} code here`); });
     if (cur && cur.hasTests) {
-      cur.prompts.forEach(p => { if (p.prob) paintRun(p); });
+      cur.prompts.forEach(p => { if (p.prob) paintRun(p); else if (p.testsProb) paintCheck(p); if (p.chat) paintChat(p); });
+      $$("[data-given]").forEach(el => { const prob = PROBLEMS[el.dataset.given], l = RUNNABLE[lang] ? lang : "python"; el.textContent = prob.starters[l]; el.closest(".given").querySelector(".given-label").textContent = `Given code (${LANGS[l].label})`; });
       // Example outputs read as Python (None, True) or JavaScript (null, true).
       $$(".problem[data-problem]").forEach(card => {
         const prob = PROBLEMS[card.dataset.problem];
@@ -672,15 +689,18 @@
       const p = cur.prompts.find(x => x.id === b.dataset.p);
       if (p) runTests(p, b.dataset.run === "all");
     }));
-    cur.prompts.forEach(p => { if (p.prob) paintRun(p); });
+    $$("[data-check]").forEach(b => b.addEventListener("click", () => { const p = cur.prompts.find(x => x.id === b.dataset.check); if (p) checkTests(p); }));
+    cur.prompts.forEach(p => { if (p.prob) paintRun(p); else if (p.testsProb) paintCheck(p); });
   }
-  function loadHidden(id) {
+  // The hidden-tests file: { cases, mutants? } (mutants: the tests-first round's implementations).
+  function loadDoc(id) {
     if (!hiddenCache[id]) hiddenCache[id] = fetch(FILES.hidden + id + ".txt" + (FILES.hiddenV ? "?v=" + FILES.hiddenV : ""))
       .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.text(); })
-      .then(t => J.decode(t).cases)
+      .then(t => J.decode(t))
       .catch(e => { delete hiddenCache[id]; throw e; });
     return hiddenCache[id];
   }
+  const loadHidden = id => loadDoc(id).then(d => d.cases);
 
   // A random token sent with each run; result messages without it (e.g. posted by the
   // candidate's own code) are ignored.
@@ -785,6 +805,7 @@
     const runs = state.runs[p.id] = state.runs[p.id] || {};
     const mine = runs[lang] = runs[lang] || {};
     mine.last = result; if (all) mine.submit = result;
+    logEvent(all ? "submit" : "run", `${all ? "Submit" : "Run"} (${LANGS[lang].label}): ${summaryText(result)}`, { pid: p.id });
     dirty = true; save();
     paintRun(p, true);
   }
@@ -870,6 +891,236 @@
     let line = `Tests (${LANGS[lang].label}): latest ${runs.last.kind} ${fmt(runs.last)}`;
     if (runs.submit && runs.submit.at !== runs.last.at) line += `; last submit ${fmt(runs.submit)}`;
     return line;
+  }
+
+  /* ======================= AI coding rounds ======================= */
+  // A chat panel beside the editor, a prompt log (prompts, replies, inserts, runs) saved with
+  // the session, a tests-first check and a self-scorecard. The assistant is the live small
+  // model behind AI_ENDPOINT when it answers, otherwise the scripted one in assistant.js.
+  const LOG_MAX = 200;
+  const SCORE = [
+    ["understanding", "Understanding", "I clarified the problem and knew what correct looked like before prompting."],
+    ["direction", "Direction", "My prompts were specific: the function, the rules, the edge cases."],
+    ["verification", "Verification", "I tested the assistant's code and caught its mistakes."],
+    ["ownership", "Ownership", "I can explain and defend every line I kept."]];
+  const SCALE = ["Not yet", "Partly", "Mostly", "Fully"];
+  const clip = (t, n) => { t = String(t || ""); return t.length > n ? t.slice(0, n) + " …" : t; };
+  function logEvent(kind, text, extra) {
+    if (!cur || !cur.ai) return;
+    state.log = (state.log || []).concat([Object.assign({ at: Date.now(), kind, text: clip(text, kind === "reply" ? 4000 : 2000) }, extra || {})]).slice(-LOG_MAX);
+  }
+  const testStarter = (prob, lang) => (prob.testStarters && prob.testStarters[lang]) || otherNote(lang);
+  function otherNote(lang) {
+    const c = lang === "python" ? "#" : "//";
+    return `${c} This round's given code, tests and assistant are in Python and JavaScript.\n${c} Switch the language to one of them to run your code, or write your answer here in ${LANGS[lang].label}.\n`;
+  }
+
+  function chatPanel(p) {
+    return `<aside class="chat" aria-labelledby="ch-${p.id}">
+      <div class="chat-head"><h3 id="ch-${p.id}">AI assistant</h3><span class="chat-src" id="cs-${p.id}"></span></div>
+      <div class="chat-log" id="cl-${p.id}" role="log" aria-live="polite" tabindex="0" aria-label="Conversation with the assistant"></div>
+      <form class="chat-form" data-p="${p.id}">
+        <label class="sr" for="ci-${p.id}">Message the assistant</label>
+        <textarea id="ci-${p.id}" rows="3" placeholder="Ask for code, tests or an explanation. Ctrl+Enter sends."></textarea>
+        <button class="btn btn-primary btn-sm" type="submit">Send</button>
+      </form>
+      <p class="chat-note">A deliberately small model, so it can be wrong: that's part of the exercise. Check everything it gives you. Your prompts are logged and sent with your answers.</p>
+    </aside>`;
+  }
+  function chatHtml(text) {
+    // Plain text with ``` code blocks; each code block gets "Insert into editor".
+    const parts = String(text).split(/```(\w*)\n?([\s\S]*?)```/);
+    let html = "";
+    for (let i = 0; i < parts.length; i += 3) {
+      if (parts[i].trim()) html += parts[i].trim().split(/\n{2,}/).map(t => `<p>${rich(t)}</p>`).join("");
+      if (i + 2 < parts.length) html += `<div class="chat-code"><div class="chat-code-bar"><span>${esc(parts[i + 1] || "code")}</span><button class="link-btn insert" type="button" data-code="${(i / 3) | 0}" title="Replaces the code in the editor (Ctrl+Z undoes it)">Insert into editor</button></div><pre><code>${esc(parts[i + 2].replace(/\n+$/, ""))}</code></pre></div>`;
+    }
+    return html;
+  }
+  function paintChat(p) {
+    const box = $("#cl-" + p.id); if (!box) return;
+    const msgs = (state.log || []).filter(e => e.pid === p.id && (e.kind === "prompt" || e.kind === "reply"));
+    box.innerHTML = msgs.length ? msgs.map((m, i) => m.kind === "prompt"
+      ? `<div class="msg me"><div class="msg-who">You</div><p>${esc(m.text).replace(/\n/g, "<br>")}</p></div>`
+      : `<div class="msg ai" data-m="${i}"><div class="msg-who">Assistant <span>${m.src === "live" ? "live · small model" : "offline assistant"}</span></div>${chatHtml(m.text)}${m.note ? `<p class="msg-note">${esc(m.note)}</p>` : ""}</div>`).join("")
+      : `<p class="chat-empty">Try: “Write ${p.prob.fn ? fnName(p.prob, RUNNABLE[state.lang] ? state.lang : "python") : p.prob.cls} for the spec above”, “What edge cases should I test?” or “Explain your approach”.</p>`;
+    box.querySelectorAll(".msg.ai").forEach(div => {
+      const m = msgs[+div.dataset.m];
+      div.querySelectorAll(".insert").forEach(b => b.onclick = () => insertCode(p, m.text, +b.dataset.code));
+    });
+    box.scrollTop = box.scrollHeight;
+    const src = $("#cs-" + p.id);
+    if (src) src.textContent = AI_ENDPOINT ? (aiDown ? "Offline assistant (live one unavailable)" : "Small model") : "Offline assistant";
+  }
+  function insertCode(p, text, n) {
+    const blocks = [...String(text).matchAll(/```(\w*)\n?([\s\S]*?)```/g)];
+    const code = blocks[n] ? blocks[n][2].replace(/\n+$/, "") + "\n" : "";
+    if (!code) return;
+    if (editors[p.id]) { editors[p.id].setValue(code); editors[p.id].focus(); }
+    else { const ta = $("#a-" + p.id); ta.value = code; ta.dispatchEvent(new Event("input")); }
+    state.answers[p.id] = code;
+    logEvent("insert", `Inserted ${plural(code.trim().split("\n").length, "line")} of the assistant's code into the editor`, { pid: p.id });
+    dirty = true; save();
+  }
+  let aiDown = false;
+  async function askLive(p, prompt) {
+    const history = (state.log || []).filter(e => e.pid === p.id && (e.kind === "prompt" || e.kind === "reply")).slice(-12)
+      .map(e => ({ role: e.kind === "prompt" ? "user" : "assistant", content: clip(e.text, 4000) }));
+    const body = { round: cur.id, lang: RUNNABLE[state.lang] ? state.lang : "python", code: clip(codeOf(p), 8000), messages: history.concat([{ role: "user", content: clip(prompt, 4000) }]) };
+    const r = await timeout(fetch(AI_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(body) }), AI_TIMEOUT_MS);
+    if (r.status === 429) { const e = new Error("rate"); e.rate = true; throw e; }
+    if (!r.ok) throw new Error(String(r.status));
+    const d = await r.json();
+    if (!d || typeof d.reply !== "string" || !d.reply.trim()) throw new Error("empty");
+    return d.reply;
+  }
+  const sendingChat = {};
+  async function sendChat(p) {
+    const ta = $("#ci-" + p.id), prompt = ta.value.trim();
+    if (!prompt || sendingChat[p.id]) return;
+    const session = cur;
+    const history = (state.log || []).filter(e => e.pid === p.id && e.kind === "prompt").map(e => e.text);
+    ta.value = ""; sendingChat[p.id] = true;
+    logEvent("prompt", prompt, { pid: p.id }); paintChat(p);
+    const box = $("#cl-" + p.id); box.insertAdjacentHTML("beforeend", `<p class="chat-wait">Thinking…</p>`); box.scrollTop = box.scrollHeight;
+    let reply, src = "offline", note = "";
+    if (AI_ENDPOINT && !aiDown) {
+      try { reply = await askLive(p, prompt); src = "live"; }
+      catch (e) {
+        if (e && e.rate) note = "The live assistant is busy (too many requests), so the offline assistant answered.";
+        else { aiDown = true; note = "The live assistant didn't answer, so the offline assistant took over for this session."; }
+      }
+    }
+    if (!reply) reply = window.PRACTICE_ASSISTANT ? window.PRACTICE_ASSISTANT.reply(session.id, prompt, history, state.lang) : "The assistant isn't available right now.";
+    sendingChat[p.id] = false;
+    if (cur !== session) return;
+    logEvent("reply", reply, { pid: p.id, src, note });
+    dirty = true; save(); paintChat(p);
+  }
+  function setupChat() {
+    $$(".chat-form").forEach(form => {
+      const p = cur.prompts.find(x => x.id === form.dataset.p);
+      form.addEventListener("submit", e => { e.preventDefault(); sendChat(p); });
+      form.querySelector("textarea").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendChat(p); } });
+      paintChat(p);
+    });
+  }
+
+  // Tests-first: run the candidate's tests against the correct implementation and the
+  // buggy versions shipped (base64) with the hidden tests.
+  function checkArea(p) {
+    return `<div class="run-bar" id="rb-${p.id}">
+        <button class="btn btn-primary btn-sm" type="button" data-check="${p.id}" aria-describedby="rs-${p.id}">Check my tests</button>
+        <span class="run-state" id="rs-${p.id}" role="status" aria-live="polite"></span>
+      </div>
+      <p class="run-off" id="ro-${p.id}" hidden></p>
+      <div class="results" id="rr-${p.id}"></div>`;
+  }
+  async function checkTests(p) {
+    const lang = state.lang, prob = p.testsProb;
+    if (!RUNNABLE[lang] || running[p.id]) return;
+    const code = codeOf(p), session = cur;
+    running[p.id] = true; paintCheck(p);
+    const status = msg => { const el = $("#rs-" + p.id); if (el && cur === session) el.textContent = msg; };
+    status("Checking…");
+    let result;
+    try {
+      const doc = await loadDoc(p.testsFor), impls = doc.mutants[lang];
+      dirty = true; save();
+      const spec = { tests: prob.fn };
+      const out = lang === "python" ? await execPy(code, spec, impls.map(c => [c]), status) : await execJs(code, spec, impls.map(c => [c]));
+      if (out.failed) result = { failed: out.failed };
+      else {
+        const first = out[0];
+        if (!first || first.timeout) result = { at: Date.now(), lang, code: hashCode(code), error: "Your tests took longer than 5 s." };
+        else if (!first.ok) result = { at: Date.now(), lang, code: hashCode(code), error: errText(first.err) };
+        else if (!first.out.length) result = { at: Date.now(), lang, code: hashCode(code), error: lang === "python" ? "No tests found: name each test function test_something." : "No tests found: name each test function testSomething." };
+        else {
+          const broken = first.out.filter(t => !t[1]);
+          const bugs = out.slice(1).map((r, i) => {
+            const caughtBy = r && r.ok ? r.out.filter(t => !t[1]).map(t => t[0]) : [];
+            return { caught: !r || !r.ok || r.timeout || caughtBy.length > 0, by: caughtBy[0] || "" };
+          });
+          result = { at: Date.now(), lang, code: hashCode(code), tests: first.out.length, broken: broken.map(t => [t[0], clip(t[2], 300)]), bugs, caught: broken.length ? null : bugs.filter(b => b.caught).length };
+        }
+      }
+    } catch (e) { result = { failed: "Couldn't load the checks. Check your connection and try again." }; }
+    running[p.id] = false;
+    if (cur !== session) return;
+    if (result.failed) { paintCheck(p); status(result.failed); return; }
+    const runs = state.runs[p.id] = state.runs[p.id] || {};
+    runs[lang] = { last: result };
+    logEvent("tests", checkSummary(p, result), { pid: p.id });
+    dirty = true; save(); paintCheck(p);
+  }
+  function checkSummary(p, r) {
+    if (r.error) return `Checked tests (${LANGS[r.lang].label}): ${r.error}`;
+    if (r.broken.length) return `Checked tests (${LANGS[r.lang].label}): ${plural(r.broken.length, "test")} fail on a correct implementation`;
+    return `Checked tests (${LANGS[r.lang].label}): ${plural(r.tests, "test")} pass on a correct implementation; caught ${r.caught}/${r.bugs.length} buggy versions`;
+  }
+  function paintCheck(p) {
+    const lang = state.lang, ok = RUNNABLE[lang];
+    const bar = $("#rb-" + p.id), off = $("#ro-" + p.id), box = $("#rr-" + p.id);
+    if (!bar) return;
+    bar.hidden = !ok; box.hidden = !ok; off.hidden = ok;
+    if (!ok) { off.textContent = `Checking tests is available in Python and JavaScript. Switch language to check them, or keep writing in ${LANGS[lang].label}.`; return; }
+    bar.querySelector("button").disabled = !!running[p.id];
+    const r = ((state.runs[p.id] || {})[lang] || {}).last;
+    if (!running[p.id]) { const st = $("#rs-" + p.id); if (st) st.textContent = ""; }
+    if (!r) { box.innerHTML = ""; return; }
+    const hints = p.testsProb.mutantHints, edited = r.code !== hashCode(codeOf(p));
+    const when = `<span class="r-when">${esc(LANGS[r.lang].label)} · ${new Date(r.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}${edited ? " · tests edited since" : ""}</span>`;
+    if (r.error) { box.innerHTML = `<p class="r-sum fail"><span class="r-icon" aria-hidden="true">✗</span><b>${esc(r.error)}</b>${when}</p>`; return; }
+    if (r.broken.length) {
+      box.innerHTML = `<p class="r-sum fail"><span class="r-icon" aria-hidden="true">✗</span><b>${plural(r.broken.length, "test")} fail on a correct implementation</b>${when}</p>
+        <p class="r-hidden">Fix these tests first: a test that fails on correct code would also flag every implementation.</p>
+        ${r.broken.map(([n, m]) => `<p class="mut"><b>${esc(n)}</b>: ${esc(m)}</p>`).join("")}`;
+      return;
+    }
+    const all = r.caught === r.bugs.length;
+    box.innerHTML = `<p class="r-sum ${all ? "pass" : "fail"}"><span class="r-icon" aria-hidden="true">${all ? "✓" : "◐"}</span><b>Your tests caught ${r.caught}/${r.bugs.length} buggy versions</b>${when}</p>
+      <p class="r-hidden">All ${plural(r.tests, "test")} pass on a correct implementation. ${all ? "Every buggy version failed at least one of them." : "The ones that slipped through hint at a rule your tests don't pin down yet."}</p>
+      ${r.bugs.map((b, i) => `<p class="mut ${b.caught ? "pass" : "fail"}"><span class="r-icon" aria-hidden="true">${b.caught ? "✓" : "✗"}</span>Bug ${i + 1} ${b.caught ? `caught${b.by ? ` by <code>${esc(b.by)}</code>` : ""}` : `slipped through: a version that ${esc(hints[i])}`}</p>`).join("")}`;
+  }
+
+  // Self-scorecard (1–4 on four criteria) and a short note, sent with the answers.
+  function scorecard() {
+    return `<section class="scorecard" id="scorecard" aria-labelledby="sc-h">
+      <div class="block-head"><h2 id="sc-h"><span class="num">✓</span>Self-scorecard</h2><span>After the round</span></div>
+      <p class="hint">Score yourself honestly from 1 (not yet) to 4 (fully). It's sent with your answers, so the review can compare notes.</p>
+      ${SCORE.map(([k, label, desc]) => `<fieldset class="sc-row"><legend><b>${label}</b><span>${esc(desc)}</span></legend>
+        <div class="sc-scale">${SCALE.map((t, i) => `<label><input type="radio" name="sc-${k}" value="${i + 1}"><span>${i + 1}<small>${t}</small></span></label>`).join("")}</div></fieldset>`).join("")}
+      <label class="sc-note">What would you do differently next time? <small>(optional)</small><textarea id="sc-note" rows="2"></textarea></label>
+    </section>`;
+  }
+  function setupScorecard() {
+    const sc = state.score || {};
+    SCORE.forEach(([k]) => $$(`input[name="sc-${k}"]`).forEach(r => {
+      r.checked = String(sc[k] || "") === r.value;
+      r.addEventListener("change", () => { state.score = Object.assign({}, state.score, { [k]: +r.value }); queueSave(); });
+    }));
+    const note = $("#sc-note"); if (note) { note.value = sc.note || ""; note.addEventListener("input", () => { state.score = Object.assign({}, state.score, { note: note.value }); queueSave(); }); }
+  }
+  // Compact versions for the downloaded and sent answers.
+  function scoreMarkdown() {
+    const sc = state.score || {};
+    let md = "## Self-scorecard\n\n" + SCORE.map(([k, label]) => `- ${label}: ${sc[k] ? `${sc[k]}/4 (${SCALE[sc[k] - 1]})` : "-"}`).join("\n") + "\n";
+    if ((sc.note || "").trim()) md += `- Note: ${sc.note.trim()}\n`;
+    return md + "\n";
+  }
+  function logMarkdown() {
+    const log = state.log || [];
+    if (!log.length) return "## AI prompt log\n\n_(no prompts or runs)_\n\n";
+    const t = at => new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const lines = log.map(e => {
+      if (e.kind === "prompt") return `- ${t(e.at)} **You:** ${clip(e.text.replace(/\s+/g, " "), 600)}`;
+      if (e.kind === "reply") {
+        const code = [...e.text.matchAll(/```\w*\n?([\s\S]*?)```/g)].reduce((n, m) => n + m[1].trim().split("\n").length, 0);
+        return `- ${t(e.at)} Assistant (${e.src === "live" ? "live" : "offline"}): ${clip(e.text.replace(/```[\s\S]*?```/g, " ").replace(/\s+/g, " ").trim(), 200)}${code ? ` [${plural(code, "line")} of code]` : ""}`;
+      }
+      return `- ${t(e.at)} ${e.text}`;
+    });
+    return "## AI prompt log\n\n" + lines.join("\n") + "\n\n";
   }
 
   /* ======================= Whiteboard (Excalidraw) ======================= */
@@ -1211,8 +1462,10 @@
         if (p.given) md += "Given code:\n\n" + fence(p.given, "python");
         md += a ? (p.kind === "code" ? fence(a, lang.fence) : a + "\n\n") : "_(no answer)_\n\n";
         if (p.prob) md += testsLine(p) + "\n\n";
+        if (p.testsProb) { const r = ((state.runs[p.id] || {})[state.lang] || {}).last; md += (r ? checkSummary(p, r) : `Tests check: not run (${lang.label})`) + "\n\n"; }
       });
     });
+    if (s.ai) md += scoreMarkdown() + logMarkdown();
     return md;
   }
   function saveFile(data, name, type) {

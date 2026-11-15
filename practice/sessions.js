@@ -311,3 +311,27 @@ window.PRACTICE_SESSIONS = [
     codingSet(15, "Heaps · Binary search", "Schedule tasks with a cooldown, then find the smallest heater range that warms every house.", "cooldown-schedule", "heater-radius")
   );
 })();
+
+// AI coding rounds: built from AI_ROUNDS in ai-problems.js. Each round: clarify & plan,
+// work with the assistant (chat beside the editor, Run / Submit), verify & explain.
+// Round 4 (tests first) adds a block to write tests before implementing.
+(function () {
+  const P = window.PRACTICE_PROBLEMS || {};
+  (window.AI_ROUNDS || []).forEach(([id, tag, blurb], i) => {
+    const n = i + 1, p = P[id] || { title: id, clarify: ["(missing)"], look: ["(missing)"], testing: ["(missing)"] };
+    const plan = { name: "Clarify & plan", min: 5, problem: id, prompts: [
+      { q: `Round ${n}, ${p.title}: what would you clarify, and what's your plan? Write the first prompt you'll give the assistant.`, look: p.clarify }] };
+    const work = min => ({ name: "Work with the AI", min, prompts: [
+      { q: p.testStarters ? "Now implement it. Ask the assistant if you like, check its code with your tests and with Run, then Submit." : "Work with the assistant: ask for code, tests or explanations, insert what you choose into the editor, and check it with Run and Submit. The assistant can be wrong.", kind: "code", problem: id, chat: true, look: p.look }] });
+    const verify = { name: "Verify & explain", min: 10, prompts: [
+      { q: `Which test exposed the problem, or which tests did you add? Explain the root cause, your fix and the complexity, as you would to the interviewer.${p.followup ? " If there's time, the follow-up: " + p.followup : ""}`, look: p.testing }] };
+    const blocks = p.testStarters
+      ? [plan, { name: "Write tests first", min: 10, prompts: [
+          { q: "Write your tests before asking the assistant anything, then press \"Check my tests\".", kind: "code", testsFor: id, look: [
+            "Each rule in the spec has a test: boundary, rejected requests, same-second requests, the exact limit, sliding windows",
+            "Expected values worked out by hand, not copied from code",
+            "Small tests with names that say what they check"] }] }, work(20), verify]
+      : [plan, work(30), verify];
+    window.PRACTICE_SESSIONS.push({ id: `ai-round-${n}`, track: "AI coding rounds", ai: true, tag, title: `Round ${n}: ${p.title}`, blurb, blocks });
+  });
+})();
