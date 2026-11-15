@@ -7,18 +7,31 @@
   const onScroll = () => hdr.classList.toggle('scrolled', scrollY > 8);
   addEventListener('scroll', onScroll, {passive:true}); onScroll();
 
-  // theme: same stored choice as the homepage
+  // theme: same rules as the homepage (device setting, then the visitor's stored choice)
+  // (The script in <head> sets the starting theme before the page paints.)
   const root = document.documentElement, tBtn = $('#theme');
   const paint = () => {
     const dark = root.dataset.theme === 'dark';
     tBtn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
     $('meta[name=theme-color]').content = dark ? '#13150e' : '#f6f3ec';
   };
-  tBtn.addEventListener('click', () => {
-    if (root.dataset.theme === 'dark') delete root.dataset.theme; else root.dataset.theme = 'dark';
-    try { localStorage.setItem('ct-theme', root.dataset.theme || 'light'); } catch (e) {}
+  const setTheme = dark => {
+    if (dark) root.dataset.theme = 'dark'; else delete root.dataset.theme;
     paint();
+    root.dispatchEvent(new Event('ct-themechange')); // e.g. the booking calendar follows
+  };
+  const stored = () => { try { return localStorage.getItem('ct-theme'); } catch (e) { return null; } };
+  tBtn.addEventListener('click', () => {
+    const dark = root.dataset.theme !== 'dark';
+    try { localStorage.setItem('ct-theme', dark ? 'dark' : 'light'); } catch (e) {}
+    setTheme(dark);
   });
+  // Without a stored choice, follow the device setting as it changes.
+  const mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  if (mq) {
+    const follow = e => { const s = stored(); if (s !== 'dark' && s !== 'light') setTheme(e.matches); };
+    if (mq.addEventListener) mq.addEventListener('change', follow); else if (mq.addListener) mq.addListener(follow);
+  }
   paint();
 
   // mobile menu

@@ -55,7 +55,7 @@ page = lambda do |title:, description:, path:, image: nil, type: "website", body
   og_image = image ? %(\n<meta property="og:image" content="#{h(image)}">) : ""
   <<~HTML
     <!DOCTYPE html>
-    <html lang="en" data-theme="dark">
+    <html lang="en">
     <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -66,8 +66,8 @@ page = lambda do |title:, description:, path:, image: nil, type: "website", body
     <meta property="og:title" content="#{h(title)}">
     <meta property="og:description" content="#{h(description)}">
     <meta property="og:url" content="#{SITE}#{path}">#{og_image}
-    <meta name="theme-color" content="#13150e">
-    <script>try{if(localStorage.getItem("ct-theme")==="light")delete document.documentElement.dataset.theme}catch(e){}</script>
+    <meta name="theme-color" content="#f6f3ec">
+    <script>(function(){var r=document.documentElement,s=null;try{s=localStorage.getItem("ct-theme")}catch(e){}var d=s==="dark"||(s!=="light"&&!!window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);if(d)r.dataset.theme="dark";var m=document.querySelector("meta[name=theme-color]");if(m)m.content=d?"#13150e":"#f6f3ec"})()</script>
     #{favicon}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
