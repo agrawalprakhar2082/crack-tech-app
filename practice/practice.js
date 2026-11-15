@@ -4,21 +4,20 @@
 // Content lives in sessions.js. Built into practice/ by `ruby _blog/build.rb`.
 (() => {
   /* ======================= Settings ======================= */
-  // Where "Send for review" posts the answers: a Formspree form URL, e.g.
-  // "https://formspree.io/f/abcdwxyz" (see CLAUDE.md, "Practice page").
+  // Where "Send for review" posts the answers: our practice-review Cloudflare Worker
+  // (worker/practice-review/), which emails them to the owner with the answers (.md)
+  // and the drawing (.excalidraw) attached. It only accepts posts from cracktech.app.
   // While empty, sending opens an email to REVIEW_EMAIL instead (see sendByEmail).
-  // Before launch, do one long test submission (a full session with a drawing) to
-  // check Formspree accepts and emails everything.
-  const FORM_ENDPOINT = "";
+  const FORM_ENDPOINT = "https://practice-review.cracktech-app.workers.dev";
   const REVIEW_EMAIL = "hello@cracktech.app";
   const MINUTES = 45;
-  // Formspree's free plan has no file uploads, so a whiteboard drawing is sent as
-  // .excalidraw JSON text in its own field, up to this size; bigger ones are left out
-  // and the candidate is asked to email the downloaded file instead.
-  const MAX_DIAGRAM_CHARS = 60000;
+  // The Worker attaches the drawing as a .excalidraw file, up to this size (it accepts
+  // 1.2 million characters); bigger ones are left out and the candidate is asked to
+  // email the downloaded file instead.
+  const MAX_DIAGRAM_CHARS = 1000000;
   // Answers longer than this are trimmed in the submission (with a note), to stay
-  // well inside what a form service accepts. A full 45-minute session is far below it.
-  const MAX_ANSWER_CHARS = 100000;
+  // inside what the Worker accepts (500,000). A full 45-minute session is far below it.
+  const MAX_ANSWER_CHARS = 400000;
   // A timer left running longer than this without the page open is paused at the
   // moment the page was last seen, so it doesn't count the hours you were away.
   const AWAY_PAUSE_MS = 15 * 60000;
@@ -911,14 +910,14 @@
     let diagram = "", diagramNote = "";
     if (sc) {
       const json = sceneJson(sc);
-      if (json.length <= MAX_DIAGRAM_CHARS) { diagram = json; diagramNote = `${plural(sc.elements.length, "shape")}. The drawing is in the "diagram_excalidraw" field: save that text as a file ending in .excalidraw and open it at excalidraw.com (menu → Open).`; }
+      if (json.length <= MAX_DIAGRAM_CHARS) { diagram = json; diagramNote = `${plural(sc.elements.length, "shape")}. The drawing is attached as a .excalidraw file: open it at excalidraw.com (menu → Open).`; }
       else diagramNote = "The drawing was too large to send here; the candidate was asked to email the .excalidraw file.";
     }
     let answers = markdown({ diagramNote }), trimmed = false;
     if (answers.length > MAX_ANSWER_CHARS) { answers = answers.slice(0, MAX_ANSWER_CHARS) + "\n\n[Trimmed: the answers were too long to send in full. The candidate was asked to email the full file.]"; trimmed = true; }
     sending = true; $("#sendBtn").disabled = true; flash("Sending…");
     try {
-      // _gotcha is Formspree's spam trap: real people leave it empty.
+      // _gotcha is the spam trap (hidden honeypot field): real people leave it empty.
       const payload = { name, email, target: $("#f-target").value.trim(), session: cur.title, time_used: fmtTime(elapsed()), answers, _subject: subject, _gotcha: trap };
       if (diagram) payload.diagram_excalidraw = diagram;
       const r = await fetch(FORM_ENDPOINT, { method: "POST", headers: { "Accept": "application/json", "Content-Type": "application/json" }, body: JSON.stringify(payload) });
