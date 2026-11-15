@@ -1,0 +1,2 @@
+// Naive approach (too slow on purpose): used by verify.js --speed.
+function minCandies(r) { const c = new Array(r.length).fill(1); let ch = true; while (ch) { ch = false; for (let i = 0; i < r.length; i++) { if (i > 0 && r[i] > r[i - 1] && c[i] <= c[i - 1]) { c[i] = c[i - 1] + 1; ch = true; } if (i + 1 < r.length && r[i] > r[i + 1] && c[i] <= c[i + 1]) { c[i] = c[i + 1] + 1; ch = true; } } } return c.reduce((a, b) => a + b, 0); }

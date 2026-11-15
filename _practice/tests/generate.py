@@ -602,6 +602,290 @@ def g_halves(rng, small):
     return cases
 
 
+# ---------------------------------------------------------------- sessions 11-15
+
+# Trees travel as level-order lists with None for a missing child (see harness.py).
+_H = {"__name__": "harness"}
+exec(compile(open(os.path.join(HERE, "..", "harness.py"), encoding="utf-8").read(), "harness.py", "exec"), _H)
+build_tree = _H["_build_tree"]
+TREE_ARGS = {"bst-dead-ends": [0], "complete-tree-count": [0]}
+
+
+class _Node:
+    def __init__(self, val):
+        self.val, self.left, self.right = val, None, None
+
+
+def serialize(root):
+    out, q, h = [], [root] if root else [], 0
+    while h < len(q):
+        node = q[h]
+        h += 1
+        if node is None:
+            out.append(None)
+            continue
+        out.append(node.val)
+        q.extend([node.left, node.right])
+    while out and out[-1] is None:
+        out.pop()
+    return out
+
+
+def bst_insert(root, x):
+    if root is None:
+        return _Node(x)
+    cur = root
+    while True:
+        if x < cur.val:
+            if cur.left is None:
+                cur.left = _Node(x)
+                return root
+            cur = cur.left
+        else:
+            if cur.right is None:
+                cur.right = _Node(x)
+                return root
+            cur = cur.right
+
+
+def b_dead_ends(root):
+    # A leaf is fine if inserting some missing integer x >= 1 the normal way lands under it.
+    vals, leaves, st = set(), [], [root] if root else []
+    while st:
+        nd = st.pop()
+        vals.add(nd.val)
+        if not nd.left and not nd.right:
+            leaves.append(nd)
+        st += [c for c in (nd.left, nd.right) if c]
+    top = max(vals) + 2 if vals else 2
+    for leaf in leaves:
+        ok = False
+        for x in range(1, top + 1):
+            if x in vals:
+                continue
+            cur = root
+            while True:
+                nxt = cur.left if x < cur.val else cur.right
+                if nxt is None:
+                    break
+                cur = nxt
+            if cur is leaf:
+                ok = True
+                break
+        if not ok:
+            return False
+    return True
+
+
+def b_count(root):
+    n, st = 0, [root] if root else []
+    while st:
+        nd = st.pop()
+        n += 1
+        st += [c for c in (nd.left, nd.right) if c]
+    return n
+
+
+def b_warmer(t):
+    return [next((j - i for j in range(i + 1, len(t)) if t[j] > t[i]), 0) for i in range(len(t))]
+
+
+def b_candies(r):
+    c = [1] * len(r)
+    changed = True
+    while changed:
+        changed = False
+        for i in range(len(r)):
+            for j in (i - 1, i + 1):
+                if 0 <= j < len(r) and r[i] > r[j] and c[i] <= c[j]:
+                    c[i] = c[j] + 1
+                    changed = True
+    return sum(c)
+
+
+def b_kpal(s, k):
+    n, best = len(s), 0
+    for mask in range(1 << n):
+        t = "".join(s[i] for i in range(n) if mask >> i & 1)
+        if t == t[::-1]:
+            best = max(best, len(t))
+    return n - best <= k
+
+
+def b_nextperm(nums):
+    perms = sorted(set(itertools.permutations(nums)))
+    i = perms.index(tuple(nums))
+    return list(perms[(i + 1) % len(perms)])
+
+
+ROOM = 2147483647
+
+
+def b_exits(grid):
+    rows, cols = len(grid), len(grid[0]) if grid else 0
+    out = [row[:] for row in grid]
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] != ROOM:
+                continue
+            seen, q = {(r, c)}, deque([(r, c, 0)])
+            while q:
+                a, b, d = q.popleft()
+                if grid[a][b] == 0:
+                    out[r][c] = d
+                    break
+                for x, y in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)):
+                    if 0 <= x < rows and 0 <= y < cols and grid[x][y] != -1 and (x, y) not in seen:
+                        seen.add((x, y))
+                        q.append((x, y, d + 1))
+    return out
+
+
+def b_effort(h):
+    rows, cols = len(h), len(h[0])
+    diffs = sorted({abs(h[r][c] - h[x][y]) for r in range(rows) for c in range(cols) for x, y in ((r + 1, c), (r, c + 1)) if x < rows and y < cols} | {0})
+    for lim in diffs:
+        seen, st = {(0, 0)}, [(0, 0)]
+        while st:
+            r, c = st.pop()
+            for x, y in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):
+                if 0 <= x < rows and 0 <= y < cols and (x, y) not in seen and abs(h[x][y] - h[r][c]) <= lim:
+                    seen.add((x, y))
+                    st.append((x, y))
+        if (rows - 1, cols - 1) in seen:
+            return lim
+
+
+def b_cooldown(tasks, n):
+    left, ready, time = Counter(tasks), {}, 0
+    while sum(left.values()):
+        avail = [t for t in left if left[t] and ready.get(t, 0) <= time]
+        if avail:
+            t = max(avail, key=lambda x: left[x])
+            left[t] -= 1
+            ready[t] = time + n + 1
+        time += 1
+    return time
+
+
+def b_heaters(houses, heaters):
+    return max(min(abs(h - x) for x in heaters) for h in houses)
+
+
+def g_dead_ends(rng, small):
+    def make(n, hi):
+        vals = rng.sample(range(1, hi + 1), n)
+        root = None
+        for v in vals:
+            root = bst_insert(root, v)
+        return [serialize(root)]
+    if small:
+        n = rng.randint(0, 7)
+        return make(n, max(n, rng.randint(n, 12)))
+    cases = [[[]], [[1]], [[2]], [[2, 1, 3]], [[3, 1, 4, None, 2]], [[10, 5, 20]], [[4, 2, 6, 1, 3, 5, 7]], [[5, 3, None, 2, 4]]]
+    cases += [make(rng.randint(5, 30), rng.randint(30, 60)) for _ in range(3)]
+    cases += [make(3000, 3300), make(3000, 10**9)]
+    return cases
+
+
+def g_complete(rng, small):
+    def make(n):
+        return [rng.sample(range(1, 10 * n + 10), n)]
+    if small:
+        return make(rng.randint(0, 20))
+    cases = [[[]], [[7]], [[1, 2]], [[1, 2, 3]], [[1, 2, 3, 4]], [list(range(1, 16))], [list(range(1, 17))]]
+    cases += [make(rng.randint(20, 200)) for _ in range(3)] + [make(5000), [{"$complete": 100000}]]
+    return cases
+
+
+def g_warmer(rng, small):
+    def make(n, lo=-30, hi=45):
+        return [[rng.randint(lo, hi) for _ in range(n)]]
+    if small:
+        return make(rng.randint(1, 10), 0, 5)
+    cases = [[[20]], [[5, 5, 5]], [[1, 2, 3]], [[3, 2, 1]], [[10, 8, 9, 12]], [[-5, -10, -3, -3, 0]]]
+    cases += [make(rng.randint(10, 60)) for _ in range(4)] + [make(5000), [sorted(make(3000)[0], reverse=True)]]
+    return cases
+
+
+def g_candies(rng, small):
+    def make(n, hi=100):
+        return [[rng.randint(0, hi) for _ in range(n)]]
+    if small:
+        return make(rng.randint(1, 9), 4)
+    cases = [[[7]], [[1, 1, 1]], [[1, 2, 3]], [[3, 2, 1]], [[1, 3, 2, 2, 1]], [[2, 4, 4, 4, 1]], [[5, 1, 5, 1, 5]]]
+    cases += [make(rng.randint(10, 60)) for _ in range(3)] + [make(5000, 20000), [list(range(3000, 0, -1))]]
+    return cases
+
+
+def g_kpal(rng, small):
+    def make(n, alpha="abc", k=None):
+        s = "".join(rng.choice(alpha) for _ in range(n))
+        return [s, rng.randint(0, max(0, n // 2)) if k is None else k]
+    if small:
+        return make(rng.randint(0, 11), rng.choice(["ab", "abc", "abcd"]))
+    cases = [["", 0], ["a", 0], ["ab", 0], ["ab", 1], ["racecar", 0], ["abca", 1], ["abcd", 2], ["abcd", 3], ["aaabbb", 3]]
+    cases += [make(rng.randint(12, 40)) for _ in range(3)]
+    half = "".join(rng.choice("abcde") for _ in range(150))
+    noisy = list(half + half[::-1])
+    for _ in range(12):
+        noisy.insert(rng.randrange(len(noisy) + 1), rng.choice("xyz"))
+    cases += [["".join(noisy), 12], ["".join(noisy), 11]]
+    return cases
+
+
+def g_nextperm(rng, small):
+    def make(n, hi):
+        return [[rng.randint(0, hi) for _ in range(n)]]
+    if small:
+        return make(rng.randint(1, 6), 3)
+    cases = [[[1]], [[1, 2]], [[2, 1]], [[1, 1]], [[1, 2, 3]], [[3, 2, 1]], [[1, 3, 2]], [[2, 2, 0, 4, 3, 1]], [[1, 5, 1]]]
+    cases += [make(rng.randint(5, 20), 9) for _ in range(3)] + [make(100, 100), [sorted(make(100, 5)[0], reverse=True)]]
+    return cases
+
+
+def g_exits(rng, small):
+    def make(rows, cols, pw=0.2, pe=0.08):
+        return [[[(-1 if (x := rng.random()) < pw else 0 if x < pw + pe else ROOM) for _ in range(cols)] for _ in range(rows)]]
+    if small:
+        return make(rng.randint(1, 5), rng.randint(1, 5))
+    cases = [[[[0]]], [[[ROOM]]], [[[-1]]], [[[ROOM, 0, ROOM]]], [[[0], [ROOM], [ROOM]]], [[[ROOM, -1, 0], [ROOM, -1, ROOM], [ROOM, ROOM, ROOM]]],
+             [[[ROOM, -1], [-1, 0]]]]
+    cases += [make(rng.randint(3, 12), rng.randint(3, 12)) for _ in range(3)] + [make(60, 60), make(60, 60, 0.4, 0.01)]
+    return cases
+
+
+def g_effort(rng, small):
+    def make(rows, cols, hi):
+        return [[[rng.randint(1, hi) for _ in range(cols)] for _ in range(rows)]]
+    if small:
+        return make(rng.randint(1, 4), rng.randint(1, 4), 9)
+    cases = [[[[5]]], [[[1, 10]]], [[[1], [3], [6]]], [[[1, 1, 1], [9, 9, 1], [1, 1, 1]]], [[[3, 8, 2], [4, 9, 1], [5, 6, 7]]]]
+    cases += [make(rng.randint(3, 10), rng.randint(3, 10), 50) for _ in range(4)] + [make(40, 40, 10**6), make(40, 40, 3)]
+    return cases
+
+
+def g_cooldown(rng, small):
+    def make(n, letters, cool):
+        return ["".join(rng.choice(letters) for _ in range(n)), cool]
+    if small:
+        return make(rng.randint(1, 9), "ABC", rng.randint(0, 3))
+    cases = [["A", 0], ["A", 5], ["AAA", 0], ["AAA", 2], ["AB", 3], ["AAABBB", 2], ["AAABBBCCDD", 2], ["ABCDE", 1], ["AAAAB", 1]]
+    cases += [make(rng.randint(10, 40), "ABCDEF", rng.randint(0, 6)) for _ in range(3)]
+    cases += [make(10000, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 100), make(10000, "AAAAAAB", 50)]
+    return cases
+
+
+def g_heaters(rng, small):
+    def make(n, m, hi):
+        return [[rng.randint(1, hi) for _ in range(n)], [rng.randint(1, hi) for _ in range(m)]]
+    if small:
+        return make(rng.randint(1, 6), rng.randint(1, 4), 20)
+    cases = [[[5], [5]], [[1, 9], [5]], [[1, 2, 3], [2]], [[1, 5], [10]], [[4, 4, 4], [1, 7]], [[1, 1000000000], [1, 1000000000]]]
+    cases += [make(rng.randint(5, 30), rng.randint(1, 10), 100) for _ in range(4)] + [make(5000, 300, 10**9), make(3000, 3000, 10**5)]
+    return cases
+
+
 # id: (python function name, brute force, generator, extra small cases to cross-check)
 PROBLEMS = {
     "unpaired-number": ("find_unpaired", b_unpaired, g_unpaired),
@@ -624,6 +908,16 @@ PROBLEMS = {
     "heap-k-largest": ("k_largest", b_klargest, g_klargest),
     "subarray-sum-k": ("count_subarrays", b_subarrays, g_subarrays),
     "age-halves": ("skill_gaps", b_halves, g_halves),
+    "bst-dead-ends": ("no_dead_ends", b_dead_ends, g_dead_ends),
+    "complete-tree-count": ("count_nodes", b_count, g_complete),
+    "warmer-days": ("days_until_warmer", b_warmer, g_warmer),
+    "fair-candies": ("min_candies", b_candies, g_candies),
+    "k-palindrome": ("can_make_palindrome", b_kpal, g_kpal),
+    "next-permutation": ("next_permutation", b_nextperm, g_nextperm),
+    "nearest-exit": ("fill_distances", b_exits, g_exits),
+    "min-effort-path": ("min_effort", b_effort, g_effort),
+    "cooldown-schedule": ("least_time", b_cooldown, g_cooldown),
+    "heater-radius": ("min_radius", b_heaters, g_heaters),
 }
 EXTRA_SMALL = 300
 # Full-size cases (seeded, generated by judge.js). Sizes are at the constraint limits and
@@ -638,6 +932,13 @@ FULL = {
     "scoreboard": [{"seed": 61, "names": 30000, "ops": 100000}],
     "subarray-sum-k": [{"seed": 71, "n": 200000, "k": 7}],
     "age-halves": [{"seed": 81, "n": 100000}],
+    "complete-tree-count": [{"seed": 91, "lo": 1000000000, "hi": 2000000000}],
+    "warmer-days": [{"seed": 101, "n": 200000}],
+    "fair-candies": [{"seed": 111, "n": 100000}],
+    "k-palindrome": [{"seed": 121, "n": 1000}],
+    "nearest-exit": [{"seed": 131, "rows": 500, "cols": 500}],
+    "min-effort-path": [{"seed": 141, "rows": 200, "cols": 200}],
+    "heater-radius": [{"seed": 151, "n": 100000, "m": 100000}],
 }
 JUDGE = os.path.join(HERE, "..", "judge.js")
 
@@ -661,6 +962,16 @@ BRUTE_LIMITS = {  # cases bigger than this are checked against the reference onl
     "subarray-sum-k": lambda a: len(a[0]) <= 300,
     "age-halves": lambda a: len(a[0]) <= 300,
     "fewest-paren-removals": lambda a: len(a[0]) <= 12,
+    "bst-dead-ends": lambda a: len(a[0]) <= 400,
+    "complete-tree-count": lambda a: isinstance(a[0], list) or a[0]["$complete"] <= 200000,
+    "warmer-days": lambda a: len(a[0]) <= 5000,
+    "fair-candies": lambda a: len(a[0]) <= 400,
+    "k-palindrome": lambda a: len(a[0]) <= 12,
+    "next-permutation": lambda a: len(a[0]) <= 7,
+    "nearest-exit": lambda a: len(a[0]) * len(a[0][0]) <= 400,
+    "min-effort-path": lambda a: len(a[0]) * len(a[0][0]) <= 1600,
+    "cooldown-schedule": lambda a: len(a[0]) <= 10000,
+    "heater-radius": lambda a: len(a[0]) * len(a[1]) <= 2 * 10**6,
 }
 
 
@@ -676,10 +987,17 @@ def run_ops(cls, ops, args):
     return out
 
 
+def tree_args(pid, args):
+    args = json.loads(json.dumps(args))
+    for i in TREE_ARGS.get(pid, []):
+        args[i] = build_tree(args[i])
+    return args
+
+
 def solve(pid, ref, args):
     if pid == "scoreboard":
         return run_ops(ref, *args)
-    return ref(*json.loads(json.dumps(args)))
+    return ref(*tree_args(pid, args))
 
 
 def check(pid, brute, args, got):
@@ -691,7 +1009,7 @@ def check(pid, brute, args, got):
         return ok
     if brute is None or (pid in BRUTE_LIMITS and not BRUTE_LIMITS[pid](args)):
         return True
-    return brute(*json.loads(json.dumps(args))) == got
+    return brute(*tree_args(pid, args)) == got
 
 
 def main():

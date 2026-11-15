@@ -19,6 +19,54 @@ _sys, _setlimit = sys, sys.setrecursionlimit
 _Iterable, _Mapping = Iterable, Mapping
 _ns = {}
 MAX_STDOUT = 4000
+
+
+class TreeNode:
+    """Binary tree node given to the candidate's code (spec "trees": argument indexes)."""
+    def __init__(self, val=0, left=None, right=None):
+        self.val, self.left, self.right = val, left, right
+
+
+class _CompleteNode:
+    # A node of a huge complete binary tree with n nodes, made only when visited (children
+    # aren't cached, so a full traversal doesn't keep the whole tree in memory). Used by
+    # full-size tests: {"$complete": n}.
+    __slots__ = ("val", "_i", "_n")
+
+    def __init__(self, i, n):
+        self.val, self._i, self._n = i + 1, i, n
+
+    @property
+    def left(self):
+        j = 2 * self._i + 1
+        return _CompleteNode(j, self._n) if j < self._n else None
+
+    @property
+    def right(self):
+        j = 2 * self._i + 2
+        return _CompleteNode(j, self._n) if j < self._n else None
+
+
+def _build_tree(v):
+    # Level-order list with None for a missing child, e.g. [5, 3, 8, None, 4].
+    if isinstance(v, dict) and "$complete" in v:
+        return _CompleteNode(0, v["$complete"]) if v["$complete"] > 0 else None
+    if not v or v[0] is None:
+        return None
+    root = TreeNode(v[0])
+    queue, head, i = [root], 0, 1
+    while i < len(v):
+        node = queue[head]
+        head += 1
+        if v[i] is not None:
+            node.left = TreeNode(v[i])
+            queue.append(node.left)
+        i += 1
+        if i < len(v) and v[i] is not None:
+            node.right = TreeNode(v[i])
+            queue.append(node.right)
+        i += 1
+    return root
 RECURSION_LIMIT = 3000
 
 
@@ -102,7 +150,7 @@ def _run_ops(spec, args):
 
 def ct_load(code):
     global _ns
-    _ns = {"__name__": "solution"}
+    _ns = {"__name__": "solution", "TreeNode": TreeNode}
     _setlimit(RECURSION_LIMIT)
     buf, old = _Capture(), _sys.stdout
     _sys.stdout = buf
@@ -120,13 +168,18 @@ def ct_load(code):
 def ct_case(spec_json, args_json):
     spec, args = _loads(spec_json), _loads(args_json)
     keep = {i: _deepcopy(args[i]) for i in spec.get("keep", [])}
+    for i in spec.get("trees", []):
+        args[i] = _build_tree(args[i])
     buf, old = _Capture(), _sys.stdout
     _sys.stdout = buf
     try:
         if spec.get("cls"):
             out = _run_ops(spec, args)
         else:
-            out = _jsonable(_find(spec["fn"])(*args))
+            out = _find(spec["fn"])(*args)
+            if out is None and "inplace" in spec:
+                out = args[spec["inplace"]]  # changed the list in place and returned nothing
+            out = _jsonable(out)
         changed = [i for i, v in keep.items() if args[i] != v]
         if changed:
             res = {"ok": False, "err": {"type": "Changed input", "msg": "your function changed its input list; it must leave it as it was", "line": None}}

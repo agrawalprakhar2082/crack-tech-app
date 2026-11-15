@@ -303,6 +303,11 @@ window.PRACTICE_SESSIONS = [
     codingSet(7, "Graphs", "Find a cycle in a directed graph, then plan courses in the fewest semesters.", "graph-cycle", "course-semesters"),
     codingSet(8, "Hashing · Insight", "Check a sudoku board, then find the fewest moves to put a list in order.", "sudoku-check", "move-to-ends"),
     codingSet(9, "Class design · Heaps", "Design a scoreboard class, then take the k largest values from a heap without touching it.", "scoreboard", "heap-k-largest"),
-    codingSet(10, "Prefix sums · Two heaps", "Count subarrays that sum to k, then split employees into age halves day by day.", "subarray-sum-k", "age-halves")
+    codingSet(10, "Prefix sums · Two heaps", "Count subarrays that sum to k, then split employees into age halves day by day.", "subarray-sum-k", "age-halves"),
+    codingSet(11, "Trees", "Find dead ends in a binary search tree, then count a complete tree without visiting every node.", "bst-dead-ends", "complete-tree-count"),
+    codingSet(12, "Monotonic stack · Greedy", "Days until a warmer day with a stack, then hand out the fewest fair candies.", "warmer-days", "fair-candies"),
+    codingSet(13, "Strings · DP", "Can k deletions make a palindrome? Then rearrange a list into its next arrangement in place.", "k-palindrome", "next-permutation"),
+    codingSet(14, "Graphs · BFS · Dijkstra", "Distance from every room to the nearest exit, then the gentlest path across a height map.", "nearest-exit", "min-effort-path"),
+    codingSet(15, "Heaps · Binary search", "Schedule tasks with a cooldown, then find the smallest heater range that warms every house.", "cooldown-schedule", "heater-radius")
   );
 })();

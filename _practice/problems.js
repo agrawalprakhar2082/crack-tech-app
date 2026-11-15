@@ -5,7 +5,10 @@
 // Hidden tests live in _practice/tests/hidden/<id>.json (made by _practice/tests/generate.py
 // from the reference solutions in _practice/tests/ref/). Check everything with:
 //   node _practice/tests/verify.js
-// Text may use `backticks` for code. Types: int, long, bool, string, int[], int[][].
+// Text may use `backticks` for code. Types: int, long, bool, string, int[], int[][], tree
+// (a binary tree written in level order with null for a missing child; the runners turn it
+// into TreeNode objects with val, left and right). inplace: index of an argument the candidate
+// may change in place and return nothing (that argument is then taken as the answer).
 // compare: "exact" (default), "unordered", "float", or a checker in judge.js (e.g. "parens").
 // speed: true when the hidden tests include full-size inputs (see judge.js GENS); otherwise
 // the page says the hidden tests check correctness, not speed. keep: argument indexes the
@@ -597,5 +600,292 @@ window.PRACTICE_PROBLEMS = {
       "One person, equal ages, ages arriving in increasing and decreasing order",
       "O(n log n) time, O(n) space"],
     followup: "People can also leave. What changes? (Lazy deletion in both heaps, or an order-statistics tree.)"
+  },
+  /* ---------------- Session 11 ---------------- */
+  "bst-dead-ends": {
+    title: "No dead ends in a search tree",
+    fn: "noDeadEnds", params: [["root", "tree"]], returns: "bool",
+    statement: [
+      "`root` is a binary search tree of distinct positive integers: every value in a node's left subtree is smaller than the node, and every value in its right subtree is larger.",
+      "A leaf is a dead end if no new integer (at least 1, not already in the tree) could be added as its child without breaking that rule. For example, a leaf 4 whose ancestors force every value below it to lie strictly between 3 and 5 is a dead end: nothing fits on either side.",
+      "Return true if the tree has no dead ends, and false if at least one leaf is a dead end."],
+    input: ["`root`: the tree, written in level order with null (None in Python) for a missing child. The page builds `TreeNode` objects with `val`, `left` and `right` for you."],
+    output: "true if no leaf is a dead end, otherwise false. An empty tree has no dead ends.",
+    constraints: ["0 ≤ number of nodes ≤ 10⁴", "1 ≤ node values ≤ 10⁹, all distinct", "The input is a valid binary search tree"],
+    samples: [
+      { args: [[8, 4, 12, 2, 6, 10, 14]], expected: true, why: "Every leaf has room: e.g. 1 or 3 under the 2, and 5 or 7 under the 6." },
+      { args: [[5, 2, 8, 1, 3]], expected: false, why: "The leaf 1 must hold values between 0 and 2 below it: no positive integer fits." },
+      { args: [[10, 8, 15, null, 9]], expected: false, why: "The leaf 9 sits between 8 and 10, so nothing can go under it." }],
+    clarify: [
+      "Confirms values are positive and distinct, so 0 is the floor below the smallest value",
+      "Asks what counts as a leaf and what to return for an empty tree",
+      "Restates it as intervals: each node's value had to fit between a low and a high bound"],
+    look: [
+      "Passes (low, high) down the tree: left child gets (low, node), right child gets (node, high), starting from (0, ∞)",
+      "A leaf with value v is a dead end exactly when low = v − 1 and high = v + 1",
+      "Stops early on the first dead end",
+      "Iterative or recursive, with a word about recursion depth on a very tall tree"],
+    testing: [
+      "Empty tree, a single node 1 (it can still take 2 on the right), consecutive values, a long chain",
+      "O(n) time, O(h) space for the recursion or stack"],
+    followup: "Now values can be any integers, including negatives. What changes? (Start from (−∞, ∞): only a squeeze between two neighbours makes a dead end.)"
+  },
+  "complete-tree-count": {
+    speed: true,
+    title: "Count a complete tree",
+    fn: "countNodes", params: [["root", "tree"]], returns: "long",
+    statement: [
+      "`root` is a complete binary tree: every level is full except possibly the last, and the last level's nodes are as far left as possible.",
+      "Return the number of nodes. Visiting every node takes O(n); use the shape of the tree to do it in O(log² n).",
+      "In the tests, small trees are written as level-order lists. The full-size test is a tree with over a billion nodes that the page builds only as you visit it, so only a solution that visits about O(log² n) nodes finishes in time."],
+    input: ["`root`: the tree, in level order (the values don't matter, only the shape). The page builds `TreeNode` objects with `val`, `left` and `right`."],
+    output: "The number of nodes (0 for an empty tree).",
+    constraints: ["0 ≤ number of nodes ≤ 2·10⁹", "The tree is complete"],
+    samples: [
+      { args: [[1, 2, 3, 4, 5, 6]], expected: 6, why: "Two full levels (3 nodes) plus three nodes on the last level." },
+      { args: [[3, 1, 4, 1, 5, 9, 2, 6]], expected: 8 },
+      { args: [[]], expected: 0 }],
+    clarify: [
+      "Confirms what complete means, and that the values don't matter",
+      "Notes a perfect tree of height h has 2^h − 1 nodes",
+      "Aims below O(n): you can't afford to visit every node"],
+    look: [
+      "Measures the leftmost depth of the left and right subtrees (walking left only)",
+      "Equal depths: the left subtree is perfect, so add 2^depth and continue right; otherwise the right subtree is perfect (one level shorter), so add 2^depth and continue left",
+      "Each step costs O(log n) and there are O(log n) steps: O(log² n)",
+      "Uses shifts or powers carefully (no overflow for large counts)"],
+    testing: [
+      "Empty tree, one node, a perfect tree, a last level with one node or missing one node",
+      "O(log² n) time, O(1) extra space for the iterative version"],
+    followup: "Can you find the number of nodes on the last level with a binary search over positions? (Yes: test whether position i exists by walking down along its bits.)"
+  },
+
+  /* ---------------- Session 12 ---------------- */
+  "warmer-days": {
+    speed: true,
+    title: "Days until it's warmer",
+    fn: "daysUntilWarmer", params: [["temps", "int[]"]], returns: "int[]",
+    statement: [
+      "`temps[i]` is the temperature on day i. For each day, return how many days you have to wait for a strictly warmer day. If no later day is warmer, use 0.",
+      "Checking every later day for every day is O(n²); do it in one pass."],
+    input: ["`temps`: daily temperatures."],
+    output: "A list of the same length with the wait for each day.",
+    constraints: ["1 ≤ temps.length ≤ 2·10⁵", "−50 ≤ temps[i] ≤ 50"],
+    samples: [
+      { args: [[12, 15, 11, 9, 14, 20, 18]], expected: [1, 4, 2, 1, 1, 0, 0], why: "Day 1 (15°) waits until day 5 (20°): 4 days. The last two days never see a warmer day." },
+      { args: [[5, 5, 5]], expected: [0, 0, 0], why: "Equal isn't warmer." },
+      { args: [[-3, -1, 2]], expected: [1, 1, 0] }],
+    clarify: [
+      "Confirms strictly warmer, and 0 when there's none",
+      "Asks about the size of the input (rules out O(n²))",
+      "Thinks of it as 'next greater element'"],
+    look: [
+      "A stack of indexes whose temperatures don't increase from bottom to top",
+      "For each day, pop every day that's colder than today and record the distance",
+      "Each index is pushed and popped at most once: O(n)",
+      "Days left on the stack keep 0"],
+    testing: [
+      "One day, all equal, strictly rising, strictly falling",
+      "O(n) time, O(n) space for the stack"],
+    followup: "Temperatures can only be −50 to 50. Is there another O(n·range) approach scanning from the right? (Keep the next index of each temperature.)"
+  },
+  "fair-candies": {
+    speed: true,
+    title: "Fair candies",
+    fn: "minCandies", params: [["ratings", "int[]"]], returns: "long",
+    statement: [
+      "Children stand in a row, and `ratings[i]` is child i's rating. Give out candies so that every child gets at least one, and a child with a higher rating than a neighbour gets more candies than that neighbour. Children with equal ratings have no rule between them.",
+      "Return the fewest candies in total."],
+    input: ["`ratings`: one rating per child, in row order."],
+    output: "The minimum total number of candies.",
+    constraints: ["1 ≤ ratings.length ≤ 10⁵", "0 ≤ ratings[i] ≤ 2·10⁵"],
+    samples: [
+      { args: [[2, 6, 6, 3]], expected: 6, why: "1, 2, 2, 1: each 6 beats its smaller neighbour, and the two 6s don't need to differ." },
+      { args: [[4, 3, 2, 1]], expected: 10, why: "4, 3, 2, 1 candies." },
+      { args: [[7]], expected: 1 }],
+    clarify: [
+      "Asks what happens between equal neighbours (no rule)",
+      "Notices each child depends on both sides",
+      "Asks whether the total can exceed 32 bits (it can approach n²/2)"],
+    look: [
+      "Two passes: left to right for rising slopes, right to left for falling ones, taking the larger requirement",
+      "Explains why the larger of the two requirements is both enough and necessary",
+      "O(n) time; O(1) extra space is a possible follow-up with slope counting",
+      "Uses a 64-bit total"],
+    testing: [
+      "One child, all equal, strictly rising, strictly falling, a peak and a valley",
+      "O(n) time, O(n) space"],
+    followup: "Can you do it in O(1) extra space? (Count lengths of rising and falling runs and add arithmetic series.)"
+  },
+
+  /* ---------------- Session 13 ---------------- */
+  "k-palindrome": {
+    speed: true,
+    title: "Palindrome within k removals",
+    fn: "canMakePalindrome", params: [["s", "string"], ["k", "int"]], returns: "bool",
+    statement: [
+      "Can you turn the string `s` into a palindrome (it reads the same both ways) by deleting at most `k` of its characters?",
+      "Trying every set of deletions is exponential. Find the fewest deletions with dynamic programming in O(n²)."],
+    input: ["`s`: lowercase letters.", "`k`: the most characters you may delete."],
+    output: "true if at most k deletions make s a palindrome, otherwise false.",
+    constraints: ["0 ≤ s.length ≤ 1000", "0 ≤ k ≤ s.length"],
+    samples: [
+      { args: ["radar", 0], expected: true },
+      { args: ["bandana", 2], expected: true, why: "Delete the b and the d: \"anana\"." },
+      { args: ["abcde", 3], expected: false, why: "At least four deletions are needed: only one letter can stay." }],
+    clarify: [
+      "Confirms only deletions are allowed, and the empty string counts as a palindrome",
+      "Connects it to the longest palindromic subsequence: deletions = n − LPS",
+      "Checks the size: n ≤ 1000 allows O(n²), not more"],
+    look: [
+      "dp[i][j] = fewest deletions to make s[i..j] a palindrome: equal ends → dp[i+1][j−1], otherwise 1 + min(dp[i+1][j], dp[i][j−1])",
+      "Or LPS via LCS of s and its reverse",
+      "Fills the table in the right order (by length, or i from the end) and keeps O(n) memory with two rows",
+      "Can stop early when the answer is clearly over k (optional)"],
+    testing: [
+      "Empty string, one letter, already a palindrome, all different letters, k = 0",
+      "O(n²) time, O(n) space with two rows"],
+    followup: "If k is much smaller than n, can you beat O(n²)? (Compare s with its reverse in an edit-distance table and keep only the band within k of the diagonal: O(n·k).)"
+  },
+  "next-permutation": {
+    title: "Next arrangement",
+    fn: "nextPermutation", params: [["nums", "int[]"]], returns: "int[]", inplace: 0,
+    statement: [
+      "Rearrange the list `nums` into the next arrangement in dictionary order: the smallest arrangement that is larger than the current one. If the list is already the largest arrangement (sorted from high to low), wrap around to the smallest one (sorted low to high).",
+      "Change the list in place using O(1) extra memory, and return it. (Returning nothing after changing the list also works.)"],
+    input: ["`nums`: integers, possibly with repeats."],
+    output: "The same list, rearranged.",
+    constraints: ["1 ≤ nums.length ≤ 100", "0 ≤ nums[i] ≤ 100"],
+    samples: [
+      { args: [[2, 4, 3, 1]], expected: [3, 1, 2, 4], why: "The 2 is the last place that can grow: swap it with 3 (the smallest bigger value to its right), then sort what follows." },
+      { args: [[5, 4, 1]], expected: [1, 4, 5], why: "Already the largest, so wrap around." },
+      { args: [[1, 1, 2]], expected: [1, 2, 1] }],
+    clarify: [
+      "Asks what to do with the largest arrangement (wrap around) and with repeated values",
+      "Works a small example by hand before coding",
+      "Confirms in place with O(1) extra memory"],
+    look: [
+      "Finds the rightmost i with nums[i] < nums[i + 1]",
+      "Swaps it with the rightmost value bigger than nums[i]",
+      "Reverses the suffix after i (it was in falling order), which also handles the wrap-around",
+      "Uses ≥ and ≤ correctly so repeated values work"],
+    testing: [
+      "One element, two equal elements, the largest arrangement, repeated values like [1, 5, 1]",
+      "O(n) time, O(1) extra space"],
+    followup: "Return the k-th next arrangement instead. (Use factorial numbering instead of calling this k times.)"
+  },
+
+  /* ---------------- Session 14 ---------------- */
+  "nearest-exit": {
+    speed: true,
+    title: "Distance to the nearest exit",
+    fn: "fillDistances", params: [["grid", "int[][]"]], returns: "int[][]", inplace: 0,
+    statement: [
+      "A building plan is a grid. Each cell is a wall (−1), an exit (0) or a room, marked `ROOM` = 2147483647 (2³¹ − 1). You can move up, down, left or right, but not through walls.",
+      "Replace every room with the number of steps to its nearest exit. Rooms that can't reach any exit keep 2147483647. Return the grid (changing it in place is fine).",
+      "Running a search from every room is far too slow on a large plan: aim for O(rows × cols)."],
+    input: ["`grid`: rows of −1, 0 or 2147483647."],
+    output: "The grid with each room replaced by its distance to the nearest exit.",
+    constraints: ["1 ≤ rows, cols ≤ 500", "Each cell is −1, 0 or 2147483647"],
+    samples: [
+      { args: [[[2147483647, -1, 0], [2147483647, 2147483647, 2147483647], [0, -1, 2147483647]]], expected: [[2, -1, 0], [1, 2, 1], [0, -1, 2]], why: "The bottom-left exit is nearest for the left column; the top-right exit for the right column." },
+      { args: [[[2147483647, -1], [-1, 0]]], expected: [[2147483647, -1], [-1, 0]], why: "The top-left room is walled in, so it keeps the room marker." }],
+    clarify: [
+      "Confirms the markers and that walls block movement (no diagonals)",
+      "Asks what an unreachable room should hold",
+      "Spots that the question is about exits, so start the search from them"],
+    look: [
+      "Multi-source BFS: put every exit in the queue at distance 0, then expand level by level",
+      "A room is written the first time it's reached, which is its shortest distance",
+      "Doesn't re-queue cells, so it's O(rows × cols)",
+      "Explains why BFS from each room or each exit is slower"],
+    testing: [
+      "A single cell of each kind, a room boxed in by walls, several exits at the same distance",
+      "O(rows × cols) time and space"],
+    followup: "Exits now have different opening delays (a cost to start from each). What changes? (Dijkstra with multiple sources, or 0-1 BFS for small costs.)"
+  },
+  "min-effort-path": {
+    speed: true,
+    title: "Gentlest path",
+    fn: "minEffort", params: [["heights", "int[][]"]], returns: "int",
+    statement: [
+      "`heights` is a grid of ground heights. You walk from the top-left cell to the bottom-right cell, moving up, down, left or right. The effort of a path is the largest absolute height difference between two consecutive cells on it.",
+      "Return the smallest effort of any path."],
+    input: ["`heights`: rows of heights."],
+    output: "The minimum effort (0 if the grid has one cell).",
+    constraints: ["1 ≤ rows, cols ≤ 200", "1 ≤ heights[r][c] ≤ 10⁶"],
+    samples: [
+      { args: [[[1, 3, 2], [6, 5, 8], [4, 9, 3]]], expected: 5, why: "For example 1 → 3 → 5 → 8 → 3 has steps 2, 2, 3 and 5; every path to the corner needs a step of at least 5." },
+      { args: [[[4, 4, 4, 4]]], expected: 0 }],
+    clarify: [
+      "Confirms the effort is the maximum step on the path, not the sum",
+      "Asks about grid size and height range",
+      "Names two approaches: Dijkstra on the maximum, or binary search on the effort with a reachability check"],
+    look: [
+      "Dijkstra where a path's cost is max(cost so far, next step), with a min-heap and stale-entry skipping",
+      "Or binary search on the effort with BFS/DFS, or union-find adding edges by size",
+      "Stops when the target cell is popped",
+      "States the complexity of the chosen approach"],
+    testing: [
+      "One cell, one row, flat ground, a cliff that must be crossed",
+      "Dijkstra: O(R·C·log(R·C)); binary search: O(R·C·log H)"],
+    followup: "Allow one 'jump' that ignores a single step's height difference. How does the state change? (Add a used-the-jump flag to each cell.)"
+  },
+
+  /* ---------------- Session 15 ---------------- */
+  "cooldown-schedule": {
+    title: "Tasks with a cooldown",
+    fn: "leastTime", params: [["tasks", "string"], ["n", "int"]], returns: "int",
+    statement: [
+      "A machine runs tasks, one per time unit. `tasks` lists the tasks to run as capital letters (the same letter means the same kind of task), in any order you like. Two runs of the same kind must be at least `n` time units apart; the machine may sit idle.",
+      "Return the fewest time units needed to run every task."],
+    input: ["`tasks`: capital letters A–Z.", "`n`: the cooldown between two tasks of the same kind."],
+    output: "The minimum total time, idle units included.",
+    constraints: ["1 ≤ tasks.length ≤ 10⁴", "0 ≤ n ≤ 100"],
+    samples: [
+      { args: ["AAABC", 2], expected: 7, why: "A B C A _ _ A: the three As need two gaps each, and B and C fill one gap." },
+      { args: ["AABB", 0], expected: 4 },
+      { args: ["XXYYZ", 3], expected: 6, why: "X Y Z _ X Y." }],
+    clarify: [
+      "Confirms tasks can run in any order and what n means exactly (n units between, so n + 1 apart)",
+      "Notices the most frequent task decides the frame",
+      "Asks for size limits"],
+    look: [
+      "Counting formula: max(len, (maxCount − 1)·(n + 1) + number of kinds with maxCount)",
+      "Or a simulation with a max-heap and a cooldown queue, with its cost",
+      "Explains why the formula works, including when there are enough tasks to need no idle time",
+      "Handles n = 0"],
+    testing: [
+      "One task, n = 0, several kinds tied for the maximum, many kinds so no idle time is needed",
+      "O(len) time, O(1) space (26 counters)"],
+    followup: "Now the tasks must run in the given order. How do you compute the time? (Track the last run time of each kind.)"
+  },
+  "heater-radius": {
+    speed: true,
+    title: "Heater range",
+    fn: "minRadius", params: [["houses", "int[]"], ["heaters", "int[]"]], returns: "int",
+    statement: [
+      "Houses and heaters stand on a straight street, at the positions in `houses` and `heaters` (in no particular order; several can share a spot). Every heater warms everything within distance r of it.",
+      "Return the smallest whole number r so that every house is warmed by at least one heater."],
+    input: ["`houses`: house positions.", "`heaters`: heater positions."],
+    output: "The minimum radius.",
+    constraints: ["1 ≤ houses.length, heaters.length ≤ 10⁵", "1 ≤ positions ≤ 10⁹"],
+    samples: [
+      { args: [[2, 9, 15], [4, 12]], expected: 3, why: "House 9 and house 15 are each 3 away from their nearest heater." },
+      { args: [[1, 5], [10]], expected: 9 },
+      { args: [[7, 7], [7]], expected: 0 }],
+    clarify: [
+      "Asks whether the inputs are sorted (they aren't) and whether positions repeat",
+      "Restates it: the answer is the largest distance from a house to its nearest heater",
+      "Rules out O(houses × heaters) for the sizes given"],
+    look: [
+      "Sorts the heaters, then binary-searches each house's neighbours (or sorts both and uses two pointers)",
+      "Checks both the heater before and after each house, and the ends of the street",
+      "Takes the maximum of the nearest distances",
+      "O((n + m) log m)"],
+    testing: [
+      "One heater, houses on both sides of it, a house exactly on a heater, repeated positions",
+      "O((n + m) log m) time, O(m) space for the sorted copy"],
+    followup: "You may now place k heaters anywhere. What's the smallest radius? (Binary search on r with a greedy placement.)"
   }
 };
