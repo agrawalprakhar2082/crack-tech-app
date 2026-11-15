@@ -30,6 +30,17 @@
   const EXCALIDRAW_PATH = "@excalidraw/excalidraw@0.17.6/dist/";
   const REACT = [CDN + "react@18.3.1/umd/react.production.min.js", CDN + "react-dom@18.3.1/umd/react-dom.production.min.js"];
 
+  // Running tests (coding practice sets). JavaScript runs in a fresh Web Worker per run;
+  // Python runs in Pyodide in a worker that stays loaded. A test that runs longer than
+  // CASE_MS is stopped by terminating the worker. Pyodide is pinned and loads from
+  // jsDelivr (its own CDN path first, then the npm mirror).
+  const RUNNABLE = { python: true, javascript: true };
+  const CASE_MS = 5000;
+  const PY_LOAD_MS = 90000;
+  const PYODIDE = ["https://cdn.jsdelivr.net/pyodide/v0.26.4/full/", CDN + "pyodide@0.26.4/"];
+  // Built files (the build adds ?v= to each, so new versions aren't served from cache).
+  const FILES = { js: "/practice/runner-js.js", py: "/practice/runner-py.js", harness: "/practice/harness.py", hidden: "/practice/hidden/", hiddenV: "" };
+
   const LANGS = {
     python:     { label: "Python",     mode: "python",          fence: "python",     file: "python/python" },
     java:       { label: "Java",       mode: "text/x-java",     fence: "java",       file: "clike/clike" },
@@ -88,25 +99,65 @@
   }
   const timeout = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error("timeout")), ms))]);
 
+  const PROBLEMS = window.PRACTICE_PROBLEMS || {};
+  const J = window.PracticeJudge;
   // Prompt ids like "3-0" (block 3, prompt 0); flags per session.
   SESSIONS.forEach(s => {
     s.prompts = [];
-    s.blocks.forEach((b, bi) => b.prompts.forEach((p, pi) => { p.id = bi + "-" + pi; p.block = bi; s.prompts.push(p); }));
+    s.blocks.forEach((b, bi) => b.prompts.forEach((p, pi) => {
+      p.id = bi + "-" + pi; p.block = bi; s.prompts.push(p);
+      if (p.problem && PROBLEMS[p.problem]) p.prob = PROBLEMS[p.problem];
+    }));
     s.hasCode = s.prompts.some(p => p.kind === "code");
+    s.hasTests = s.prompts.some(p => p.prob);
     s.total = s.prompts.length;
   });
+
+  /* ---------- starter code for runnable questions ---------- */
+  const snake = n => n.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+  const TYPES = {
+    int:       { python: "int", java: "int", cpp: "int", javascript: "number", typescript: "number", go: "int", csharp: "int" },
+    long:      { python: "int", java: "long", cpp: "long long", javascript: "number", typescript: "number", go: "int64", csharp: "long" },
+    bool:      { python: "bool", java: "boolean", cpp: "bool", javascript: "boolean", typescript: "boolean", go: "bool", csharp: "bool" },
+    string:    { python: "str", java: "String", cpp: "string", javascript: "string", typescript: "string", go: "string", csharp: "string" },
+    "int[]":   { python: "list[int]", java: "int[]", cpp: "vector<int>", javascript: "number[]", typescript: "number[]", go: "[]int", csharp: "int[]" },
+    "int[][]": { python: "list[list[int]]", java: "int[][]", cpp: "vector<vector<int>>", javascript: "number[][]", typescript: "number[][]", go: "[][]int", csharp: "int[][]" }
+  };
+  // The function name in each language: snake_case in Python, PascalCase in C#.
+  const fnName = (prob, lang) => lang === "python" ? snake(prob.fn) : lang === "csharp" ? prob.fn[0].toUpperCase() + prob.fn.slice(1) : prob.fn;
+  function starter(prob, lang) {
+    if (prob.starters) return prob.starters[lang] || "";
+    const t = ty => TYPES[ty][lang], name = fnName(prob, lang), ps = prob.params, ret = t(prob.returns);
+    const typed = sep => ps.map(([n, ty]) => sep(n, ty)).join(", ");
+    const cppArg = (n, ty) => (/\[\]|string/.test(ty) ? `${t(ty)}& ` : `${t(ty)} `) + n;
+    switch (lang) {
+      case "python": return `def ${name}(${typed((n, ty) => `${n}: ${t(ty)}`)}) -> ${ret}:\n    # Your code here\n    pass\n`;
+      case "javascript": return `/**\n${ps.map(([n, ty]) => ` * @param {${t(ty)}} ${n}`).join("\n")}\n * @return {${ret}}\n */\nfunction ${name}(${ps.map(p => p[0]).join(", ")}) {\n    // Your code here\n}\n`;
+      case "typescript": return `function ${name}(${typed((n, ty) => `${n}: ${t(ty)}`)}): ${ret} {\n    // Your code here\n}\n`;
+      case "java": return `class Solution {\n    public ${ret} ${name}(${typed((n, ty) => `${t(ty)} ${n}`)}) {\n        // Your code here\n    }\n}\n`;
+      case "cpp": return `class Solution {\npublic:\n    ${ret} ${name}(${typed(cppArg)}) {\n        // Your code here\n    }\n};\n`;
+      case "go": return `func ${name}(${typed((n, ty) => `${n} ${t(ty)}`)}) ${ret} {\n    // Your code here\n}\n`;
+      case "csharp": return `public class Solution {\n    public ${ret} ${name}(${typed((n, ty) => `${t(ty)} ${n}`)}) {\n        // Your code here\n    }\n}\n`;
+    }
+    return "";
+  }
+  // Code that is only a starter (in any language) doesn't count as an answer.
+  const isStarter = (p, code) => !!p.prob && Object.keys(LANGS).some(l => starter(p.prob, l).trim() === code.trim());
   // An answer counts only when it has text, and isn't just the code we pre-filled.
   const answerOf = (p, st) => {
     const a = ((st && st.answers && st.answers[p.id]) || "").trim();
-    return p.given && a === p.given.trim() ? "" : a;
+    return (p.given && a === p.given.trim()) || isStarter(p, a) ? "" : a;
   };
+  // `code` in problem text.
+  const rich = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
   const answeredCount = (s, st) => s.prompts.filter(p => answerOf(p, st)).length;
 
   /* ======================= Session list ======================= */
   const TRACKS = [
     { name: "Behavioral", note: "Stories with structure: situation, what you did, and the result." },
     { name: "System design", note: "Notes for each step, plus a whiteboard to draw your design." },
-    { name: "Coding", note: "A code editor in your language, with tests and complexity." }
+    { name: "Coding", note: "A code editor in your language, with tests and complexity." },
+    { name: "Coding practice sets", note: "Ten sets of two questions, easier to harder. Run your code against sample and hidden tests in Python or JavaScript." }
   ];
   function renderList() {
     $("#tracks").innerHTML = TRACKS.map(t => {
@@ -116,7 +167,7 @@
         <div class="session-grid">${list.map(s => {
           const st = store.get(sKey(s.id)), done = answeredCount(s, st);
           const badge = st && st.sentAt ? `<span class="badge sent">✓ Sent for review</span>`
-            : done ? `<span class="badge">${done} of ${s.total} answered</span>` : `<span class="badge muted">${plural(s.total, "question")}</span>`;
+            : done ? `<span class="badge">${done} of ${s.total} ${s.questions ? "parts" : "answered"}${s.questions ? " answered" : ""}</span>` : `<span class="badge muted">${plural(s.questions || s.total, "question")}</span>`;
           return `<a class="session-card" href="#${esc(s.id)}">
             <div class="session-meta"><span>${esc(s.tag || s.track)}</span><span>${MINUTES} min</span></div>
             <h3>${esc(s.title)}</h3><p>${esc(s.blurb)}</p>
@@ -129,7 +180,8 @@
   let cur = null, state = null, saveT = null, tickT = null;
   let dirty = false, stale = false, applying = false; // unsaved local edits; another tab changed this session; applying another tab's data
   const editors = {};          // prompt id -> CodeMirror instance
-  const blank = () => ({ answers: {}, elapsed: 0, runningSince: null, seenAt: null, sentAt: null, lang: "python", note: "" });
+  // runs: prompt id -> language -> { last, submit }: the latest test results in each language.
+  const blank = () => ({ answers: {}, elapsed: 0, runningSince: null, seenAt: null, sentAt: null, lang: "python", note: "", runs: {} });
 
   function open(id) {
     const s = SESSIONS.find(x => x.id === id);
@@ -140,6 +192,7 @@
     cur = s; state = Object.assign(blank(), store.get(sKey(id)) || {}); dirty = false; stale = false;
     try { sessionStorage.setItem("ct-practice:open", id); } catch (e) {}
     if (!LANGS[state.lang]) state.lang = "python";
+    if (!state.runs || typeof state.runs !== "object") state.runs = {};
     let awayNote = "";
     if (state.runningSince && state.seenAt && Date.now() - state.seenAt > AWAY_PAUSE_MS) {
       state.elapsed += Math.max(0, state.seenAt - state.runningSince); state.runningSince = null;
@@ -174,6 +227,7 @@
         ${s.board ? boardSection() : ""}
         ${s.blocks.map((b, bi) => `<section class="block" id="block-${bi}" aria-labelledby="bh-${bi}">
           <div class="block-head"><h2 id="bh-${bi}"><span class="num">${String(bi + 1).padStart(2, "0")}</span>${esc(b.name)}</h2><span>${b.min} min</span></div>
+          ${b.problem && PROBLEMS[b.problem] ? problemCard(PROBLEMS[b.problem], s, bi) : ""}
           ${b.prompts.map(p => promptCard(p)).join("")}
         </section>`).join("")}
         ${submitPanel(s)}
@@ -181,8 +235,9 @@
 
     s.prompts.forEach(p => {
       const ta = $("#a-" + p.id);
-      // The "review the AI's code" answer starts as a copy of the AI's code to edit.
-      ta.value = state.answers[p.id] || (p.given || "");
+      // The "review the AI's code" answer starts as a copy of the AI's code to edit;
+      // runnable questions start with the function signature in the chosen language.
+      ta.value = state.answers[p.id] || (p.given || "") || (p.prob ? starter(p.prob, state.lang) : "");
       count(p.id);
       ta.addEventListener("input", () => { if (!applying) { state.answers[p.id] = ta.value; queueSave(); } count(p.id); });
       if (p.kind === "code") ta.addEventListener("keydown", tabKey);
@@ -207,6 +262,7 @@
     if (s.board) setupBoardButtons();
     setupDictation();
     if (s.hasCode) setupEditors();
+    if (s.hasTests) setupRuns();
     paintSaved();
     if (awayNote) { flash(awayNote); save(); }
     clearInterval(tickT); ticks = 0; tickT = setInterval(tick, 1000); tick();
@@ -220,6 +276,7 @@
     if (s.track !== "Coding") parts.push(SR ? "Type, or press <b>Dictate</b> and speak." : "Type your answers. (Dictation works in Chrome, Edge and Safari.)");
     if (s.board) parts.push("Draw your design on the whiteboard.");
     if (s.hasCode) parts.push("Pick your language for the code editor.");
+    if (s.hasTests) parts.push("<b>Run</b> checks your code against the sample tests and <b>Submit</b> adds the hidden tests, in Python or JavaScript, right in your browser.");
     parts.push("Everything saves in this browser as you go.");
     return parts.join(" ");
   }
@@ -228,10 +285,11 @@
     const code = p.kind === "code";
     const langSel = code ? `<label class="lang-pick">Language <select class="lang">${Object.entries(LANGS).map(([k, l]) => `<option value="${k}">${esc(l.label)}</option>`).join("")}</select></label>` : "";
     return `<article class="prompt${code ? " is-code" : ""}">
-      <p class="q" id="q-${p.id}">${esc(p.q)}</p>
+      <p class="q" id="q-${p.id}">${rich(p.q)}</p>
       ${p.given ? `<div class="given"><div class="given-label">The AI's code (Python)</div><pre><code id="g-${p.id}">${esc(p.given)}</code></pre></div>` : ""}
       ${code ? `<div class="editor-top">${langSel}<span class="editor-note" id="en-${p.id}"></span></div>` : ""}
       <textarea id="a-${p.id}" class="${code ? "ta-code" : "ta-text"}" spellcheck="${code ? "false" : "true"}" rows="${code ? 12 : 5}" placeholder="${code ? "Write your code here" : "Your answer"}" aria-labelledby="q-${p.id}"></textarea>
+      ${p.prob ? runArea(p) : ""}
       <div class="interim" id="i-${p.id}" aria-hidden="true"></div>
       <div class="prompt-tools">
         ${code ? "" : `<button class="btn btn-outline btn-sm mic" type="button" data-p="${p.id}" aria-pressed="false" aria-describedby="q-${p.id}" hidden><span class="dot"></span><span class="mic-label">Dictate</span></button><span class="mic-state" id="ms-${p.id}" aria-live="polite"></span>`}
@@ -240,6 +298,45 @@
       <details class="look"><summary>What interviewers look for</summary><ul>${p.look.map(l => `<li>${esc(l)}</li>`).join("")}</ul>
         <p class="pnote">Answer first, then compare.</p></details>
     </article>`;
+  }
+
+  // The problem statement, shown at the top of each question's first block.
+  function argText(name, v) {
+    const one = J.show(v, 100000);
+    const multi = Array.isArray(v) && v.length > 1 && v.every(Array.isArray) && one.length > 70;
+    return `${name} = ${multi ? "[\n  " + v.map(r => J.show(r, 100000)).join(",\n  ") + "\n]" : one}`;
+  }
+  const argNames = prob => prob.cls ? ["ops", "args"] : prob.params.map(p => p[0]);
+  function problemCard(prob, s, bi) {
+    const qn = s.blocks.slice(0, bi + 1).filter(b => b.problem).length;
+    const ex = prob.samples.map((t, i) => `<div class="ex">
+        <div class="ex-label">Example ${i + 1}</div>
+        <pre><code>${esc(t.args.map((a, j) => argText(argNames(prob)[j], a)).join("\n"))}</code></pre>
+        <p class="ex-out"><span>Output</span> <code data-ex="${i}">${esc(J.expectedText(prob.compare, t.expected, state.lang))}</code></p>
+        ${t.why ? `<p class="ex-why">${rich(t.why)}</p>` : ""}
+      </div>`).join("");
+    return `<article class="problem" aria-labelledby="pt-${bi}" data-problem="${esc(s.blocks[bi].problem)}">
+      <div class="problem-kicker">Question ${qn}</div>
+      <h3 id="pt-${bi}">${esc(prob.title)}</h3>
+      ${prob.statement.map(t => `<p>${rich(t)}</p>`).join("")}
+      <div class="problem-io">
+        <div><h4>Input</h4><ul>${prob.input.map(t => `<li>${rich(t)}</li>`).join("")}</ul></div>
+        <div><h4>Output</h4><p>${rich(prob.output)}</p></div>
+      </div>
+      <h4>Constraints</h4><ul class="constraints">${prob.constraints.map(t => `<li>${rich(t)}</li>`).join("")}</ul>
+      <p class="speed-note">${prob.speed ? "Hidden tests include inputs at the full constraint size: a solution slower than the target complexity runs out of time." : "Hidden tests check correctness on edge cases and medium inputs; they don't measure speed for this question, so state your complexity out loud."}</p>
+      <h4>Examples <small>(these are also the sample tests)</small></h4>
+      <div class="examples">${ex}</div>
+    </article>`;
+  }
+  function runArea(p) {
+    return `<div class="run-bar" id="rb-${p.id}">
+        <button class="btn btn-outline btn-sm" type="button" data-run="samples" data-p="${p.id}" aria-describedby="rs-${p.id}">Run</button>
+        <button class="btn btn-primary btn-sm" type="button" data-run="all" data-p="${p.id}" aria-describedby="rs-${p.id}">Submit</button>
+        <span class="run-state" id="rs-${p.id}" role="status" aria-live="polite"></span>
+      </div>
+      <p class="run-off" id="ro-${p.id}" hidden></p>
+      <div class="results" id="rr-${p.id}"></div>`;
   }
 
   function submitPanel(s) {
@@ -285,7 +382,7 @@
     const v = (state.answers[id] || "").trim();
     const el = $("#c-" + id); if (!el) return;
     const p = cur.prompts.find(x => x.id === id);
-    el.textContent = !v || (p.given && v === p.given.trim()) ? "" : p.kind === "code" ? plural(v.split("\n").length, "line") : plural(v.split(/\s+/).length, "word");
+    el.textContent = !v || (p.given && v === p.given.trim()) || isStarter(p, v) ? "" : p.kind === "code" ? plural(v.split("\n").length, "line") : plural(v.split(/\s+/).length, "word");
   }
   function autoGrow(ta) {
     const fit = () => { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight + 2, 640) + "px"; };
@@ -382,7 +479,7 @@
   // The same session open in another tab: never overwrite its newer data silently.
   // With no unsaved edits here, this tab takes the other tab's data; otherwise it stops
   // saving and asks which version to keep.
-  const contentKey = st => JSON.stringify([st.answers || {}, st.note || "", st.lang, st.elapsed || 0, st.runningSince || null, st.sentAt || null]);
+  const contentKey = st => JSON.stringify([st.answers || {}, st.note || "", st.lang, st.elapsed || 0, st.runningSince || null, st.sentAt || null, st.runs || {}]);
   addEventListener("storage", e => {
     if (!cur) return;
     if (e.key === sKey(cur.id)) {
@@ -413,9 +510,10 @@
   // Show another tab's saved data here without marking it as a local edit.
   function adopt(theirs) {
     state = Object.assign(blank(), theirs); dirty = false;
+    if (!state.runs || typeof state.runs !== "object") state.runs = {};
     applying = true;
     cur.prompts.forEach(p => {
-      const v = state.answers[p.id] || (p.given || "");
+      const v = state.answers[p.id] || (p.given || "") || (p.prob ? starter(p.prob, state.lang) : "");
       if (editors[p.id]) { if (editors[p.id].getValue() !== v) editors[p.id].setValue(v); }
       else { const ta = $("#a-" + p.id); if (ta && ta.value !== v) { ta.value = v; ta.dispatchEvent(new Event("input")); } }
       count(p.id);
@@ -489,11 +587,14 @@
           mode: LANGS[state.lang].mode, theme: "ct", lineNumbers: true, indentUnit: 4, tabSize: 4,
           indentWithTabs: false, matchBrackets: true, autoCloseBrackets: true, lineWrapping: narrow(),
           viewportMargin: Infinity, inputStyle: "contenteditable", screenReaderLabel: p.q.slice(0, 160),
-          extraKeys: { Tab: c => c.somethingSelected() ? c.indentSelection("add") : c.replaceSelection("    ", "end"), "Shift-Tab": c => c.indentSelection("subtract"), Esc: c => c.getInputField().blur() }
+          extraKeys: Object.assign({ Tab: c => c.somethingSelected() ? c.indentSelection("add") : c.replaceSelection("    ", "end"), "Shift-Tab": c => c.indentSelection("subtract"), Esc: c => c.getInputField().blur() },
+            p.prob ? { "Ctrl-Enter": () => runTests(p, false), "Cmd-Enter": () => runTests(p, false), "Shift-Ctrl-Enter": () => runTests(p, true), "Shift-Cmd-Enter": () => runTests(p, true) } : {})
         });
         cm.on("change", () => { if (!applying) { state.answers[p.id] = cm.getValue(); queueSave(); } count(p.id); });
+        // Start loading Python when someone starts on a runnable question in Python.
+        if (p.prob) cm.on("focus", () => { if (state.lang === "python") warmPython(); });
         editors[p.id] = cm;
-        $("#en-" + p.id).textContent = p.given ? "Starts as the AI's code: edit it · Esc leaves the editor" : "Tab indents · Esc leaves the editor";
+        $("#en-" + p.id).textContent = p.given ? "Starts as the AI's code: edit it · Esc leaves the editor" : p.prob ? "Ctrl+Enter runs · Shift+Ctrl+Enter submits · Esc leaves the editor" : "Tab indents · Esc leaves the editor";
         if (p.given) {
           const g = $("#g-" + p.id), pre = g.parentElement;
           const view = CodeMirror(el => pre.replaceWith(el), { value: p.given, mode: "python", theme: "ct", readOnly: "nocursor", lineNumbers: true, lineWrapping: true, viewportMargin: Infinity });
@@ -507,11 +608,245 @@
   }
   function setLang(lang) {
     if (!LANGS[lang]) return;
-    state.lang = lang; queueSave(); applyLang(lang);
+    state.lang = lang;
+    // Untouched starter code follows the language; code you've written stays as it is.
+    cur.prompts.forEach(p => {
+      if (!p.prob) return;
+      const code = codeOf(p);
+      if (code.trim() && !isStarter(p, code)) return;
+      const next = starter(p.prob, lang);
+      if (editors[p.id]) editors[p.id].setValue(next);
+      else { const ta = $("#a-" + p.id); if (ta) { ta.value = next; ta.dispatchEvent(new Event("input")); } }
+      state.answers[p.id] = next;
+    });
+    queueSave(); applyLang(lang);
   }
   function applyLang(lang) {
     $$(".lang").forEach(s => { s.value = lang; });
     Object.values(editors).forEach(cm => { cm.setOption("mode", LANGS[lang].mode); cm.setOption("placeholder", `Write your ${LANGS[lang].label} code here`); });
+    if (cur && cur.hasTests) {
+      cur.prompts.forEach(p => { if (p.prob) paintRun(p); });
+      // Example outputs read as Python (None, True) or JavaScript (null, true).
+      $$(".problem[data-problem]").forEach(card => {
+        const prob = PROBLEMS[card.dataset.problem];
+        card.querySelectorAll("[data-ex]").forEach(el => { el.textContent = J.expectedText(prob.compare, prob.samples[+el.dataset.ex].expected, lang); });
+      });
+    }
+  }
+  const codeOf = p => editors[p.id] ? editors[p.id].getValue() : (($("#a-" + p.id) || {}).value || "");
+
+
+  /* ======================= Running tests ======================= */
+  // Run: the sample tests (inputs, expected and your output shown). Submit: samples plus
+  // hidden tests (only counts and the first failing test's number are shown). Results are
+  // kept per language in state.runs and go into the downloaded and sent answers.
+  const running = {};          // prompt id -> true while its tests run
+  const hiddenCache = {};
+  const hashCode = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+  function setupRuns() {
+    $$("[data-run]").forEach(b => b.addEventListener("click", () => {
+      const p = cur.prompts.find(x => x.id === b.dataset.p);
+      if (p) runTests(p, b.dataset.run === "all");
+    }));
+    cur.prompts.forEach(p => { if (p.prob) paintRun(p); });
+  }
+  function loadHidden(id) {
+    if (!hiddenCache[id]) hiddenCache[id] = fetch(FILES.hidden + id + ".txt" + (FILES.hiddenV ? "?v=" + FILES.hiddenV : ""))
+      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.text(); })
+      .then(t => J.decode(t).cases)
+      .catch(e => { delete hiddenCache[id]; throw e; });
+    return hiddenCache[id];
+  }
+
+  // A random token sent with each run; result messages without it (e.g. posted by the
+  // candidate's own code) are ignored.
+  const newNonce = () => { const a = new Uint32Array(4); crypto.getRandomValues(a); return [...a].map(x => x.toString(36)).join(""); };
+
+  // JavaScript: a fresh worker per run. Resolves to per-case results; a case that exceeds
+  // CASE_MS ends the run with { timeout: true } in its place (later cases have no result).
+  function execJs(code, spec, cases) {
+    return new Promise(resolve => {
+      let w;
+      try { w = new Worker(FILES.js); } catch (e) { return resolve({ failed: "Your browser blocked the test runner." }); }
+      const res = [], nonce = newNonce(); let t = null, over = false;
+      const finish = () => { if (over) return; over = true; clearTimeout(t); w.terminate(); resolve(res); };
+      const arm = () => { clearTimeout(t); t = setTimeout(() => { res[res.length] = { timeout: true }; finish(); }, CASE_MS); }; // results arrive in order
+      w.onmessage = e => { const m = e.data; if (!m || m.nonce !== nonce) return; if (m.type === "case") { res[m.i] = m; arm(); } else if (m.type === "done") finish(); };
+      w.onerror = e => { e.preventDefault(); res[res.length] = { timeout: true }; finish(); };
+      arm();
+      w.postMessage({ code, spec, cases, stdout: true, nonce });
+    });
+  }
+
+  // Python: every run gets a fresh Pyodide in a new worker (so one run can't leave changes
+  // behind for the next), and runs go one at a time through a queue. The next worker loads
+  // in the background after each run, so it's usually ready before it's needed.
+  let pySpare = null, pyLoadedOnce = false, pyQueue = Promise.resolve(), pyActive = 0;
+  function warmPython() {
+    if (pySpare) return pySpare;
+    let w;
+    try { w = new Worker(FILES.py); } catch (e) { return null; }
+    const spare = { worker: w, ok: false };
+    spare.ready = new Promise(res => {
+      const t = setTimeout(() => res(false), PY_LOAD_MS);
+      w.onmessage = e => { const m = e.data; if (m && (m.type === "ready" || m.type === "fail")) { clearTimeout(t); spare.ok = m.type === "ready"; res(spare.ok); } };
+      w.onerror = ev => { ev.preventDefault(); clearTimeout(t); res(false); };
+    });
+    w.postMessage({ type: "load", base: PYODIDE, harness: FILES.harness });
+    return (pySpare = spare);
+  }
+  function execPy(code, spec, cases, onStatus) {
+    if (pyActive++) onStatus("Queued: waiting for the run in progress…");
+    const job = pyQueue.then(() => runPy(code, spec, cases, onStatus));
+    pyQueue = job.catch(() => {}).then(() => { pyActive--; });
+    return job;
+  }
+  async function runPy(code, spec, cases, onStatus) {
+    const spare = warmPython();
+    if (!spare) return { failed: "Your browser blocked the test runner." };
+    pySpare = null; // this worker is used up by this run
+    if (!spare.ok) onStatus(pyLoadedOnce ? "Restarting Python…" : "Loading Python (about 10 MB, only the first time)…");
+    if (!(await spare.ready)) {
+      spare.worker.terminate();
+      return { failed: "Python couldn't load (check your connection or ad blocker). JavaScript tests still run in your browser." };
+    }
+    pyLoadedOnce = true;
+    onStatus("Running…");
+    const w = spare.worker, nonce = newNonce();
+    const out = await new Promise(resolve => {
+      const res = []; let t = null, over = false;
+      const finish = () => { if (over) return; over = true; clearTimeout(t); w.onmessage = w.onerror = null; w.terminate(); resolve(res); };
+      const arm = () => { clearTimeout(t); t = setTimeout(() => { res[res.length] = { timeout: true }; finish(); }, CASE_MS); };
+      w.onmessage = e => {
+        const m = e.data; if (!m || m.nonce !== nonce) return;
+        if (m.type === "case") { res[m.i] = m; arm(); }
+        else if (m.type === "done") finish();
+        else if (m.type === "fail") { res.failed = "Python couldn't load. Press Run to try again."; finish(); }
+      };
+      w.onerror = e => { e.preventDefault(); res[res.length] = { timeout: true }; finish(); };
+      arm();
+      w.postMessage({ type: "run", base: PYODIDE, harness: FILES.harness, code, spec, cases, stdout: true, nonce });
+    });
+    setTimeout(warmPython, 50); // get the next fresh interpreter ready
+    return out;
+  }
+
+  const errText = e => e ? `${e.type}${e.msg ? ": " + e.msg : ""}${e.line ? ` (line ${e.line})` : ""}` : "";
+  async function runTests(p, all) {
+    const lang = state.lang, prob = p.prob;
+    if (!RUNNABLE[lang] || running[p.id]) return;
+    const code = codeOf(p), session = cur;
+    running[p.id] = true; paintRun(p);
+    const status = msg => { const el = $("#rs-" + p.id); if (el && cur === session) el.textContent = msg; };
+    status("Running…");
+    let cases = prob.samples.map(t => ({ args: t.args, expected: t.expected }));
+    const nSamples = cases.length;
+    let result;
+    try {
+      if (all) cases = cases.concat(await loadHidden(p.problem));
+      // Full-size hidden tests are generated here from a seed; only their output's hash ships.
+      const args = cases.map(c => c.gen ? J.generate(p.problem, c.gen) : c.args);
+      const spec = prob.cls ? { cls: prob.cls } : { fn: lang === "python" ? snake(prob.fn) : prob.fn };
+      if (prob.keep) spec.keep = prob.keep;
+      // Save everything first: runaway code can use so much memory that the browser closes the tab.
+      dirty = true; save(); flushBoard();
+      const out = lang === "python" ? await execPy(code, spec, args, status) : await execJs(code, spec, args);
+      if (!out.failed) for (let i = 0; i < cases.length; i++) if (cases[i].sha && out[i] && out[i].ok) out[i].hash = await J.sha256(out[i].out);
+      result = judgeRun(prob, lang, cases, nSamples, out, all, code);
+    } catch (e) {
+      result = { failed: all ? "Couldn't load the hidden tests. Check your connection and press Submit again." : "Couldn't run the tests. Press Run to try again." };
+    }
+    running[p.id] = false;
+    if (cur !== session) return;
+    if (result.failed) { paintRun(p); status(result.failed); return; }
+    const runs = state.runs[p.id] = state.runs[p.id] || {};
+    const mine = runs[lang] = runs[lang] || {};
+    mine.last = result; if (all) mine.submit = result;
+    dirty = true; save();
+    paintRun(p, true);
+  }
+  // Turns raw worker results into what's shown and saved. Hidden tests keep only counts
+  // and the first failure's number and kind (never inputs, expected values or output).
+  function judgeRun(prob, lang, cases, nSamples, out, all, code) {
+    if (out.failed) return { failed: out.failed };
+    const verdict = (c, r) => {
+      if (!r) return { pass: false, kind: "not run" };
+      if (r.timeout) return { pass: false, kind: "timeout" };
+      if (!r.ok) return { pass: false, kind: "error", err: r.err };
+      if (c.sha) return r.hash === c.sha ? { pass: true, kind: "pass" } : { pass: false, kind: "wrong" };
+      const v = J.compare(prob.compare, c.args, r.out, c.expected);
+      return { pass: v.pass, kind: v.pass ? "pass" : "wrong", why: v.why };
+    };
+    const samples = cases.slice(0, nSamples).map((c, i) => {
+      const r = out[i], v = verdict(c, r);
+      return { pass: v.pass, kind: v.kind, why: v.why || "", out: r && r.ok ? J.show(r.out, 1500, lang) : "", err: errText(v.err), stdout: r && r.stdout ? String(r.stdout).slice(0, 2000) : "" };
+    });
+    const res = { at: Date.now(), lang, kind: all ? "submit" : "run", code: hashCode(code), samples: { passed: samples.filter(x => x.pass).length, total: nSamples, cases: samples } };
+    if (all) {
+      let passed = 0, first = null;
+      cases.slice(nSamples).forEach((c, j) => {
+        const v = verdict(c, out[nSamples + j]);
+        if (v.pass) passed++;
+        else if (!first) first = { n: j + 1, kind: v.kind, err: v.err ? v.err.type + (v.err.line ? ` on line ${v.err.line}` : "") : "" };
+      });
+      res.hidden = { passed, total: cases.length - nSamples, first };
+    }
+    return res;
+  }
+  const kindText = { wrong: "wrong answer", error: "error", timeout: `took longer than ${CASE_MS / 1000} s or used too much memory (an endless loop, or too slow for the larger tests)`, "not run": "not run (an earlier test stopped the run)" };
+  function summaryText(r) {
+    if (!r) return "";
+    let t = `${r.samples.passed}/${r.samples.total} samples passed`;
+    if (r.hidden) t += ` · ${r.hidden.passed}/${r.hidden.total} hidden passed`;
+    return t;
+  }
+  function paintRun(p, fresh) {
+    const lang = state.lang, ok = RUNNABLE[lang];
+    const bar = $("#rb-" + p.id), off = $("#ro-" + p.id), box = $("#rr-" + p.id);
+    if (!bar) return;
+    bar.hidden = !ok; box.hidden = !ok; off.hidden = ok;
+    if (!ok) { off.textContent = `Running tests is available in Python and JavaScript. Switch language to run, or keep writing in ${LANGS[lang].label}; the sample tests above still show what's expected.`; return; }
+    bar.querySelectorAll("button").forEach(b => { b.disabled = !!running[p.id]; });
+    const st = $("#rs-" + p.id);
+    if (!running[p.id] && st) st.textContent = "";
+    const runs = (state.runs[p.id] || {})[lang] || {}, r = runs.last;
+    if (!r) { box.innerHTML = ""; return; }
+    const edited = r.code !== hashCode(codeOf(p));
+    const allPass = r.samples.passed === r.samples.total && (!r.hidden || r.hidden.passed === r.hidden.total);
+    const when = new Date(r.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    let html = `<p class="r-sum ${allPass ? "pass" : "fail"}"><span class="r-icon" aria-hidden="true">${allPass ? "✓" : "✗"}</span><b>${esc(summaryText(r))}</b><span class="r-when">${r.kind === "submit" ? "Submit" : "Run"} · ${esc(LANGS[r.lang].label)} · ${when}${edited ? " · code edited since" : ""}</span></p>`;
+    if (r.hidden) {
+      const f = r.hidden.first;
+      const what = p.prob.speed ? "They include edge cases and full-size inputs, so a slow solution runs out of time." : "For this question they check correctness on edge cases and medium inputs, not speed.";
+      html += `<p class="r-hidden">${f ? `Hidden test ${f.n} failed: ${esc(kindText[f.kind] || f.kind)}${f.err ? " (" + esc(f.err) + ")" : ""}. Hidden tests don't show their inputs. ${what}` : p.prob.speed ? `All ${r.hidden.total} hidden tests passed, including full-size inputs.` : `All ${r.hidden.total} hidden tests passed. (For this question they check correctness, not speed: say your complexity out loud.)`}</p>`;
+    } else if (runs.submit && runs.submit.at !== r.at) html += `<p class="r-hidden">Last submit: ${esc(summaryText(runs.submit))}.</p>`;
+    html += r.samples.cases.map((c, i) => {
+      const t = p.prob.samples[i]; if (!t) return "";
+      return `<details class="case ${c.pass ? "pass" : "fail"}"${c.pass ? "" : " open"}>
+        <summary><span class="r-icon" aria-hidden="true">${c.pass ? "✓" : "✗"}</span>Sample ${i + 1}<span class="case-kind">${c.pass ? "passed" : esc(kindText[c.kind] || c.kind)}</span></summary>
+        <dl>
+          <dt>Input</dt><dd><pre>${esc(t.args.map((a, j) => argText(argNames(p.prob)[j], a)).join("\n"))}</pre></dd>
+          <dt>Expected</dt><dd><pre>${esc(J.expectedText(p.prob.compare, t.expected, lang))}</pre></dd>
+          ${c.kind === "pass" || c.kind === "wrong" ? `<dt>Your output</dt><dd><pre>${esc(c.out)}</pre>${c.why ? `<p class="case-why">${esc(c.why[0].toUpperCase() + c.why.slice(1))}.</p>` : ""}</dd>` : ""}
+          ${c.err ? `<dt>Error</dt><dd><pre class="err">${esc(c.err)}</pre></dd>` : ""}
+          ${c.stdout ? `<dt>Printed</dt><dd><pre>${esc(c.stdout.length >= 2000 ? c.stdout + "\n… (cut)" : c.stdout)}</pre></dd>` : ""}
+        </dl></details>`;
+    }).join("");
+    box.innerHTML = html;
+    if (fresh) { const st2 = $("#rs-" + p.id); if (st2) st2.textContent = allPass ? "All passed" : "Some tests failed"; }
+  }
+  // One line per runnable question for the downloaded and sent answers.
+  function testsLine(p) {
+    const lang = state.lang;
+    const other = Object.keys(RUNNABLE).filter(l => l !== lang && ((state.runs[p.id] || {})[l] || {}).last)
+      .map(l => `; earlier in ${LANGS[l].label}: ${summaryText(state.runs[p.id][l].last)}`).join("");
+    if (!RUNNABLE[lang]) return `Tests: not run (${LANGS[lang].label} can't run in the browser)${other}`;
+    if (!((state.runs[p.id] || {})[lang] || {}).last) return `Tests: not run in ${LANGS[lang].label}${other}`;
+    const runs = (state.runs[p.id] || {})[lang] || {};
+    const fmt = r => `${summaryText(r)}${r.hidden && r.hidden.first ? ` (first failure: hidden test ${r.hidden.first.n}, ${kindText[r.hidden.first.kind] || r.hidden.first.kind})` : ""}${r.code !== hashCode(codeOf(p)) ? ", code edited since" : ""}`;
+    let line = `Tests (${LANGS[lang].label}): latest ${runs.last.kind} ${fmt(runs.last)}`;
+    if (runs.submit && runs.submit.at !== runs.last.at) line += `; last submit ${fmt(runs.submit)}`;
+    return line;
   }
 
   /* ======================= Whiteboard (Excalidraw) ======================= */
@@ -852,6 +1187,7 @@
         md += `**${p.q}**\n\n`;
         if (p.given) md += "Given code:\n\n" + fence(p.given, "python");
         md += a ? (p.kind === "code" ? fence(a, lang.fence) : a + "\n\n") : "_(no answer)_\n\n";
+        if (p.prob) md += testsLine(p) + "\n\n";
       });
     });
     return md;

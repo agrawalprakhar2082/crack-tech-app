@@ -2,6 +2,9 @@
 // kind: "text" (written answer, dictation allowed) or "code" (monospace editor, no dictation).
 // look: what interviewers look for (shown on demand). given: code shown to the candidate.
 // board: true adds the whiteboard (Excalidraw). Check totals with: node _practice/check.js
+// problem: an id from problems.js. On a block it shows the problem statement; on a code
+// prompt it adds starter code and the Run / Submit tests. The coding practice sets at the
+// end are built from problems.js by codingSet().
 window.PRACTICE_SESSIONS = [
   {
     id: "behavioral-leadership",
@@ -271,3 +274,35 @@ window.PRACTICE_SESSIONS = [
     ]
   }
 ];
+
+// Coding practice sets: two questions in 45 minutes, each clarify & plan, code, test & complexity.
+(function () {
+  const P = window.PRACTICE_PROBLEMS || {};
+  const question = (n, id, codeMin) => {
+    const p = P[id] || { title: id, clarify: ["(missing problem)"], look: ["(missing problem)"], testing: ["(missing problem)"] };
+    return [
+      { name: `Q${n}: clarify & plan`, min: 3, problem: id, prompts: [
+        { q: `Question ${n}, ${p.title}: what would you ask the interviewer, and what's your plan? Name the time and space complexity you're aiming for.`, look: p.clarify }] },
+      { name: `Q${n}: code`, min: codeMin, prompts: [
+        { q: `Write your solution to "${p.title}". The signature is filled in for your language. Press Run to check the sample tests, then Submit to run the hidden tests too.`, kind: "code", problem: id, look: p.look }] },
+      { name: `Q${n}: test & complexity`, min: 4, prompts: [
+        { q: `Which tests would you walk through out loud, beyond the samples? State the time and space complexity.${p.followup ? " If there's time, the follow-up: " + p.followup : ""}`, look: p.testing }] }
+    ];
+  };
+  const codingSet = (n, tag, blurb, a, b) => ({
+    id: `coding-session-${n}`, track: "Coding practice sets", tag, title: `Session ${n}`, blurb, questions: 2,
+    blocks: [...question(1, a, 15), ...question(2, b, 16)]
+  });
+  window.PRACTICE_SESSIONS.push(
+    codingSet(1, "Bit tricks · Binary search", "Find the number without a pair, then find it again in a sorted list in O(log n).", "unpaired-number", "unpaired-in-sorted"),
+    codingSet(2, "Stacks · Strings", "Replay a keyboard with backspaces, then balance brackets with the fewest removals.", "backspace-keys", "fewest-paren-removals"),
+    codingSet(3, "Sweep line · Greedy", "Count fence posts with enough coats of paint, then burst every balloon with the fewest arrows.", "fence-coats", "balloon-arrows"),
+    codingSet(4, "Sliding window", "The maximum of every window with a deque, then the longest run of ones with k flips.", "window-maximum", "longest-ones-flips"),
+    codingSet(5, "Binary search", "Search a grid sorted by rows and columns, then binary-search the answer: the smallest water tank.", "sorted-matrix-search", "tank-capacity"),
+    codingSet(6, "Dynamic programming", "Paint a street at the lowest cost, then count the ways to hit a sum with limited copies.", "paint-houses", "bounded-subsets"),
+    codingSet(7, "Graphs", "Find a cycle in a directed graph, then plan courses in the fewest semesters.", "graph-cycle", "course-semesters"),
+    codingSet(8, "Hashing · Insight", "Check a sudoku board, then find the fewest moves to put a list in order.", "sudoku-check", "move-to-ends"),
+    codingSet(9, "Class design · Heaps", "Design a scoreboard class, then take the k largest values from a heap without touching it.", "scoreboard", "heap-k-largest"),
+    codingSet(10, "Prefix sums · Two heaps", "Count subarrays that sum to k, then split employees into age halves day by day.", "subarray-sum-k", "age-halves")
+  );
+})();

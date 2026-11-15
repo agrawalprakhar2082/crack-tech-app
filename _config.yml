@@ -1,0 +1,9 @@
+# GitHub Pages builds the site with Jekyll. Folders starting with "_" (_blog, _practice) are
+# never published; these other source files are kept off the site too.
+exclude:
+  - CLAUDE.md
+  - worker
+  - node_modules
+  - vendor
+  - Gemfile
+  - Gemfile.lock
