@@ -642,9 +642,9 @@ window.PRACTICE_PROBLEMS = {
     output: "The number of nodes (0 for an empty tree).",
     constraints: ["0 ≤ number of nodes ≤ 2·10⁹", "The tree is complete"],
     samples: [
-      { args: [[1, 2, 3, 4, 5, 6]], expected: 6, why: "Two full levels (3 nodes) plus three nodes on the last level." },
+      { args: [[9, 4, 7, 1, 8, 2, 6, 3, 5, 10, 11]], expected: 11, why: "Three full levels (7 nodes) plus four nodes on the last level." },
       { args: [[3, 1, 4, 1, 5, 9, 2, 6]], expected: 8 },
-      { args: [[]], expected: 0 }],
+      { args: [[42]], expected: 1 }],
     clarify: [
       "Confirms what complete means, and that the values don't matter",
       "Notes a perfect tree of height h has 2^h − 1 nodes",
@@ -728,7 +728,7 @@ window.PRACTICE_PROBLEMS = {
       "Trying every set of deletions is exponential. Find the fewest deletions with dynamic programming in O(n²)."],
     input: ["`s`: lowercase letters.", "`k`: the most characters you may delete."],
     output: "true if at most k deletions make s a palindrome, otherwise false.",
-    constraints: ["0 ≤ s.length ≤ 1000", "0 ≤ k ≤ s.length"],
+    constraints: ["0 ≤ s.length ≤ 200", "0 ≤ k ≤ s.length"],
     samples: [
       { args: ["radar", 0], expected: true },
       { args: ["bandana", 2], expected: true, why: "Delete the b and the d: \"anana\"." },
@@ -736,12 +736,13 @@ window.PRACTICE_PROBLEMS = {
     clarify: [
       "Confirms only deletions are allowed, and the empty string counts as a palindrome",
       "Connects it to the longest palindromic subsequence: deletions = n − LPS",
-      "Checks the size: n ≤ 1000 allows O(n²), not more"],
+      "Checks the size: n ≤ 200 allows O(n²) (even O(n³)), but not exponential"],
     look: [
       "dp[i][j] = fewest deletions to make s[i..j] a palindrome: equal ends → dp[i+1][j−1], otherwise 1 + min(dp[i+1][j], dp[i][j−1])",
       "Or LPS via LCS of s and its reverse",
       "Fills the table in the right order (by length, or i from the end) and keeps O(n) memory with two rows",
-      "Can stop early when the answer is clearly over k (optional)"],
+      "Can stop early when the answer is clearly over k (optional)",
+      "A bottom-up table avoids recursion limits: in the browser, Python recursion with @cache stops after a few hundred levels"],
     testing: [
       "Empty string, one letter, already a palindrome, all different letters, k = 0",
       "O(n²) time, O(n) space with two rows"],
@@ -837,7 +838,7 @@ window.PRACTICE_PROBLEMS = {
     title: "Tasks with a cooldown",
     fn: "leastTime", params: [["tasks", "string"], ["n", "int"]], returns: "int",
     statement: [
-      "A machine runs tasks, one per time unit. `tasks` lists the tasks to run as capital letters (the same letter means the same kind of task), in any order you like. Two runs of the same kind must be at least `n` time units apart; the machine may sit idle.",
+      "A machine runs tasks, one per time unit. `tasks` lists the tasks to run as capital letters (the same letter means the same kind of task), in any order you like. Between two runs of the same kind there must be at least `n` other time units (other tasks or idle); the machine may sit idle.",
       "Return the fewest time units needed to run every task."],
     input: ["`tasks`: capital letters A–Z.", "`n`: the cooldown between two tasks of the same kind."],
     output: "The minimum total time, idle units included.",
@@ -847,7 +848,7 @@ window.PRACTICE_PROBLEMS = {
       { args: ["AABB", 0], expected: 4 },
       { args: ["XXYYZ", 3], expected: 6, why: "X Y Z _ X Y." }],
     clarify: [
-      "Confirms tasks can run in any order and what n means exactly (n units between, so n + 1 apart)",
+      "Confirms tasks can run in any order and what n means exactly (n other units between, so n + 1 apart)",
       "Notices the most frequent task decides the frame",
       "Asks for size limits"],
     look: [

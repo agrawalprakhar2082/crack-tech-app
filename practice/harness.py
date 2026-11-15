@@ -11,12 +11,13 @@ import json
 import re
 import sys
 import traceback
+import weakref
 from collections.abc import Iterable, Mapping
 
 _dumps, _loads, _deepcopy = json.dumps, json.loads, copy.deepcopy
 _StringIO, _extract_tb, _sub = io.StringIO, traceback.extract_tb, re.sub
 _sys, _setlimit = sys, sys.setrecursionlimit
-_Iterable, _Mapping = Iterable, Mapping
+_Iterable, _Mapping, _weakref = Iterable, Mapping, weakref.ref
 _ns = {}
 MAX_STDOUT = 4000
 
@@ -27,30 +28,47 @@ class TreeNode:
         self.val, self.left, self.right = val, left, right
 
 
-class _CompleteNode:
-    # A node of a huge complete binary tree with n nodes, made only when visited (children
-    # aren't cached, so a full traversal doesn't keep the whole tree in memory). Used by
-    # full-size tests: {"$complete": n}.
-    __slots__ = ("val", "_i", "_n")
+class _Fixed:
+    __slots__ = ("v",)
 
-    def __init__(self, i, n):
-        self.val, self._i, self._n = i + 1, i, n
+    def __init__(self, v):
+        self.v = v
 
-    @property
-    def left(self):
-        j = 2 * self._i + 1
-        return _CompleteNode(j, self._n) if j < self._n else None
 
-    @property
-    def right(self):
-        j = 2 * self._i + 2
-        return _CompleteNode(j, self._n) if j < self._n else None
+def _complete_tree(n):
+    # A huge complete binary tree with n nodes (full-size tests: {"$complete": n}), made only
+    # as it's visited. n lives only in this closure, so the tree's size can't be read off a
+    # node. Nodes are TreeNodes, accept new attributes, and keep their children through weak
+    # references: node.left is node.left while you hold it, but a full traversal doesn't keep
+    # the whole tree in memory. Assigning node.left or node.right replaces that child.
+    def child(node, key, j):
+        ref = node.__dict__.get(key)
+        if isinstance(ref, _Fixed):
+            return ref.v
+        got = ref() if ref is not None else None
+        if got is None:
+            got = Node(j) if j < n else None
+            node.__dict__[key] = _Fixed(None) if got is None else _weakref(got)
+        return got
+
+    class Node(TreeNode):
+        def __init__(self, i):
+            self.__dict__["val"] = i + 1
+            self.__dict__["_index"] = i
+
+        left = property(lambda self: child(self, "_left", 2 * self._index + 1),
+                        lambda self, v: self.__dict__.__setitem__("_left", _Fixed(v)))
+        right = property(lambda self: child(self, "_right", 2 * self._index + 2),
+                         lambda self, v: self.__dict__.__setitem__("_right", _Fixed(v)))
+
+    Node.__name__ = Node.__qualname__ = "TreeNode"
+    return Node(0) if n > 0 else None
 
 
 def _build_tree(v):
     # Level-order list with None for a missing child, e.g. [5, 3, 8, None, 4].
     if isinstance(v, dict) and "$complete" in v:
-        return _CompleteNode(0, v["$complete"]) if v["$complete"] > 0 else None
+        return _complete_tree(v["$complete"])
     if not v or v[0] is None:
         return None
     root = TreeNode(v[0])

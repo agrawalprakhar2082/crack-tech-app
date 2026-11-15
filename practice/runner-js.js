@@ -43,13 +43,32 @@
   // missing child; TreeNode is a global the candidate's code can use. {$complete: n} is a
   // huge complete tree whose nodes are made only when visited (full-size tests).
   class TreeNode { constructor(val = 0, left = null, right = null) { this.val = val; this.left = left; this.right = right; } }
-  class CompleteNode {
-    constructor(i, n) { this.val = i + 1; this._i = i; this._n = n; }
-    get left() { const j = 2 * this._i + 1; return j < this._n ? new CompleteNode(j, this._n) : null; }
-    get right() { const j = 2 * this._i + 2; return j < this._n ? new CompleteNode(j, this._n) : null; }
+  // The huge tree's size lives only in this closure; nodes are TreeNodes whose index and
+  // children are private. Children are kept through weak references: node.left === node.left
+  // while you hold it, but a full traversal doesn't keep the whole tree in memory.
+  function completeTree(n) {
+    const state = new WeakMap(); // node -> { i, l, r }, out of reach of the candidate's code
+    function CompleteNode(i) { this.val = i + 1; state.set(this, { i, l: undefined, r: undefined }); }
+    function child(node, side, j) {
+      const st = state.get(node), slot = side ? st.r : st.l;
+      if (slot && slot.fixed) return slot.v;
+      let got = slot ? slot.deref() : undefined;
+      if (!got) {
+        got = j < n ? new CompleteNode(j) : null;
+        const keep = got ? new WeakRef(got) : { fixed: true, v: null };
+        if (side) st.r = keep; else st.l = keep;
+      }
+      return got;
+    }
+    CompleteNode.prototype = Object.create(TreeNode.prototype, {
+      constructor: { value: TreeNode },
+      left: { get() { return child(this, 0, 2 * state.get(this).i + 1); }, set(v) { state.get(this).l = { fixed: true, v }; } },
+      right: { get() { return child(this, 1, 2 * state.get(this).i + 2); }, set(v) { state.get(this).r = { fixed: true, v }; } }
+    });
+    return n > 0 ? new CompleteNode(0) : null;
   }
   function buildTree(v) {
-    if (v && !Array.isArray(v) && typeof v === "object" && "$complete" in v) return v.$complete > 0 ? new CompleteNode(0, v.$complete) : null;
+    if (v && !Array.isArray(v) && typeof v === "object" && "$complete" in v) return completeTree(v.$complete);
     if (!v || !v.length || v[0] === null) return null;
     const root = new TreeNode(v[0]), queue = [root];
     let head = 0, i = 1;

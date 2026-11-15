@@ -826,7 +826,7 @@ def g_kpal(rng, small):
         return make(rng.randint(0, 11), rng.choice(["ab", "abc", "abcd"]))
     cases = [["", 0], ["a", 0], ["ab", 0], ["ab", 1], ["racecar", 0], ["abca", 1], ["abcd", 2], ["abcd", 3], ["aaabbb", 3]]
     cases += [make(rng.randint(12, 40)) for _ in range(3)]
-    half = "".join(rng.choice("abcde") for _ in range(150))
+    half = "".join(rng.choice("abcde") for _ in range(90))
     noisy = list(half + half[::-1])
     for _ in range(12):
         noisy.insert(rng.randrange(len(noisy) + 1), rng.choice("xyz"))
@@ -861,6 +861,10 @@ def g_effort(rng, small):
     if small:
         return make(rng.randint(1, 4), rng.randint(1, 4), 9)
     cases = [[[[5]]], [[[1, 10]]], [[[1], [3], [6]]], [[[1, 1, 1], [9, 9, 1], [1, 1, 1]]], [[[3, 8, 2], [4, 9, 1], [5, 6, 7]]]]
+    # The only gentle paths here wind left or up, so a right/down-only DP gets them wrong.
+    cases += [[[[1, 1, 1, 1, 1], [50, 50, 50, 50, 1], [1, 1, 1, 1, 1], [1, 50, 50, 50, 50], [1, 1, 1, 1, 1]]],
+              [[[2, 60, 3, 3, 3], [2, 60, 3, 60, 3], [2, 60, 3, 60, 3], [2, 2, 2, 60, 4]]],
+              [[[5, 5, 90, 1, 1, 1], [90, 5, 90, 1, 90, 1], [5, 5, 90, 1, 90, 1], [5, 90, 90, 1, 90, 1], [5, 5, 5, 3, 90, 2]]]]
     cases += [make(rng.randint(3, 10), rng.randint(3, 10), 50) for _ in range(4)] + [make(40, 40, 10**6), make(40, 40, 3)]
     return cases
 
@@ -935,7 +939,7 @@ FULL = {
     "complete-tree-count": [{"seed": 91, "lo": 1000000000, "hi": 2000000000}],
     "warmer-days": [{"seed": 101, "n": 200000}],
     "fair-candies": [{"seed": 111, "n": 100000}],
-    "k-palindrome": [{"seed": 121, "n": 1000}],
+    "k-palindrome": [{"seed": 121, "n": 200}],
     "nearest-exit": [{"seed": 131, "rows": 500, "cols": 500}],
     "min-effort-path": [{"seed": 141, "rows": 200, "cols": 200}],
     "heater-radius": [{"seed": 151, "n": 100000, "m": 100000}],
