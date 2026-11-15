@@ -334,7 +334,7 @@
     const qn = s.blocks.slice(0, bi + 1).filter(b => b.problem).length;
     const ex = prob.samples.map((t, i) => `<div class="ex">
         <div class="ex-label">Example ${i + 1}</div>
-        <pre><code>${esc(t.args.map((a, j) => argText(argNames(prob)[j], a)).join("\n"))}</code></pre>
+        <pre><code data-args="${i}">${esc(t.args.map((a, j) => argText(argNames(prob)[j], a, state.lang)).join("\n"))}</code></pre>
         <p class="ex-out"><span>Output</span> <code data-ex="${i}">${esc(J.expectedText(prob.compare, t.expected, state.lang))}</code></p>
         ${t.why ? `<p class="ex-why">${rich(t.why)}</p>` : ""}
       </div>`).join("");
@@ -653,6 +653,7 @@
       $$(".problem[data-problem]").forEach(card => {
         const prob = PROBLEMS[card.dataset.problem];
         card.querySelectorAll("[data-ex]").forEach(el => { el.textContent = J.expectedText(prob.compare, prob.samples[+el.dataset.ex].expected, lang); });
+        card.querySelectorAll("[data-args]").forEach(el => { el.textContent = prob.samples[+el.dataset.args].args.map((v, j) => argText(argNames(prob)[j], v, lang)).join("\n"); });
       });
     }
   }

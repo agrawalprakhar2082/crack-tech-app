@@ -47,11 +47,20 @@ self.onmessage = async e => {
   try { await load(m.base, m.harness); }
   catch (err) { post({ type: "fail", msg: String(err && err.message || err), nonce }); return; }
   post({ type: "status", text: "running", nonce });
-  const loaded = parse(ctLoad(m.code));
+  // Deep recursion can overflow the browser's own stack before Python's recursion limit is
+  // reached (memoized recursion such as @cache is the usual case). Pyodide then stops with a
+  // fatal error and can't run anything else, so report it and leave the other tests not run.
+  const crashed = i => {
+    post({ type: "case", i, ok: false, stdout: "", nonce, err: { type: "RecursionError", line: null,
+      msg: "Recursion too deep for Python in the browser (memoized recursion such as @cache fails after a few hundred levels): use a bottom-up table or an explicit stack." } });
+    post({ type: "done", nonce });
+  };
+  let loaded;
+  try { loaded = parse(ctLoad(m.code)); } catch (err) { return crashed(0); }
   for (let i = 0; i < cases.length; i++) {
     let res;
     if (!loaded.ok) res = { ok: false, err: loaded.err, stdout: "" };
-    else res = parse(ctCase(spec, stringify(cases[i])));
+    else { try { res = parse(ctCase(spec, stringify(cases[i]))); } catch (err) { return crashed(i); } }
     if (i === 0 && loaded.stdout) res.stdout = loaded.stdout + (res.stdout || "");
     if (!stdout) res.stdout = "";
     post(assign({}, res, { type: "case", i, nonce }));
