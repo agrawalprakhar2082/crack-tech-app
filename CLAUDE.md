@@ -106,8 +106,8 @@ The user parked these to come back to later. Ask before starting any of them, an
 
 ### Housekeeping
 - [ ] Delete merged branches on GitHub (the branches page), and turn on Settings > General > "Automatically delete head branches". Branch deletes are refused from the cloud environment, so the user does this.
-- [ ] To test the live calendar from the cloud environment, allow `cal.com`, `app.cal.com` and `api.cal.com` in the environment's network settings. The "Crack Tech" environment already allows `api.cloudflare.com` (with the owner's API token saved as a network secret) and `practice-review.cracktech-app.workers.dev`.
-- [ ] Delete or expire the Cloudflare API token used to deploy the practice-review Worker (dash.cloudflare.com > My Profile > API Tokens) unless it's still wanted for redeploys; also remove its network secret from the "Crack Tech" environment's settings. `github.io` and domain-lookup (RDAP) services are blocked there too.
+- [ ] To test the live calendar from the cloud environment, allow `cal.com`, `app.cal.com` and `api.cal.com` in the environment's network settings. `github.io` and domain-lookup (RDAP) services are blocked there too.
+- [x] Cloudflare API token used to deploy the practice-review Worker: deleted by the owner (Nov 15, 2026). Redeploying the Worker needs a new token ("Edit Cloudflare Workers" template, limited to cracktech.app) saved as a network secret for `api.cloudflare.com`; delete it again afterwards.
 
 ## Working agreement for GitHub
 
