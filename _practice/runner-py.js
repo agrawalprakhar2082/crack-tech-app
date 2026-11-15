@@ -1,11 +1,17 @@
 // Runs a candidate's Python answer against tests with Pyodide (CPython compiled to
-// WebAssembly), in a Web Worker. Pyodide loads once per worker (about 10 MB, cached by
-// the browser after the first time). If a test runs too long, practice.js terminates
-// this worker and starts a new one for the next run.
-// Message in: { base: [pyodide URLs to try], harness: URL of harness.py, code, spec, cases, stdout }
-// Messages out: { type: "status", text }, { type: "case", i, ok, out | err, stdout } per test,
-// { type: "done" }, or { type: "fail", msg } if Python couldn't load.
-let ready = null, ctLoad = null, ctCase = null;
+// WebAssembly), in a Web Worker. Each worker runs exactly one run and is then thrown away,
+// so nothing a run changes (patched modules, recursion limit, globals) reaches the next
+// one; practice.js loads the next worker in the background so it's ready when needed.
+// Pyodide's files come from the browser cache after the first load.
+// Messages in:  { type: "load", base: [pyodide URLs to try], harness: URL of harness.py }
+//               { type: "run", code, spec, cases, stdout, nonce }
+// Messages out: { type: "ready" } or { type: "fail", msg } after loading;
+//               { type: "status", text: "running", nonce }, { type: "case", i, ok, out | err, stdout, nonce }
+//               per test, then { type: "done", nonce }.
+// The nonce stays in this script's local variables, out of reach of the candidate's code,
+// so the page can ignore any message their code posts itself.
+const post = self.postMessage.bind(self), parse = JSON.parse, stringify = JSON.stringify, assign = Object.assign;
+let ready = null, ctLoad = null, ctCase = null, used = false;
 
 function load(bases, harnessUrl) {
   if (ready) return ready;
@@ -30,23 +36,25 @@ function load(bases, harnessUrl) {
 
 self.onmessage = async e => {
   const m = e.data;
-  try {
-    if (!ctCase) self.postMessage({ type: "status", text: "loading" });
-    await load(m.base, m.harness);
-  } catch (err) {
-    self.postMessage({ type: "fail", msg: String(err && err.message || err) });
+  if (m.type === "load") {
+    try { await load(m.base, m.harness); post({ type: "ready" }); }
+    catch (err) { post({ type: "fail", msg: String(err && err.message || err) }); }
     return;
   }
-  self.postMessage({ type: "status", text: "running" });
-  const loaded = JSON.parse(ctLoad(m.code));
-  const spec = JSON.stringify(m.spec);
-  m.cases.forEach((args, i) => {
+  if (m.type !== "run" || used) return;
+  used = true;
+  const nonce = m.nonce, stdout = m.stdout, cases = m.cases, spec = stringify(m.spec);
+  try { await load(m.base, m.harness); }
+  catch (err) { post({ type: "fail", msg: String(err && err.message || err), nonce }); return; }
+  post({ type: "status", text: "running", nonce });
+  const loaded = parse(ctLoad(m.code));
+  for (let i = 0; i < cases.length; i++) {
     let res;
     if (!loaded.ok) res = { ok: false, err: loaded.err, stdout: "" };
-    else res = JSON.parse(ctCase(spec, JSON.stringify(args)));
+    else res = parse(ctCase(spec, stringify(cases[i])));
     if (i === 0 && loaded.stdout) res.stdout = loaded.stdout + (res.stdout || "");
-    if (!m.stdout) res.stdout = "";
-    self.postMessage(Object.assign({ type: "case", i }, res));
-  });
-  self.postMessage({ type: "done" });
+    if (!stdout) res.stdout = "";
+    post(assign({}, res, { type: "case", i, nonce }));
+  }
+  post({ type: "done", nonce });
 };

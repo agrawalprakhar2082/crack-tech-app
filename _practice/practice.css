@@ -152,6 +152,7 @@ details.look .pnote{margin:8px 0 0;font-size:13.5px;color:var(--muted)}
 .problem .ex-out{margin:8px 0 0;font-size:14.5px}
 .ex-out span{font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:6px}
 .ex-out code{white-space:normal;word-break:break-word}
+.problem .speed-note{margin:12px 0 0;font-size:14px;color:var(--muted);border-left:2px solid var(--line-2);padding-left:10px}
 .problem .ex-why{margin:6px 0 0;font-size:14.5px;color:var(--muted)}
 
 /* run and submit */

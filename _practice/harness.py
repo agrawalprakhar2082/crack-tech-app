@@ -2,24 +2,33 @@
 # (practice/runner-py.js) and, unchanged, in CPython for `node _practice/tests/verify.js`.
 # ct_load(code) runs the candidate's code once; ct_case(spec, args) calls their function
 # (or replays class operations) for one test and returns JSON: {ok, out | err, stdout}.
+# The page runs each run in a fresh Pyodide, so nothing a run changes (modules, recursion
+# limit) carries over. Within a run, the harness keeps its own references to what it uses,
+# so candidate code that patches json, io or sys can't change how results are reported.
+import copy
 import io
 import json
 import re
 import sys
 import traceback
+from collections.abc import Iterable, Mapping
 
-sys.setrecursionlimit(3000)
+_dumps, _loads, _deepcopy = json.dumps, json.loads, copy.deepcopy
+_StringIO, _extract_tb, _sub = io.StringIO, traceback.extract_tb, re.sub
+_sys, _setlimit = sys, sys.setrecursionlimit
+_Iterable, _Mapping = Iterable, Mapping
 _ns = {}
 MAX_STDOUT = 4000
+RECURSION_LIMIT = 3000
 
 
 def _snake(name):
-    return re.sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", name).lower()
+    return _sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", name).lower()
 
 
 def _err(e):
     line = None
-    for fr in traceback.extract_tb(e.__traceback__):
+    for fr in _extract_tb(e.__traceback__):
         if fr.filename == "solution.py":
             line = fr.lineno
     if isinstance(e, SyntaxError) and e.filename == "solution.py":
@@ -30,10 +39,12 @@ def _err(e):
     return {"type": type(e).__name__, "msg": msg[:500], "line": line}
 
 
-class _Capture(io.StringIO):
+class _Capture(_StringIO):
+    # Keeps only the first MAX_STDOUT characters of what the candidate prints.
     def write(self, s):
-        if self.tell() < MAX_STDOUT + 100:
-            return super().write(s)
+        room = MAX_STDOUT + 100 - self.tell()
+        if room > 0:
+            _StringIO.write(self, str(s)[:room])
         return len(s)
 
 
@@ -41,8 +52,8 @@ def _jsonable(x):
     if isinstance(x, (list, tuple)):
         return [_jsonable(v) for v in x]
     if isinstance(x, (set, frozenset)):
-        return sorted((_jsonable(v) for v in x), key=lambda v: json.dumps(v))
-    if isinstance(x, dict):
+        return sorted((_jsonable(v) for v in x), key=lambda v: _dumps(v))
+    if isinstance(x, _Mapping):
         return {str(k): _jsonable(v) for k, v in x.items()}
     if x is None or isinstance(x, (bool, int, str)):
         return x
@@ -50,6 +61,8 @@ def _jsonable(x):
         if x != x or x in (float("inf"), float("-inf")):
             return str(x)
         return x
+    if isinstance(x, _Iterable) and not isinstance(x, (bytes, bytearray)):
+        return [_jsonable(v) for v in x]  # deque, generator, range, map, ...
     raise TypeError("returned a value of type %s, which can't be checked" % type(x).__name__)
 
 
@@ -90,32 +103,38 @@ def _run_ops(spec, args):
 def ct_load(code):
     global _ns
     _ns = {"__name__": "solution"}
-    buf, old = _Capture(), sys.stdout
-    sys.stdout = buf
+    _setlimit(RECURSION_LIMIT)
+    buf, old = _Capture(), _sys.stdout
+    _sys.stdout = buf
     try:
         exec(compile(code, "solution.py", "exec"), _ns)
         res = {"ok": True}
     except BaseException as e:  # noqa: BLE001 - report any error in the candidate's code
         res = {"ok": False, "err": _err(e)}
     finally:
-        sys.stdout = old
+        _sys.stdout = old
     res["stdout"] = buf.getvalue()[:MAX_STDOUT]
-    return json.dumps(res)
+    return _dumps(res)
 
 
 def ct_case(spec_json, args_json):
-    spec, args = json.loads(spec_json), json.loads(args_json)
-    buf, old = _Capture(), sys.stdout
-    sys.stdout = buf
+    spec, args = _loads(spec_json), _loads(args_json)
+    keep = {i: _deepcopy(args[i]) for i in spec.get("keep", [])}
+    buf, old = _Capture(), _sys.stdout
+    _sys.stdout = buf
     try:
         if spec.get("cls"):
             out = _run_ops(spec, args)
         else:
             out = _jsonable(_find(spec["fn"])(*args))
-        res = {"ok": True, "out": out}
+        changed = [i for i, v in keep.items() if args[i] != v]
+        if changed:
+            res = {"ok": False, "err": {"type": "Changed input", "msg": "your function changed its input list; it must leave it as it was", "line": None}}
+        else:
+            res = {"ok": True, "out": out}
     except BaseException as e:  # noqa: BLE001
         res = {"ok": False, "err": _err(e)}
     finally:
-        sys.stdout = old
+        _sys.stdout = old
     res["stdout"] = buf.getvalue()[:MAX_STDOUT]
-    return json.dumps(res)
+    return _dumps(res)

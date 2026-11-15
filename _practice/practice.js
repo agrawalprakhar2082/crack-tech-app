@@ -312,10 +312,10 @@
     const ex = prob.samples.map((t, i) => `<div class="ex">
         <div class="ex-label">Example ${i + 1}</div>
         <pre><code>${esc(t.args.map((a, j) => argText(argNames(prob)[j], a)).join("\n"))}</code></pre>
-        <p class="ex-out"><span>Output</span> <code>${esc(J.expectedText(prob.compare, t.expected))}</code></p>
+        <p class="ex-out"><span>Output</span> <code data-ex="${i}">${esc(J.expectedText(prob.compare, t.expected, state.lang))}</code></p>
         ${t.why ? `<p class="ex-why">${rich(t.why)}</p>` : ""}
       </div>`).join("");
-    return `<article class="problem" aria-labelledby="pt-${bi}">
+    return `<article class="problem" aria-labelledby="pt-${bi}" data-problem="${esc(s.blocks[bi].problem)}">
       <div class="problem-kicker">Question ${qn}</div>
       <h3 id="pt-${bi}">${esc(prob.title)}</h3>
       ${prob.statement.map(t => `<p>${rich(t)}</p>`).join("")}
@@ -324,6 +324,7 @@
         <div><h4>Output</h4><p>${rich(prob.output)}</p></div>
       </div>
       <h4>Constraints</h4><ul class="constraints">${prob.constraints.map(t => `<li>${rich(t)}</li>`).join("")}</ul>
+      <p class="speed-note">${prob.speed ? "Hidden tests include inputs at the full constraint size: a solution slower than the target complexity runs out of time." : "Hidden tests check correctness on edge cases and medium inputs; they don't measure speed for this question, so state your complexity out loud."}</p>
       <h4>Examples <small>(these are also the sample tests)</small></h4>
       <div class="examples">${ex}</div>
     </article>`;
@@ -590,8 +591,10 @@
             p.prob ? { "Ctrl-Enter": () => runTests(p, false), "Cmd-Enter": () => runTests(p, false), "Shift-Ctrl-Enter": () => runTests(p, true), "Shift-Cmd-Enter": () => runTests(p, true) } : {})
         });
         cm.on("change", () => { if (!applying) { state.answers[p.id] = cm.getValue(); queueSave(); } count(p.id); });
+        // Start loading Python when someone starts on a runnable question in Python.
+        if (p.prob) cm.on("focus", () => { if (state.lang === "python") warmPython(); });
         editors[p.id] = cm;
-        $("#en-" + p.id).textContent = p.given ? "Starts as the AI's code: edit it · Esc leaves the editor" : p.prob ? "Ctrl+Enter runs · Esc leaves the editor" : "Tab indents · Esc leaves the editor";
+        $("#en-" + p.id).textContent = p.given ? "Starts as the AI's code: edit it · Esc leaves the editor" : p.prob ? "Ctrl+Enter runs · Shift+Ctrl+Enter submits · Esc leaves the editor" : "Tab indents · Esc leaves the editor";
         if (p.given) {
           const g = $("#g-" + p.id), pre = g.parentElement;
           const view = CodeMirror(el => pre.replaceWith(el), { value: p.given, mode: "python", theme: "ct", readOnly: "nocursor", lineNumbers: true, lineWrapping: true, viewportMargin: Infinity });
@@ -621,7 +624,14 @@
   function applyLang(lang) {
     $$(".lang").forEach(s => { s.value = lang; });
     Object.values(editors).forEach(cm => { cm.setOption("mode", LANGS[lang].mode); cm.setOption("placeholder", `Write your ${LANGS[lang].label} code here`); });
-    if (cur && cur.hasTests) cur.prompts.forEach(p => { if (p.prob) paintRun(p); });
+    if (cur && cur.hasTests) {
+      cur.prompts.forEach(p => { if (p.prob) paintRun(p); });
+      // Example outputs read as Python (None, True) or JavaScript (null, true).
+      $$(".problem[data-problem]").forEach(card => {
+        const prob = PROBLEMS[card.dataset.problem];
+        card.querySelectorAll("[data-ex]").forEach(el => { el.textContent = J.expectedText(prob.compare, prob.samples[+el.dataset.ex].expected, lang); });
+      });
+    }
   }
   const codeOf = p => editors[p.id] ? editors[p.id].getValue() : (($("#a-" + p.id) || {}).value || "");
 
@@ -648,51 +658,83 @@
     return hiddenCache[id];
   }
 
-  // Runs cases in a worker; resolves to per-case results. A case that exceeds CASE_MS ends
-  // the run with { timeout: true } in its place (later cases have no result).
+  // A random token sent with each run; result messages without it (e.g. posted by the
+  // candidate's own code) are ignored.
+  const newNonce = () => { const a = new Uint32Array(4); crypto.getRandomValues(a); return [...a].map(x => x.toString(36)).join(""); };
+
+  // JavaScript: a fresh worker per run. Resolves to per-case results; a case that exceeds
+  // CASE_MS ends the run with { timeout: true } in its place (later cases have no result).
   function execJs(code, spec, cases) {
     return new Promise(resolve => {
       let w;
       try { w = new Worker(FILES.js); } catch (e) { return resolve({ failed: "Your browser blocked the test runner." }); }
-      const res = []; let t = null;
-      const finish = () => { clearTimeout(t); w.terminate(); resolve(res); };
+      const res = [], nonce = newNonce(); let t = null, over = false;
+      const finish = () => { if (over) return; over = true; clearTimeout(t); w.terminate(); resolve(res); };
       const arm = () => { clearTimeout(t); t = setTimeout(() => { res[res.length] = { timeout: true }; finish(); }, CASE_MS); }; // results arrive in order
-      w.onmessage = e => { const m = e.data; if (m.type === "case") { res[m.i] = m; arm(); } else if (m.type === "done") finish(); };
-      w.onerror = e => { e.preventDefault(); res.failed = "The test runner stopped unexpectedly."; finish(); };
+      w.onmessage = e => { const m = e.data; if (!m || m.nonce !== nonce) return; if (m.type === "case") { res[m.i] = m; arm(); } else if (m.type === "done") finish(); };
+      w.onerror = e => { e.preventDefault(); res[res.length] = { timeout: true }; finish(); };
       arm();
-      w.postMessage({ code, spec, cases, stdout: true });
+      w.postMessage({ code, spec, cases, stdout: true, nonce });
     });
   }
-  let pyWorker = null;
-  function execPy(code, spec, cases, onStatus) {
-    return new Promise(resolve => {
-      if (!pyWorker) { try { pyWorker = new Worker(FILES.py); } catch (e) { return resolve({ failed: "Your browser blocked the test runner." }); } }
-      const w = pyWorker, res = []; let t = null;
-      const stop = () => { w.terminate(); if (pyWorker === w) pyWorker = null; };
-      const finish = () => { clearTimeout(t); w.onmessage = w.onerror = null; resolve(res); };
-      const arm = ms => { clearTimeout(t); t = setTimeout(() => {
-        if (ms === PY_LOAD_MS) res.failed = "Python took too long to load. Check your connection and try again.";
-        else res[res.length] = { timeout: true };
-        stop(); finish();
-      }, ms); };
-      w.onmessage = e => {
-        const m = e.data;
-        if (m.type === "status") { if (m.text === "loading") { onStatus("Loading Python (about 10 MB, only the first time)…"); arm(PY_LOAD_MS); } else { onStatus("Running…"); arm(CASE_MS); } }
-        else if (m.type === "case") { res[m.i] = m; arm(CASE_MS); }
-        else if (m.type === "done") finish();
-        else if (m.type === "fail") { res.failed = "Python couldn't load (check your connection or ad blocker). JavaScript tests still run in your browser."; stop(); finish(); }
-      };
-      w.onerror = e => { e.preventDefault(); res.failed = "The Python runner stopped unexpectedly. Press Run to start it again."; stop(); finish(); };
-      arm(PY_LOAD_MS);
-      w.postMessage({ base: PYODIDE, harness: FILES.harness, code, spec, cases, stdout: true });
+
+  // Python: every run gets a fresh Pyodide in a new worker (so one run can't leave changes
+  // behind for the next), and runs go one at a time through a queue. The next worker loads
+  // in the background after each run, so it's usually ready before it's needed.
+  let pySpare = null, pyLoadedOnce = false, pyQueue = Promise.resolve(), pyActive = 0;
+  function warmPython() {
+    if (pySpare) return pySpare;
+    let w;
+    try { w = new Worker(FILES.py); } catch (e) { return null; }
+    const spare = { worker: w, ok: false };
+    spare.ready = new Promise(res => {
+      const t = setTimeout(() => res(false), PY_LOAD_MS);
+      w.onmessage = e => { const m = e.data; if (m && (m.type === "ready" || m.type === "fail")) { clearTimeout(t); spare.ok = m.type === "ready"; res(spare.ok); } };
+      w.onerror = ev => { ev.preventDefault(); clearTimeout(t); res(false); };
     });
+    w.postMessage({ type: "load", base: PYODIDE, harness: FILES.harness });
+    return (pySpare = spare);
+  }
+  function execPy(code, spec, cases, onStatus) {
+    if (pyActive++) onStatus("Queued: waiting for the run in progress…");
+    const job = pyQueue.then(() => runPy(code, spec, cases, onStatus));
+    pyQueue = job.catch(() => {}).then(() => { pyActive--; });
+    return job;
+  }
+  async function runPy(code, spec, cases, onStatus) {
+    const spare = warmPython();
+    if (!spare) return { failed: "Your browser blocked the test runner." };
+    pySpare = null; // this worker is used up by this run
+    if (!spare.ok) onStatus(pyLoadedOnce ? "Restarting Python…" : "Loading Python (about 10 MB, only the first time)…");
+    if (!(await spare.ready)) {
+      spare.worker.terminate();
+      return { failed: "Python couldn't load (check your connection or ad blocker). JavaScript tests still run in your browser." };
+    }
+    pyLoadedOnce = true;
+    onStatus("Running…");
+    const w = spare.worker, nonce = newNonce();
+    const out = await new Promise(resolve => {
+      const res = []; let t = null, over = false;
+      const finish = () => { if (over) return; over = true; clearTimeout(t); w.onmessage = w.onerror = null; w.terminate(); resolve(res); };
+      const arm = () => { clearTimeout(t); t = setTimeout(() => { res[res.length] = { timeout: true }; finish(); }, CASE_MS); };
+      w.onmessage = e => {
+        const m = e.data; if (!m || m.nonce !== nonce) return;
+        if (m.type === "case") { res[m.i] = m; arm(); }
+        else if (m.type === "done") finish();
+        else if (m.type === "fail") { res.failed = "Python couldn't load. Press Run to try again."; finish(); }
+      };
+      w.onerror = e => { e.preventDefault(); res[res.length] = { timeout: true }; finish(); };
+      arm();
+      w.postMessage({ type: "run", base: PYODIDE, harness: FILES.harness, code, spec, cases, stdout: true, nonce });
+    });
+    setTimeout(warmPython, 50); // get the next fresh interpreter ready
+    return out;
   }
 
   const errText = e => e ? `${e.type}${e.msg ? ": " + e.msg : ""}${e.line ? ` (line ${e.line})` : ""}` : "";
   async function runTests(p, all) {
     const lang = state.lang, prob = p.prob;
     if (!RUNNABLE[lang] || running[p.id]) return;
-    flush();
     const code = codeOf(p), session = cur;
     running[p.id] = true; paintRun(p);
     const status = msg => { const el = $("#rs-" + p.id); if (el && cur === session) el.textContent = msg; };
@@ -702,12 +744,17 @@
     let result;
     try {
       if (all) cases = cases.concat(await loadHidden(p.problem));
+      // Full-size hidden tests are generated here from a seed; only their output's hash ships.
+      const args = cases.map(c => c.gen ? J.generate(p.problem, c.gen) : c.args);
       const spec = prob.cls ? { cls: prob.cls } : { fn: lang === "python" ? snake(prob.fn) : prob.fn };
-      const args = cases.map(c => c.args);
+      if (prob.keep) spec.keep = prob.keep;
+      // Save everything first: runaway code can use so much memory that the browser closes the tab.
+      dirty = true; save(); flushBoard();
       const out = lang === "python" ? await execPy(code, spec, args, status) : await execJs(code, spec, args);
+      if (!out.failed) for (let i = 0; i < cases.length; i++) if (cases[i].sha && out[i] && out[i].ok) out[i].hash = await J.sha256(out[i].out);
       result = judgeRun(prob, lang, cases, nSamples, out, all, code);
     } catch (e) {
-      result = { failed: "Couldn't load the hidden tests. Check your connection and press Submit again." };
+      result = { failed: all ? "Couldn't load the hidden tests. Check your connection and press Submit again." : "Couldn't run the tests. Press Run to try again." };
     }
     running[p.id] = false;
     if (cur !== session) return;
@@ -715,7 +762,7 @@
     const runs = state.runs[p.id] = state.runs[p.id] || {};
     const mine = runs[lang] = runs[lang] || {};
     mine.last = result; if (all) mine.submit = result;
-    queueSave();
+    dirty = true; save();
     paintRun(p, true);
   }
   // Turns raw worker results into what's shown and saved. Hidden tests keep only counts
@@ -726,6 +773,7 @@
       if (!r) return { pass: false, kind: "not run" };
       if (r.timeout) return { pass: false, kind: "timeout" };
       if (!r.ok) return { pass: false, kind: "error", err: r.err };
+      if (c.sha) return r.hash === c.sha ? { pass: true, kind: "pass" } : { pass: false, kind: "wrong" };
       const v = J.compare(prob.compare, c.args, r.out, c.expected);
       return { pass: v.pass, kind: v.pass ? "pass" : "wrong", why: v.why };
     };
@@ -745,7 +793,7 @@
     }
     return res;
   }
-  const kindText = { wrong: "wrong answer", error: "error", timeout: `took longer than ${CASE_MS / 1000} s (an endless loop, or too slow for the larger tests)`, "not run": "not run (an earlier test stopped the run)" };
+  const kindText = { wrong: "wrong answer", error: "error", timeout: `took longer than ${CASE_MS / 1000} s or used too much memory (an endless loop, or too slow for the larger tests)`, "not run": "not run (an earlier test stopped the run)" };
   function summaryText(r) {
     if (!r) return "";
     let t = `${r.samples.passed}/${r.samples.total} samples passed`;
@@ -769,7 +817,8 @@
     let html = `<p class="r-sum ${allPass ? "pass" : "fail"}"><span class="r-icon" aria-hidden="true">${allPass ? "✓" : "✗"}</span><b>${esc(summaryText(r))}</b><span class="r-when">${r.kind === "submit" ? "Submit" : "Run"} · ${esc(LANGS[r.lang].label)} · ${when}${edited ? " · code edited since" : ""}</span></p>`;
     if (r.hidden) {
       const f = r.hidden.first;
-      html += `<p class="r-hidden">${f ? `Hidden test ${f.n} failed: ${esc(kindText[f.kind] || f.kind)}${f.err ? " (" + esc(f.err) + ")" : ""}. Hidden tests don't show their inputs; think about edge cases and larger inputs.` : `All ${r.hidden.total} hidden tests passed, including edge cases and larger inputs.`}</p>`;
+      const what = p.prob.speed ? "They include edge cases and full-size inputs, so a slow solution runs out of time." : "For this question they check correctness on edge cases and medium inputs, not speed.";
+      html += `<p class="r-hidden">${f ? `Hidden test ${f.n} failed: ${esc(kindText[f.kind] || f.kind)}${f.err ? " (" + esc(f.err) + ")" : ""}. Hidden tests don't show their inputs. ${what}` : p.prob.speed ? `All ${r.hidden.total} hidden tests passed, including full-size inputs.` : `All ${r.hidden.total} hidden tests passed. (For this question they check correctness, not speed: say your complexity out loud.)`}</p>`;
     } else if (runs.submit && runs.submit.at !== r.at) html += `<p class="r-hidden">Last submit: ${esc(summaryText(runs.submit))}.</p>`;
     html += r.samples.cases.map((c, i) => {
       const t = p.prob.samples[i]; if (!t) return "";

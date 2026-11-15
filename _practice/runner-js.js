@@ -1,9 +1,13 @@
 // Runs a candidate's JavaScript answer against tests, in a Web Worker started fresh for
 // each run (practice.js terminates it if a test takes too long). Also loads in Node for
 // `node _practice/tests/verify.js`.
-// Message in: { code, spec: { fn } or { cls }, cases: [args, ...], stdout: true|false }
-// Messages out: { type: "case", i, ok, out | err, stdout } per test, then { type: "done" }.
+// Message in: { code, spec: { fn } or { cls }, cases: [args, ...], stdout: true|false, nonce }
+// Messages out: { type: "case", i, ok, out | err, stdout, nonce } per test, then { type: "done", nonce }.
+// The nonce (kept out of reach of the candidate's code) lets the page ignore any message the
+// candidate's code posts itself.
 (function () {
+  const post = typeof self !== "undefined" && typeof self.postMessage === "function" ? self.postMessage.bind(self) : null;
+  const stringify = JSON.stringify, isView = ArrayBuffer.isView, toArray = Array.from;
   const MAX_STDOUT = 4000;
   // new Function puts two lines ("function anonymous(console\n) {") before the code.
   const LINE_OFFSET = 2;
@@ -28,6 +32,7 @@
     if (v instanceof Set) v = [...v];
     if (v instanceof Map) v = Object.fromEntries(v);
     if (typeof v === "bigint") return Number(v);
+    if (isView(v)) v = toArray(v); // typed arrays
     if (Array.isArray(v)) return v.map(plain);
     if (v && typeof v === "object") { const o = {}; for (const k of Object.keys(v)) o[k] = plain(v[k]); return o; }
     if (typeof v === "function") throw new TypeError("returned a function, not a value");
@@ -54,7 +59,14 @@
   }
 
   function runOne(entry, spec, args) {
-    if (!spec.cls) return entry(...args);
+    if (!spec.cls) {
+      const keep = (spec.keep || []).map(i => [i, stringify(args[i])]);
+      const out = entry(...args);
+      if (keep.some(([i, before]) => stringify(args[i]) !== before)) {
+        const e = new Error("your function changed its input list; it must leave it as it was"); e.name = "Changed input"; e.stack = ""; throw e;
+      }
+      return out;
+    }
     const [ops, opArgs] = args, out = [];
     let obj = null;
     ops.forEach((op, i) => {
@@ -74,7 +86,7 @@
     try { entry = compile(msg.code, msg.spec, con); } catch (e) { loadErr = errInfo(e); }
     const loadOut = buf; buf = "";
     msg.cases.forEach((args, i) => {
-      const res = { type: "case", i };
+      const res = { type: "case", i, nonce: msg.nonce };
       if (loadErr) Object.assign(res, { ok: false, err: loadErr });
       else {
         try { res.out = plain(runOne(entry, msg.spec, args)); res.ok = true; }
@@ -84,11 +96,11 @@
       buf = "";
       post(res);
     });
-    post({ type: "done" });
+    post({ type: "done", nonce: msg.nonce });
   }
 
   if (typeof module === "object" && module.exports) module.exports = { run };
   else if (typeof importScripts === "function") {
-    self.onmessage = e => run(e.data, m => self.postMessage(m));
+    self.onmessage = e => run(e.data, post);
   }
 })();
