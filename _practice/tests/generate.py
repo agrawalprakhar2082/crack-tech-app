@@ -29,7 +29,7 @@ OUT = os.path.join(HERE, "hidden")
 
 
 def load(pid, name):
-    ns = {"__name__": "ref"}
+    ns = {"__name__": "ref", "ServiceError": _H["ServiceError"]}
     with open(os.path.join(REF, pid + ".py"), encoding="utf-8") as f:
         exec(compile(f.read(), pid + ".py", "exec"), ns)
     return ns[name]
@@ -890,6 +890,240 @@ def g_heaters(rng, small):
     return cases
 
 
+# ---------------------------------------------------------------- AI coding rounds
+import re as _re
+
+
+def b_ranks(scores):
+    return [1 + sum(1 for x in scores if x > s) for s in scores]
+
+
+def b_inventory(ops, args):
+    # Independent simulation: every reservation keeps its creation time.
+    t, ttl, clock, stock, res, nid, out = 0, None, False, {}, {}, 1, []
+
+    def active(rid):
+        sku, qty, made = res[rid]
+        return not (clock and ttl is not None and t >= made + ttl)
+
+    def avail(sku):
+        return stock.get(sku, 0) - sum(q for r, (s, q, _) in res.items() if s == sku and active(r))
+    for op, a in zip(ops, args):
+        if op == "Inventory":
+            if a and isinstance(a[0], dict):
+                clock, t = True, a[0]["$clock"]
+            ttl = a[1] if len(a) > 1 else None
+            out.append(None)
+        elif op == "$advance":
+            t += a[0]
+            out.append(None)
+        elif op == "add":
+            stock[a[0]] = stock.get(a[0], 0) + a[1]
+            out.append(None)
+        elif op == "reserve":
+            if avail(a[0]) < a[1]:
+                out.append(-1)
+            else:
+                res[nid] = (a[0], a[1], t)
+                out.append(nid)
+                nid += 1
+        elif op == "release":
+            res.pop(a[0], None)
+            out.append(None)
+        elif op == "commit":
+            if a[0] in res and active(a[0]):
+                sku, qty, _ = res.pop(a[0])
+                stock[sku] -= qty
+                out.append(True)
+            else:
+                res.pop(a[0], None)
+                out.append(False)
+        elif op == "available":
+            out.append(avail(a[0]))
+    return out
+
+
+_LINE = _re.compile(r"^\s*(\S+)\s+(\S+)\s+(\S+)\s+(\d{3})\s+(\d+)ms\s*$")
+
+
+def b_log(lines):
+    rows = []
+    for line in lines:
+        m = _LINE.match(line)
+        if m and m.group(4).isascii():
+            rows.append((m.group(3).split("?")[0], int(m.group(4)), int(m.group(5))))
+    lat = sorted(r[2] for r in rows)
+    slow = None
+    if rows:
+        top = max(r[2] for r in rows)
+        slow = next(r[0] for r in rows if r[2] == top)
+    return {"requests": len(rows), "errors": sum(1 for r in rows if r[1] >= 500),
+            "median_ms": lat[(len(lat) - 1) // 2] if lat else None, "slowest": slow}
+
+
+def b_rate(times, limit, window):
+    allowed, out = [], []
+    for t in times:
+        ok = sum(1 for x in allowed if x > t - window) < limit
+        out.append(ok)
+        if ok:
+            allowed.append(t)
+    return out
+
+
+def b_sessions(events, gap):
+    ns = {}
+    exec(open(os.path.join(HERE, "naive", "ai-sessions.py"), encoding="utf-8").read(), ns)  # the given (slow, correct) code
+    return ns["count_sessions"](events, gap)
+
+
+def b_retry(scenario, policy):
+    # Step-by-step simulation of the rules, without exceptions.
+    outs, seq = scenario["outcomes"], scenario.get("rand") or [0.5]
+    t, calls, used, sleeps, start = 0.0, 0, 0, [], 0.0
+    while True:
+        kind, lat, *val = outs[min(calls, len(outs) - 1)]
+        calls += 1
+        t += lat
+        if kind == "ok":
+            return {"result": val[0] if val else None, "error": None, "attempts": calls, "sleeps": sleeps}
+        if kind not in ("timeout", "unavailable") or calls >= policy["attempts"]:
+            return {"result": None, "error": kind, "attempts": calls, "sleeps": sleeps}
+        d = seq[min(used, len(seq) - 1)] * min(policy["cap"], policy["base"] * 2 ** (calls - 1))
+        used += 1
+        if t + d >= start + policy["timeout"]:
+            return {"result": None, "error": kind, "attempts": calls, "sleeps": sleeps}
+        sleeps.append(round(d, 9))
+        t += d
+
+
+def g_ranks(rng, small):
+    def make(n, hi):
+        return [[rng.randint(0, hi) for _ in range(n)]]
+    if small:
+        return make(rng.randint(0, 8), 5)
+    cases = [[[]], [[7]], [[5, 5, 5]], [[1, 2, 3]], [[90, 80, 80, 70]], [[3, 3, 1, 1, 2]], [[0, 1000000000, 0]], [[4, 4, 9, 9, 9, 1]]]
+    cases += [make(rng.randint(10, 50), 10) for _ in range(3)] + [make(5000, 300), make(5000, 10**9)]
+    return cases
+
+
+def g_inventory(rng, small):
+    def make(n, clock):
+        ops, args, nid = ["Inventory"], [[{"$clock": rng.randint(0, 100)}, rng.randint(1, 30)] if clock else []], 1
+        for _ in range(n):
+            op = rng.choices(["add", "reserve", "release", "commit", "available", "$advance"], [3, 4, 1, 2, 3, 3 if clock else 0])[0]
+            sku = rng.choice(["ab", "cd", "ef"])
+            ops.append(op)
+            if op == "add":
+                args.append([sku, rng.randint(1, 6)])
+            elif op == "reserve":
+                args.append([sku, rng.randint(1, 4)])
+                nid += 1
+            elif op in ("release", "commit"):
+                args.append([rng.randint(1, nid)])
+            elif op == "available":
+                args.append([sku])
+            else:
+                args.append([rng.randint(0, 20)])
+        return [ops, args]
+    if small:
+        return make(rng.randint(1, 12), rng.random() < 0.6)
+    cases = [
+        [["Inventory", "add", "reserve", "commit", "available"], [[{"$clock": 0}, 5], ["x", 2], ["x", 2], [1], ["x"]]],
+        [["Inventory", "add", "reserve", "$advance", "release", "available"], [[{"$clock": 0}, 5], ["x", 2], ["x", 2], [5], [1], ["x"]]],
+        [["Inventory", "add", "reserve", "$advance", "reserve", "$advance", "available", "commit", "commit"], [[{"$clock": 10}, 10], ["y", 5], ["y", 3], [6], ["y", 2], [4], ["y"], [1], [2]]],
+        [["Inventory", "add", "reserve", "$advance", "reserve"], [[{"$clock": 0}, 3], ["z", 1], ["z", 1], [3], ["z", 1]]],
+        [["Inventory", "add", "reserve", "$advance", "available"], [[], ["w", 4], ["w", 4], [1000], ["w"]]],
+        [["Inventory", "add", "reserve", "reserve", "release", "reserve", "commit", "available"], [[], ["q", 5], ["q", 3], ["q", 3], [1], ["q", 3], [3], ["q"]]],
+    ]
+    cases += [make(rng.randint(10, 40), i % 3 != 0) for i in range(5)] + [make(1500, True), make(1500, False)]
+    return cases
+
+
+def g_log(rng, small):
+    paths = ["/home", "/api/users", "/login", "/cart?id=7", "/search?q=x&p=2", "/a"]
+
+    def line():
+        r = rng.random()
+        status = rng.choice(["200", "201", "404", "500", "500", "503", "302", "599"])
+        sep = lambda: rng.choice([" ", " ", " ", "  ", "\t", " \t "])
+        fields = ["2026-11-%02dT10:%02d:00Z" % (rng.randint(1, 28), rng.randint(0, 59)), rng.choice(["GET", "POST"]), rng.choice(paths), status, "%dms" % rng.randint(0, 50)]
+        if r < 0.08:
+            return ""
+        if r < 0.14:
+            fields = fields[:4]
+        elif r < 0.18:
+            fields[3] = "2x0"
+        elif r < 0.22:
+            fields[4] = "12s"
+        text = sep().join(fields)
+        return (rng.choice(["", " ", "\t"]) + text + rng.choice(["", " ", "  "])) if rng.random() < 0.3 else text
+    def make(n):
+        return [[line() for _ in range(n)]]
+    if small:
+        return make(rng.randint(0, 6))
+    cases = [[[]], [["", "   "]], [["t GET /x 500 10ms"]], [["t\tGET\t/x\t200\t10ms"]], [["t  GET  /x  200  10ms", "t GET /y 200 20ms"]],
+             [["t GET /a 200 5ms", "t GET /b 200 5ms"]], [["t GET /p?x=1 200 9ms", "t GET /q 200 3ms", "t GET /r 200 1ms", "t GET /s 200 7ms"]],
+             [["  t GET /x 404 15ms  ", "t GET /y 499 4ms"]]]
+    cases += [make(rng.randint(5, 30)) for _ in range(4)] + [make(1500), make(1499)]
+    return cases
+
+
+def g_rate(rng, small):
+    def make(n, hi_step, lim, win):
+        t, times = 0, []
+        for _ in range(n):
+            t += rng.choice([0, 0, 1, 1, 2, rng.randint(0, hi_step)])
+            times.append(t)
+        return [times, lim, win]
+    if small:
+        return make(rng.randint(0, 10), 5, rng.randint(1, 3), rng.randint(1, 6))
+    cases = [[[], 1, 1], [[0], 1, 1], [[1, 11], 1, 10], [[1, 10], 1, 10], [[8, 9, 10, 11], 2, 10], [[5, 5, 5, 5], 3, 1], [[1, 2, 3, 4, 5, 6], 2, 2], [[0, 1000000000], 1, 1000000]]
+    cases += [make(rng.randint(10, 60), 6, rng.randint(1, 4), rng.randint(1, 8)) for _ in range(4)] + [make(5000, 20, 7, 30), make(5000, 3, 1, 5)]
+    return cases
+
+
+def g_sessions(rng, small):
+    def make(n, users, tmax, gap):
+        return [[[rng.randint(0, users), rng.randint(0, tmax)] for _ in range(n)], gap]
+    if small:
+        return make(rng.randint(0, 8), 3, 50, rng.randint(0, 15))
+    cases = [[[], 5], [[[3, 7]], 0], [[[1, 0], [1, 10]], 10], [[[1, 0], [1, 11]], 10], [[[2, 5], [2, 5], [2, 5]], 0], [[[9, 30], [9, 0], [9, 15]], 15], [[[1000000, 1000000000], [0, 0]], 1000000000]]
+    cases += [make(rng.randint(10, 60), 5, 200, rng.randint(0, 30)) for _ in range(4)] + [make(2000, 50, 10**6, 5000), make(2000, 3, 1000, 0)]
+    return cases
+
+
+def g_retry(rng, small):
+    kinds = ["ok", "timeout", "timeout", "unavailable", "unavailable", "bad_request", "forbidden"]
+
+    def make(n_out):
+        outs = []
+        for _ in range(n_out):
+            k = rng.choice(kinds)
+            o = [k, round(rng.uniform(0, 3), 1)]
+            if k == "ok":
+                o.append("v%d" % rng.randint(1, 99))
+            outs.append(o)
+        base = round(rng.uniform(0.1, 2), 1)
+        policy = {"attempts": rng.randint(1, 6), "base": base, "cap": round(base * rng.choice([1, 1.5, 2, 4, 8]), 2), "timeout": rng.randint(1, 30)}
+        return [{"outcomes": outs, "rand": [round(rng.random(), 2) for _ in range(rng.randint(1, 6))]}, policy]
+    if small:
+        return make(rng.randint(1, 5))
+    P = {"attempts": 5, "base": 1, "cap": 4, "timeout": 100}
+    cases = [
+        [{"outcomes": [["ok", 0.1, "fast"]], "rand": [0.5]}, P],
+        [{"outcomes": [["forbidden", 0.1]], "rand": [0.5]}, P],
+        [{"outcomes": [["timeout", 1], ["bad_request", 1]], "rand": [0.5]}, P],
+        [{"outcomes": [["unavailable", 0]], "rand": [1, 1, 1, 1]}, P],
+        [{"outcomes": [["timeout", 1]], "rand": [0.9]}, {"attempts": 10, "base": 1, "cap": 30, "timeout": 8}],
+        [{"outcomes": [["timeout", 4], ["ok", 1, "late"]], "rand": [0.5]}, {"attempts": 3, "base": 2, "cap": 2, "timeout": 5}],
+        [{"outcomes": [["unavailable", 0.5], ["unavailable", 0.5], ["ok", 0.5, "third"]], "rand": [0.25, 0.75]}, {"attempts": 3, "base": 0.5, "cap": 10, "timeout": 60}],
+        [{"outcomes": [["timeout", 0]], "rand": [0.5]}, {"attempts": 1, "base": 1, "cap": 1, "timeout": 10}],
+    ]
+    cases += [make(rng.randint(1, 6)) for _ in range(6)]
+    return cases
+
+
 # id: (python function name, brute force, generator, extra small cases to cross-check)
 PROBLEMS = {
     "unpaired-number": ("find_unpaired", b_unpaired, g_unpaired),
@@ -922,7 +1156,16 @@ PROBLEMS = {
     "min-effort-path": ("min_effort", b_effort, g_effort),
     "cooldown-schedule": ("least_time", b_cooldown, g_cooldown),
     "heater-radius": ("min_radius", b_heaters, g_heaters),
+    "ai-ranks": ("rank_scores", b_ranks, g_ranks),
+    "ai-inventory": ("Inventory", b_inventory, g_inventory),
+    "ai-log-summary": ("summarize_log", b_log, g_log),
+    "ai-rate-limiter": ("allow_requests", b_rate, g_rate),
+    "ai-sessions": ("count_sessions", b_sessions, g_sessions),
+    "ai-retry": ("call_with_retry", b_retry, g_retry),
 }
+# The tests-first round ships its correct implementation and buggy versions (mutants),
+# in Python and JavaScript, for "Check my tests". Index 0 is the correct one.
+MUTANTS = {"ai-rate-limiter": 5}
 EXTRA_SMALL = 300
 # Full-size cases (seeded, generated by judge.js). Sizes are at the constraint limits and
 # were timed so the reference solutions take well under a second while the naive approaches
@@ -943,6 +1186,7 @@ FULL = {
     "nearest-exit": [{"seed": 131, "rows": 500, "cols": 500}],
     "min-effort-path": [{"seed": 141, "rows": 200, "cols": 200}],
     "heater-radius": [{"seed": 151, "n": 100000, "m": 100000}],
+    "ai-sessions": [{"seed": 161, "n": 120000, "users": 2000, "heavy": 60000}],
 }
 JUDGE = os.path.join(HERE, "..", "judge.js")
 
@@ -976,6 +1220,9 @@ BRUTE_LIMITS = {  # cases bigger than this are checked against the reference onl
     "min-effort-path": lambda a: len(a[0]) * len(a[0][0]) <= 1600,
     "cooldown-schedule": lambda a: len(a[0]) <= 10000,
     "heater-radius": lambda a: len(a[0]) * len(a[1]) <= 2 * 10**6,
+    "ai-ranks": lambda a: len(a[0]) <= 5000,
+    "ai-rate-limiter": lambda a: len(a[0]) <= 5000,
+    "ai-sessions": lambda a: len(a[0]) <= 3000,
 }
 
 
@@ -998,9 +1245,34 @@ def tree_args(pid, args):
     return args
 
 
+def run_class(cls, ops, args):
+    obj, out, clocks = None, [], []
+    for op, a in zip(ops, args):
+        if op == "$advance":
+            for c in clocks:
+                c.t += a[0]
+            out.append(None)
+        elif op == cls.__name__:
+            real = []
+            for x in a:
+                if isinstance(x, dict) and "$clock" in x:
+                    clocks.append(_H["_FakeClock"](x["$clock"]))
+                    x = clocks[-1]
+                real.append(x)
+            obj = cls(*real)
+            out.append(None)
+        else:
+            out.append(getattr(obj, op)(*a))
+    return out
+
+
 def solve(pid, ref, args):
     if pid == "scoreboard":
         return run_ops(ref, *args)
+    if pid == "ai-inventory":
+        return run_class(ref, *json.loads(json.dumps(args)))
+    if pid == "ai-retry":
+        return _H["_run_env"](ref, json.loads(json.dumps(args)))
     return ref(*tree_args(pid, args))
 
 
@@ -1035,7 +1307,13 @@ def main():
             args = gen(rng, True)
             if not check(pid, brute, args, solve(pid, ref, args)):
                 sys.exit("%s: reference and brute force disagree on small case %s" % (pid, json.dumps(args)))
-        text = json.dumps({"id": pid, "cases": cases}, separators=(",", ":")) + "\n"
+        doc = {"id": pid, "cases": cases}
+        if pid in MUTANTS:
+            def src(name, ext):
+                return open(os.path.join(HERE, name + ext), encoding="utf-8").read()
+            names = ["ref/" + pid] + ["mutants/%s/m%d" % (pid, i) for i in range(1, MUTANTS[pid] + 1)]
+            doc["mutants"] = {"python": [src(n, ".py") for n in names], "javascript": [src(n, ".js") for n in names]}
+        text = json.dumps(doc, separators=(",", ":")) + "\n"
         path = os.path.join(OUT, pid + ".json")
         if write:
             with open(path, "w", encoding="utf-8") as f:

@@ -6,6 +6,10 @@
 //      JavaScript (through runner-js.js, as in the page's worker), passes every sample and
 //      hidden test, judged by judge.js exactly as the page judges it. Full-size hidden tests
 //      are generated from their seed and compared by the SHA-256 of the output, as on Submit.
+//   4. AI coding rounds: every buggy version (mutant) of the tests-first round fails a hidden
+//      test; a thorough test suite passes the correct version and catches every mutant, in
+//      both runners; the scripted assistant's first code answer for each round fails the
+//      tests and its fully corrected answer passes them, in both languages.
 //   With --speed: also times the full-size tests. The references must finish each in under
 //   1.5 s, and the naive solutions in tests/naive/ must fail or take over the page's 5 s
 //   limit (in CPython and Node, which are faster than Pyodide in the browser).
@@ -20,8 +24,10 @@ step("1. Sessions", "node", [path.join(DIR, "check.js")]);
 step("2. Hidden tests", "python3", [path.join(__dirname, "generate.py"), "--check"]);
 
 const ctx = { window: {} };
-vm.runInNewContext(fs.readFileSync(path.join(DIR, "problems.js"), "utf8"), ctx);
+vm.runInNewContext(fs.readFileSync(path.join(DIR, "problems.js"), "utf8") + fs.readFileSync(path.join(DIR, "ai-problems.js"), "utf8") + fs.readFileSync(path.join(DIR, "sessions.js"), "utf8"), ctx);
 const PROBLEMS = ctx.window.PRACTICE_PROBLEMS;
+globalThis.PRACTICE_PROBLEMS = PROBLEMS; // the scripted assistant builds on the given code
+const assistant = require(path.join(DIR, "assistant.js"));
 const judge = require(path.join(DIR, "judge.js"));
 const runner = require(path.join(DIR, "runner-js.js"));
 
@@ -36,6 +42,7 @@ const jobs = Object.entries(PROBLEMS).map(([id, p]) => {
   const spec = p.cls ? { cls: p.cls } : { fn: p.fn };
   if (p.keep) spec.keep = p.keep;
   if (p.inplace !== undefined) spec.inplace = p.inplace;
+  if (p.env) spec.env = true;
   const trees = (p.params || []).map((x, i) => x[1] === "tree" ? i : -1).filter(i => i >= 0);
   if (trees.length) spec.trees = trees;
   return { id, p, cases, spec };
@@ -82,8 +89,68 @@ const runJs = (code, job, cases) => {
     console.log(`  ${job.id.padEnd(24)} ${String(job.p.samples.length).padStart(2)} samples + ${String(job.cases.length - job.p.samples.length).padStart(2)} hidden${full ? ` (${full} full size)` : "              "}   Python ${a}/${job.cases.length} (${pyRes.seconds}s)   JavaScript ${b}/${job.cases.length} (${jsMs} ms)`);
   }
 
+  console.log("4. AI coding rounds");
+  const pyRun = (j, code, cases) => runPy([{ id: j.id, spec: pySpec(j), code, cases: cases.map(c => c.args) }])[0].results;
+  const failsSome = async (lang, j, results) => {
+    for (let i = 0; i < j.cases.length; i++) {
+      const c = j.cases[i], r = results[i];
+      if (!r || !r.ok) return true;
+      const pass = c.sha ? (await judge.sha256(r.out)) === c.sha : judge.compare(j.p.compare, c.args, r.out, c.expected).pass;
+      if (!pass) return true;
+    }
+    return false;
+  };
+  const passesAll = async (lang, j, results) => !(await failsSome(lang, j, results));
+  // 4a. Tests-first: mutants are real bugs, and a thorough suite catches them all.
+  for (const j of jobs.filter(x => x.p.testStarters)) {
+    const doc = JSON.parse(fs.readFileSync(path.join(__dirname, "hidden", j.id + ".json"), "utf8"));
+    for (const lang of ["python", "javascript"]) {
+      const impls = doc.mutants[lang];
+      for (let m = 1; m < impls.length; m++) {
+        const res = lang === "python" ? pyRun(j, impls[m], j.cases) : runJs(impls[m], j, j.cases);
+        const ok = await failsSome(lang, j, res);
+        if (!ok) failures++;
+        console.log(`  ${ok ? "OK  " : "FAIL"} ${j.id} ${lang} mutant ${m} (${j.p.mutantHints[m - 1]}) fails a test`);
+      }
+      const suite = fs.readFileSync(path.join(REF, j.id + ".tests." + (lang === "python" ? "py" : "js")), "utf8");
+      const spec = { tests: lang === "python" ? j.p.fn : j.p.fn };
+      let rows;
+      if (lang === "python") rows = runPy([{ id: j.id, spec, code: suite, cases: impls.map(c => [c]) }])[0].results;
+      else { rows = []; runner.run({ code: suite, spec, cases: impls.map(c => [c]), stdout: false, nonce: "v" }, msg => { if (msg.type === "case") rows[msg.i] = msg; }); }
+      const correctOk = rows[0].ok && rows[0].out.length > 0 && rows[0].out.every(t => t[1]);
+      const caught = rows.slice(1).filter(r => r.ok && r.out.some(t => !t[1])).length;
+      const ok = correctOk && caught === impls.length - 1;
+      if (!ok) failures++;
+      console.log(`  ${ok ? "OK  " : "FAIL"} ${j.id} ${lang} thorough tests: pass the correct version ${correctOk}, catch ${caught}/${impls.length - 1} buggy versions`);
+      // The assistant's own (weak) tests, for comparison.
+      const weak = assistant.reply("ai-round-4", "write some tests", [], lang).match(/```\w+\n([\s\S]*?)```/)[1];
+      let wr;
+      if (lang === "python") wr = runPy([{ id: j.id, spec, code: weak, cases: impls.map(c => [c]) }])[0].results;
+      else { wr = []; runner.run({ code: weak, spec, cases: impls.map(c => [c]), stdout: false, nonce: "v" }, msg => { if (msg.type === "case") wr[msg.i] = msg; }); }
+      console.log(`       (the assistant's quick tests catch ${wr.slice(1).filter(r => r.ok && r.out.some(t => !t[1])).length}/${impls.length - 1})`);
+    }
+  }
+  // 4b. The scripted assistant: first answer has the round's flaw, the corrected one passes.
+  const sessions = ctx.window.PRACTICE_SESSIONS.filter(s => s.ai);
+  for (const s of sessions) {
+    const pid = s.blocks.flatMap(b => b.prompts).find(p => p.chat).problem, j = jobs.find(x => x.id === pid);
+    for (const lang of ["python", "javascript"]) {
+      const code = text => { const m = text.match(/```\w+\n([\s\S]*?)```/); return m ? m[1] : null; };
+      const first = code(assistant.reply(s.id, "Please write the code for this", [], lang));
+      const words = Object.values(assistant.fixWords(s.id)).map(w => w[0]);
+      const fixed = code(assistant.reply(s.id, "Please fix the " + words.join(" and the "), ["Please write the code for this"], lang));
+      const res1 = lang === "python" ? pyRun(j, first, j.cases) : runJs(first, j, j.cases);
+      const res2 = lang === "python" ? pyRun(j, fixed, j.cases) : runJs(fixed, j, j.cases);
+      const a = await failsSome(lang, j, res1), b = await passesAll(lang, j, res2);
+      if (!a || !b) failures++;
+      console.log(`  ${a && b ? "OK  " : "FAIL"} ${s.id} ${lang}: assistant's first answer fails the tests (${a}), corrected answer passes (${b})`);
+    }
+    const help = assistant.reply(s.id, "hello", [], "python"), off = assistant.reply(s.id, "tell me a joke", [], "python");
+    if (!/Ask me for code/.test(help) || !/only/.test(off)) { failures++; console.log(`  FAIL ${s.id}: generic replies`); }
+  }
+
   if (process.argv.includes("--speed")) {
-    console.log("4. Speed of the full-size tests (reference < 1.5 s each; naive fails or > 5 s)");
+    console.log("5. Speed of the full-size tests (reference < 1.5 s each; naive fails or > 5 s)");
     for (const job of jobs.filter(j => j.p.speed)) {
       for (const c of job.cases.filter(x => x.gen)) {
         const one = { ...job, cases: [c] };
