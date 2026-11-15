@@ -290,7 +290,7 @@ window.PRACTICE_SESSIONS = [
     ];
   };
   const codingSet = (n, tag, blurb, a, b) => ({
-    id: `coding-session-${n}`, track: "Coding practice sets", tag, title: `Session ${n}`, blurb,
+    id: `coding-session-${n}`, track: "Coding practice sets", tag, title: `Session ${n}`, blurb, questions: 2,
     blocks: [...question(1, a, 15), ...question(2, b, 16)]
   });
   window.PRACTICE_SESSIONS.push(

@@ -167,7 +167,7 @@
         <div class="session-grid">${list.map(s => {
           const st = store.get(sKey(s.id)), done = answeredCount(s, st);
           const badge = st && st.sentAt ? `<span class="badge sent">✓ Sent for review</span>`
-            : done ? `<span class="badge">${done} of ${s.total} answered</span>` : `<span class="badge muted">${plural(s.total, "question")}</span>`;
+            : done ? `<span class="badge">${done} of ${s.total} ${s.questions ? "parts" : "answered"}${s.questions ? " answered" : ""}</span>` : `<span class="badge muted">${plural(s.questions || s.total, "question")}</span>`;
           return `<a class="session-card" href="#${esc(s.id)}">
             <div class="session-meta"><span>${esc(s.tag || s.track)}</span><span>${MINUTES} min</span></div>
             <h3>${esc(s.title)}</h3><p>${esc(s.blurb)}</p>
