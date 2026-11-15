@@ -7,6 +7,9 @@
 //   node _practice/tests/verify.js
 // Text may use `backticks` for code. Types: int, long, bool, string, int[], int[][].
 // compare: "exact" (default), "unordered", "float", or a checker in judge.js (e.g. "parens").
+// speed: true when the hidden tests include full-size inputs (see judge.js GENS); otherwise
+// the page says the hidden tests check correctness, not speed. keep: argument indexes the
+// candidate's function must not modify (checked by both runners).
 window.PRACTICE_PROBLEMS = {
   /* ---------------- Session 1 ---------------- */
   "unpaired-number": {
@@ -46,8 +49,8 @@ window.PRACTICE_PROBLEMS = {
     output: "The value that appears only once.",
     constraints: ["1 ≤ nums.length ≤ 10⁵ (always odd)", "−10⁹ ≤ nums[i] ≤ 10⁹", "nums is sorted ascending; pairs are next to each other"],
     samples: [
-      { args: [[1, 1, 2, 3, 3, 4, 4, 8, 8]], expected: 2, why: "Before 2, each pair starts at an even index (0); after it, pairs start at odd indices." },
-      { args: [[3, 3, 7, 7, 10, 11, 11]], expected: 10 },
+      { args: [[2, 2, 5, 9, 9]], expected: 5, why: "The pair before 5 starts at index 0 (even); the pair after it starts at index 3 (odd)." },
+      { args: [[-4, -4, 0, 0, 6, 7, 7]], expected: 6 },
       { args: [[5]], expected: 5 }],
     clarify: [
       "Notices that sorted input is the hint: the expected complexity drops to O(log n)",
@@ -104,7 +107,7 @@ window.PRACTICE_PROBLEMS = {
     constraints: ["0 ≤ s.length ≤ 10⁵"],
     samples: [
       { args: ["x)(y)z)"], expected: "x(y)z", why: "The first and last ) have no partner." },
-      { args: ["))(("], expected: "", why: "No bracket can be matched, so all four go." },
+      { args: [")a(("], expected: "a", why: "None of the three brackets has a partner, so only the letter stays." },
       { args: ["(a(b)"], expected: "a(b)", why: "\"(ab)\" is also accepted: both remove one character." }],
     clarify: [
       "Asks whether letters can be removed (never needed) and whether any valid answer is accepted",
@@ -123,6 +126,7 @@ window.PRACTICE_PROBLEMS = {
 
   /* ---------------- Session 3 ---------------- */
   "fence-coats": {
+    speed: true,
     title: "Fence posts with enough paint",
     fn: "countCoated", params: [["days", "int[][]"], ["k", "int"]], returns: "long",
     statement: [
@@ -151,6 +155,7 @@ window.PRACTICE_PROBLEMS = {
     followup: "The ranges arrive one by one and after each you must report the answer. What changes? (A balanced tree or segment tree over compressed coordinates.)"
   },
   "balloon-arrows": {
+    speed: true,
     title: "Fewest arrows",
     fn: "minArrows", params: [["balloons", "int[][]"]], returns: "int",
     statement: [
@@ -160,8 +165,8 @@ window.PRACTICE_PROBLEMS = {
     output: "The minimum number of arrows.",
     constraints: ["0 ≤ balloons.length ≤ 10⁵", "−2·10⁹ ≤ start ≤ end ≤ 2·10⁹"],
     samples: [
-      { args: [[[10, 16], [2, 8], [1, 6], [7, 12]]], expected: 2, why: "One arrow at x = 6 bursts [2,8] and [1,6]; one at x = 12 bursts [10,16] and [7,12]." },
-      { args: [[[1, 2], [2, 3], [3, 4], [4, 5]]], expected: 2, why: "Balloons that only touch can share an arrow: x = 2 and x = 4." },
+      { args: [[[10, 16], [2, 8], [1, 6], [7, 12]]], expected: 2, why: "Any x from 2 to 6 is inside the two left balloons, and any x from 10 to 12 is inside the two right ones." },
+      { args: [[[0, 3], [3, 7], [7, 9]]], expected: 2, why: "Touching counts: x = 3 bursts the first two, and x = 7 the last one." },
       { args: [[[1, 2], [3, 4], [5, 6]]], expected: 3 }],
     clarify: [
       "Asks whether touching balloons ([1,2] and [2,3]) can share an arrow",
@@ -180,6 +185,7 @@ window.PRACTICE_PROBLEMS = {
 
   /* ---------------- Session 4 ---------------- */
   "window-maximum": {
+    speed: true,
     title: "Sliding window maximum",
     fn: "windowMax", params: [["nums", "int[]"], ["k", "int"]], returns: "int[]",
     statement: [
@@ -187,7 +193,7 @@ window.PRACTICE_PROBLEMS = {
       "There are n − k + 1 windows. Do better than recomputing each maximum from scratch."],
     input: ["`nums`: a list of integers.", "`k`: the window size."],
     output: "A list of n − k + 1 maximums, in window order.",
-    constraints: ["1 ≤ nums.length ≤ 10⁵", "1 ≤ k ≤ nums.length", "−10⁴ ≤ nums[i] ≤ 10⁴"],
+    constraints: ["1 ≤ nums.length ≤ 2·10⁵", "1 ≤ k ≤ nums.length", "−10⁴ ≤ nums[i] ≤ 10⁴"],
     samples: [
       { args: [[2, 7, 4, 1, 8, 1, 3], 3], expected: [7, 7, 8, 8, 8], why: "Windows: [2,7,4] [7,4,1] [4,1,8] [1,8,1] [8,1,3]." },
       { args: [[4, 2], 1], expected: [4, 2] },
@@ -207,6 +213,7 @@ window.PRACTICE_PROBLEMS = {
     followup: "What about the minimum and maximum together, or the median of each window? (Two deques; two heaps with lazy deletion.)"
   },
   "longest-ones-flips": {
+    speed: true,
     title: "Longest run of ones with k flips",
     fn: "longestOnes", params: [["nums", "int[]"], ["k", "int"]], returns: "int",
     statement: [
@@ -214,7 +221,7 @@ window.PRACTICE_PROBLEMS = {
       "Return the length of the longest stretch of consecutive 1s you can make."],
     input: ["`nums`: a list of 0s and 1s.", "`k`: the most zeros you may flip."],
     output: "The length of the longest possible run of 1s.",
-    constraints: ["1 ≤ nums.length ≤ 10⁵", "0 ≤ k ≤ nums.length"],
+    constraints: ["1 ≤ nums.length ≤ 2·10⁵", "0 ≤ k ≤ nums.length"],
     samples: [
       { args: [[1, 1, 0, 0, 1, 1, 1, 0, 1], 1], expected: 5, why: "Flip the zero at index 7: positions 4–8 become 1, 1, 1, 1, 1." },
       { args: [[0, 1, 1, 0, 1, 0, 0, 1, 1, 1], 2], expected: 6 },
@@ -263,6 +270,7 @@ window.PRACTICE_PROBLEMS = {
     followup: "Count how many cells are ≤ target, or find the k-th smallest value. (The same staircase walk, then binary search on the value.)"
   },
   "tank-capacity": {
+    speed: true,
     title: "Smallest water tank",
     fn: "minCapacity", params: [["draws", "int[]"], ["k", "int"]], returns: "int",
     statement: [
@@ -272,7 +280,7 @@ window.PRACTICE_PROBLEMS = {
     output: "The smallest capacity C that needs at most k refills.",
     constraints: ["1 ≤ draws.length ≤ 10⁵", "1 ≤ draws[i] ≤ 10⁴", "1 ≤ k ≤ draws.length"],
     samples: [
-      { args: [[3, 2, 2, 4, 1, 4], 3], expected: 6, why: "With C = 6: fill, use 3 and 2; fill, use 2 and 4; fill, use 1 and 4. Three refills. C = 5 needs four." },
+      { args: [[4, 1, 3, 2, 5, 1], 3], expected: 6, why: "With C = 6: fill, use 4 and 1; fill, use 3 and 2; fill, use 5 and 1. Three refills. C = 5 needs four." },
       { args: [[5, 1, 1, 1], 1], expected: 8, why: "One fill has to cover every day, so C is the total." },
       { args: [[1, 2, 3, 4, 5], 5], expected: 5 }],
     clarify: [
@@ -413,8 +421,8 @@ window.PRACTICE_PROBLEMS = {
     output: "true if no row, column or box repeats a digit, otherwise false.",
     constraints: ["board is 9 × 9", "0 ≤ board[r][c] ≤ 9 (0 means empty)"],
     samples: [
-      { args: [[[5, 3, 0, 6, 0, 8, 9, 0, 2], [6, 7, 2, 1, 0, 5, 3, 0, 0], [0, 9, 0, 3, 0, 2, 5, 6, 7], [0, 5, 0, 0, 6, 0, 4, 2, 3], [0, 2, 6, 0, 0, 3, 0, 0, 1], [0, 0, 0, 0, 2, 0, 8, 5, 0], [9, 0, 1, 0, 0, 0, 0, 8, 0], [0, 0, 0, 0, 0, 0, 0, 3, 0], [0, 0, 0, 2, 8, 0, 1, 0, 9]]], expected: true },
-      { args: [[[5, 3, 7, 6, 0, 8, 9, 0, 2], [6, 7, 2, 1, 0, 5, 3, 0, 0], [0, 9, 0, 3, 0, 2, 5, 6, 7], [0, 5, 0, 0, 6, 0, 4, 2, 3], [0, 2, 6, 0, 0, 3, 0, 0, 1], [0, 0, 0, 0, 2, 0, 8, 5, 0], [9, 0, 1, 0, 0, 0, 0, 8, 0], [0, 0, 0, 0, 0, 0, 0, 3, 0], [0, 0, 0, 2, 8, 0, 1, 0, 9]]], expected: false, why: "The 7 in the top row repeats the 7 in the same top-left box (row 1, column 1), though its row and column are fine." }],
+      { args: [[[0, 9, 0, 0, 0, 0, 8, 0, 2], [0, 2, 0, 0, 7, 0, 0, 0, 0], [0, 1, 7, 0, 0, 0, 5, 6, 4], [4, 0, 0, 7, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0, 9], [0, 0, 0, 0, 0, 2, 3, 8, 0], [0, 0, 0, 0, 0, 8, 0, 0, 0], [0, 0, 0, 0, 6, 0, 9, 0, 0], [0, 0, 0, 0, 0, 0, 6, 2, 0]]], expected: true },
+      { args: [[[1, 9, 0, 0, 0, 0, 8, 0, 2], [0, 2, 0, 0, 7, 0, 0, 0, 0], [0, 1, 7, 0, 0, 0, 5, 6, 4], [4, 0, 0, 7, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0, 9], [0, 0, 0, 0, 0, 2, 3, 8, 0], [0, 0, 0, 0, 0, 8, 0, 0, 0], [0, 0, 0, 0, 6, 0, 9, 0, 0], [0, 0, 0, 0, 0, 0, 6, 2, 0]]], expected: false, why: "The 1 in the top-left corner repeats the 1 two rows down in the same 3 × 3 box, though its row and column are fine." }],
     clarify: [
       "Confirms empty cells are ignored and solvability isn't checked",
       "Asks whether the input is always 9 × 9 with digits 0–9",
@@ -437,7 +445,7 @@ window.PRACTICE_PROBLEMS = {
       "Return the fewest moves that make b exactly equal to a."],
     input: ["`a`: the target order.", "`b`: the same values, in the order you start with."],
     output: "The minimum number of moves.",
-    constraints: ["1 ≤ n ≤ 10⁵", "a and b are permutations of the same n distinct values"],
+    constraints: ["n = a.length = b.length, 1 ≤ n ≤ 10⁵", "a and b contain the same n distinct values, in different orders"],
     samples: [
       { args: [[4, 2, 3, 5, 1, 6], [1, 5, 4, 2, 6, 3]], expected: 3, why: "4, 2, 3 already appear in that order in b, so they can stay. Move 5, 1, 6 to the end one by one." },
       { args: [[4, 2, 3, 5, 1, 6], [6, 3, 2, 5, 4, 1]], expected: 3, why: "3, 5, 1 can stay. Move 2 then 4 to the start, and 6 to the end." },
@@ -459,6 +467,7 @@ window.PRACTICE_PROBLEMS = {
 
   /* ---------------- Session 9 ---------------- */
   "scoreboard": {
+    speed: true,
     title: "Design a scoreboard",
     cls: "Scoreboard",
     methods: [
@@ -477,16 +486,16 @@ window.PRACTICE_PROBLEMS = {
     },
     statement: [
       "Design a class `Scoreboard` that keeps one score per player name:",
-      "`assign(name, score)` adds the player, or replaces their score if they're already there. `remove(name)` deletes the player (nothing happens if they aren't there). `maxScore()` returns `[name, score]` for the highest score; if several players share it, the name that comes first alphabetically; or null (None in Python) when the board is empty. `getScore(name)` returns the player's score, or null if they aren't there.",
+      "`assign(name, score)` adds the player, or replaces their score if they're already there. `remove(name)` deletes the player (nothing happens if they aren't there). `maxScore()` returns `[name, score]` for the highest score; if several players share it, the smallest name in character order (compare the names as strings); or null (None in Python) when the board is empty. `getScore(name)` returns the player's score, or null if they aren't there.",
       "Each test is a list of operations, run in order on one new Scoreboard. The expected output lists what each operation returns (null for the constructor, assign and remove). Aim for O(log n) per operation."],
     input: ["`ops`: operation names, starting with \"Scoreboard\".", "`args`: the arguments for each operation."],
     output: "What each operation returns, in order.",
-    constraints: ["Up to 10⁴ operations per test", "Names are 1–10 lowercase letters or digits", "0 ≤ score ≤ 10⁹"],
+    constraints: ["Up to 10⁵ operations per test", "Names are 1–10 lowercase letters or digits", "0 ≤ score ≤ 10⁹"],
     samples: [
       { args: [["Scoreboard", "assign", "assign", "maxScore", "assign", "getScore", "maxScore", "remove", "maxScore", "getScore", "getScore"],
                [[], ["abc", 10], ["pqr", 5], [], ["aaa", 10], ["pqr"], [], ["aaa"], [], ["abc"], ["aaa"]]],
         expected: [null, null, null, ["abc", 10], null, 5, ["aaa", 10], null, ["abc", 10], 10, null],
-        why: "\"aaa\" ties with \"abc\" at 10 and wins alphabetically, until it's removed." },
+        why: "\"aaa\" ties with \"abc\" at 10 and is the smaller string, until it's removed." },
       { args: [["Scoreboard", "assign", "assign", "maxScore"], [[], ["zed", 3], ["zed", 1], []]], expected: [null, null, null, ["zed", 1]], why: "Assigning again replaces the score." },
       { args: [["Scoreboard", "maxScore", "remove", "getScore"], [[], [], ["x"], ["x"]]], expected: [null, null, null, null] }],
     clarify: [
@@ -505,7 +514,7 @@ window.PRACTICE_PROBLEMS = {
   },
   "heap-k-largest": {
     title: "K largest from a heap",
-    fn: "kLargest", params: [["heap", "int[]"], ["k", "int"]], returns: "int[]",
+    fn: "kLargest", params: [["heap", "int[]"], ["k", "int"]], returns: "int[]", keep: [0],
     statement: [
       "`heap` is a max-heap stored as a list: for every index i, heap[i] ≥ heap[2i + 1] and heap[i] ≥ heap[2i + 2] (when those exist), so heap[0] is the largest.",
       "Return the k largest values in descending order. Don't modify `heap`, and don't copy or sort the whole list: aim for O(k log k) time."],
@@ -533,6 +542,7 @@ window.PRACTICE_PROBLEMS = {
 
   /* ---------------- Session 10 ---------------- */
   "subarray-sum-k": {
+    speed: true,
     title: "Subarrays that sum to k",
     fn: "countSubarrays", params: [["nums", "int[]"], ["k", "int"]], returns: "long",
     statement: [
@@ -540,7 +550,7 @@ window.PRACTICE_PROBLEMS = {
       "Values can be negative, so a sliding window doesn't work. Beat the O(n²) approach of trying every start and end."],
     input: ["`nums`: a list of integers (may be negative).", "`k`: the target sum."],
     output: "The number of subarrays with sum k.",
-    constraints: ["1 ≤ nums.length ≤ 2·10⁴", "−1000 ≤ nums[i] ≤ 1000", "−10⁷ ≤ k ≤ 10⁷"],
+    constraints: ["1 ≤ nums.length ≤ 2·10⁵", "−1000 ≤ nums[i] ≤ 1000", "−10⁸ ≤ k ≤ 10⁸"],
     samples: [
       { args: [[3, 1, 2, -1, 1], 3], expected: 3, why: "[3], [1, 2] and [1, 2, −1, 1]." },
       { args: [[1, -1, 1, -1], 0], expected: 4, why: "[1, −1] twice, [−1, 1], and the whole list." },
@@ -560,6 +570,7 @@ window.PRACTICE_PROBLEMS = {
     followup: "Count subarrays whose sum is divisible by k instead. (Prefix sums modulo k; normalise negative remainders.)"
   },
   "age-halves": {
+    speed: true,
     title: "Younger half, older half",
     fn: "skillGaps", params: [["ages", "int[]"], ["skills", "int[]"]], returns: "int[]",
     statement: [

@@ -69,7 +69,51 @@
     return JSON.parse(new TextDecoder().decode(bytes));
   }
 
-  const api = { compare, same, show, expectedText, decode, validParens };
+  /* ---------- full-size tests ----------
+     Hidden tests that check speed use inputs too big to ship. They're made here from a seed
+     (the same in the page and in _practice/tests), and only the SHA-256 of the expected
+     output's JSON ships. generate.py gets the inputs from this code (node), so Python and
+     JavaScript test exactly the same thing. */
+  function rng(seed) { // mulberry32
+    let a = seed >>> 0;
+    return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  const GENS = {
+    "fence-coats": (r, g) => { const days = []; for (let i = 0; i < g.n; i++) { const a = 1 + Math.floor(r() * 1e9); days.push([a, Math.min(1e9, a + Math.floor(r() * g.len))]); } return [days, g.k]; },
+    "balloon-arrows": (r, g) => { const b = []; for (let i = 0; i < g.n; i++) { const s = Math.floor(r() * 4e9) - 2e9; b.push([s, Math.min(2e9, s + Math.floor(r() * g.len))]); } return [b]; },
+    "window-maximum": (r, g) => { const a = []; for (let i = 0; i < g.n; i++) a.push(Math.floor(r() * 20001) - 10000); return [a, g.k]; },
+    "longest-ones-flips": (r, g) => { const a = []; for (let i = 0; i < g.n; i++) a.push(r() < g.p ? 1 : 0); return [a, g.k]; },
+    "tank-capacity": (r, g) => { const d = []; for (let i = 0; i < g.n; i++) d.push(1 + Math.floor(r() * 10000)); return [d, g.k]; },
+    "scoreboard": (r, g) => {
+      const ops = ["Scoreboard"], args = [[]];
+      for (let i = 0; i < g.names; i++) { ops.push("assign"); args.push(["p" + i, Math.floor(r() * 1e9)]); }
+      while (ops.length < g.ops) {
+        const x = r(), name = "p" + Math.floor(r() * g.names);
+        if (x < 0.5) { ops.push("maxScore"); args.push([]); }
+        else if (x < 0.8) { ops.push("assign"); args.push([name, Math.floor(r() * 1e9)]); }
+        else if (x < 0.9) { ops.push("remove"); args.push([name]); }
+        else { ops.push("getScore"); args.push([name]); }
+      }
+      return [ops, args];
+    },
+    "subarray-sum-k": (r, g) => { const a = []; for (let i = 0; i < g.n; i++) a.push(Math.floor(r() * 2001) - 1000); return [a, g.k]; },
+    "age-halves": (r, g) => { const a = [], s = []; for (let i = 0; i < g.n; i++) { a.push(1 + Math.floor(r() * 100)); s.push(Math.floor(r() * 10001)); } return [a, s]; }
+  };
+  function generate(id, g) {
+    if (!GENS[id]) throw new Error("no generator for " + id);
+    return GENS[id](rng(g.seed), g);
+  }
+  // SHA-256 (hex) of a value's JSON, for comparing big outputs.
+  async function sha256(value) {
+    const text = JSON.stringify(value === undefined ? null : value);
+    if (typeof crypto !== "undefined" && crypto.subtle) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+    return require("crypto").createHash("sha256").update(text).digest("hex");
+  }
+
+  const api = { compare, same, show, expectedText, decode, validParens, generate, sha256, GENERATED: Object.keys(GENS) };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.PracticeJudge = api;
 })(typeof self !== "undefined" ? self : this);

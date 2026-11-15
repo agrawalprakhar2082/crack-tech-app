@@ -1,0 +1,2 @@
+// Naive approach (too slow on purpose): used by verify.js --speed.
+function skillGaps(ages,skills){const p=[],o=[];for(let i=0;i<ages.length;i++){const x=[ages[i],i,skills[i]];let lo=0,hi=p.length;while(lo<hi){const m=(lo+hi)>>1;if(p[m][0]<x[0]||(p[m][0]===x[0]&&p[m][1]<x[1]))lo=m+1;else hi=m}p.splice(lo,0,x);const h=(p.length+1)>>1;let a=0,b=0;for(let j=0;j<p.length;j++){if(j<h)a+=p[j][2];else b+=p[j][2]}o.push(Math.abs(a-b))}return o}
