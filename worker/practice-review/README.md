@@ -2,6 +2,8 @@
 
 Receives "Send for review" from `/practice/` and emails the answers to the owner, with
 the answers (`.md`) and the drawing (`.excalidraw`) attached. Reply-To is the candidate.
+It also answers `POST /ai`, the assistant in the AI coding rounds (written November 2026,
+**not deployed yet**: see "Switch on the AI assistant" below).
 
 - Live at `https://practice-review.cracktech-app.workers.dev` (deployed Nov 15, 2026);
   `FORM_ENDPOINT` in `_practice/practice.js` points here.
@@ -27,4 +29,36 @@ With a Cloudflare API token ("Edit Cloudflare Workers" template), from this fold
 4. Test: POST JSON with `Origin: https://cracktech.app` (fields `name`, `email`,
    `session`, `answers`, optional `target`, `time_used`, `diagram_excalidraw`).
 
-Test the MIME builder locally: `node worker/practice-review/test.mjs`.
+Test locally (MIME builder and the /ai route, with stubs): `node worker/practice-review/test.mjs`.
+
+## Switch on the AI assistant (POST /ai)
+
+The AI coding rounds on `/practice/` use a scripted offline assistant until this is done.
+
+- `POST /ai` takes `{round, lang, code?, messages: [{role: "user"|"assistant", content}]}`
+  from `https://cracktech.app` only and returns `{ok, reply}`. Limits: 16 messages, 4,000
+  characters each, 24,000 in total, 8,000 characters of editor code, 40 KB per request;
+  600 output tokens. Each round has its own system prompt (help with this round's code
+  only, refuse other chat, never claim to know the hidden tests). Prompt contents are
+  never logged.
+- Model: `AI_MODEL` in `src/index.js` (`@cf/meta/llama-3.2-1b-instruct`, deliberately
+  small). **Confirm it's still in the Workers AI catalogue** (dashboard > AI > Workers AI >
+  Models) before deploying; swap in another small instruct model if not.
+- Rate limit: `AI_RATE` (10 prompts per minute per IP), falling back to `RATE` if missing.
+
+Steps, with a Cloudflare API token that can edit Workers and use Workers AI:
+
+1. Redeploy as above with two more bindings: `{"type":"ai","name":"AI"}` and
+   `{"type":"ratelimit","name":"AI_RATE","namespace_id":"1002","simple":{"limit":10,"period":60}}`.
+2. Test: `POST https://practice-review.cracktech-app.workers.dev/ai` with
+   `Origin: https://cracktech.app` and
+   `{"round":"ai-round-1","lang":"python","messages":[{"role":"user","content":"Write rank_scores"}]}`.
+3. Set `AI_ENDPOINT` at the top of `_practice/practice.js` to
+   `https://practice-review.cracktech-app.workers.dev/ai`, run `ruby _blog/build.rb`, and
+   open a pull request.
+4. Daily spend: Workers AI bills by "neurons", with a free daily allocation on every plan
+   (10,000 neurons a day at the time of writing); beyond it, usage is billed only on the
+   Workers Paid plan. Check usage under AI > Workers AI, and if needed lower `AI_RATE` or
+   `AI_MAX_TOKENS`. When the allocation runs out or the model errors, the page falls back to
+   the offline assistant automatically.
+5. Delete or expire the API token afterwards.
