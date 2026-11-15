@@ -22,6 +22,6 @@ Files in `blog/` are generated, so edit `_blog/` rather than `blog/`.
 - `_practice/problems.js`: the runnable questions of the coding practice sets, with sample tests. Their hidden tests come from `python3 _practice/tests/generate.py` (in `_practice/tests/hidden/`); the build copies them base64-encoded into `practice/hidden/`.
 - `_practice/runner-js.js`, `_practice/runner-py.js`, `_practice/harness.py`, `_practice/judge.js`: the in-browser test runner (JavaScript worker, Python via Pyodide) and the answer checker.
 
-Check the questions and tests with `node _practice/tests/verify.js` (see CLAUDE.md, "Practice page").
+Check the questions and tests with `node _practice/tests/verify.js` (add `--speed` to time the full-size tests) (see CLAUDE.md, "Practice page").
 
 Files in `practice/` are generated, so edit `_practice/` rather than `practice/`.
