@@ -19,5 +19,9 @@ Files in `blog/` are generated, so edit `_blog/` rather than `blog/`.
 - `_practice/sessions.js`: the practice sessions (questions, timings, "what interviewers look for"). Each session must add up to 45 minutes; the build runs `node _practice/check.js` to check this when Node is installed.
 - `_practice/practice.js`: the app (timer, autosave, dictation, code editor, whiteboard, send for review). `FORM_ENDPOINT` at the top sets where answers are sent.
 - `_practice/practice.css`: its styles.
+- `_practice/problems.js`: the runnable questions of the coding practice sets, with sample tests. Their hidden tests come from `python3 _practice/tests/generate.py` (in `_practice/tests/hidden/`); the build copies them base64-encoded into `practice/hidden/`.
+- `_practice/runner-js.js`, `_practice/runner-py.js`, `_practice/harness.py`, `_practice/judge.js`: the in-browser test runner (JavaScript worker, Python via Pyodide) and the answer checker.
+
+Check the questions and tests with `node _practice/tests/verify.js` (see CLAUDE.md, "Practice page").
 
 Files in `practice/` are generated, so edit `_practice/` rather than `practice/`.
