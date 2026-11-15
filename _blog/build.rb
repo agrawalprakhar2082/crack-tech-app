@@ -197,27 +197,53 @@ require "digest"
 if system("node --version > /dev/null 2>&1")
   system("node", File.join(ROOT, "_practice/check.js")) or abort "Fix _practice/sessions.js (see the message above)"
 end
-practice_assets = %w[practice.css sessions.js practice.js].to_h do |f|
+require "base64"
+require "json"
+ver = ->(text) { Digest::SHA1.hexdigest(text)[0, 8] }
+# Hidden tests for the coding practice sets, base64-encoded so they aren't readable at a
+# glance (they are not secret: anyone can decode them). Made by _practice/tests/generate.py.
+FileUtils.rm_rf(File.join(ROOT, "practice/hidden"))
+hidden = Dir[File.join(ROOT, "_practice/tests/hidden/*.json")].sort.map do |f|
+  text = File.read(f, encoding: "UTF-8")
+  JSON.parse(text) # fail the build on a broken file
+  write("practice/hidden/#{File.basename(f, ".json")}.txt", Base64.strict_encode64(text) + "\n")
+  text
+end
+# Test runners: loaded by practice.js as workers, with ?v= so updates aren't cached.
+runner_paths = %w[runner-js.js runner-py.js harness.py judge.js].to_h do |f|
   text = read("_practice/#{f}")
   write("practice/#{f}", text)
-  [f, "/practice/#{f}?v=#{Digest::SHA1.hexdigest(text)[0, 8]}"]
+  [f, "/practice/#{f}?v=#{ver.(text)}"]
 end
+practice_assets = %w[practice.css problems.js sessions.js practice.js].to_h do |f|
+  text = read("_practice/#{f}")
+  if f == "practice.js"
+    %w[runner-js.js runner-py.js harness.py].each do |r|
+      abort "practice.js: no \"/practice/#{r}\" path to version" unless text.include?(%("/practice/#{r}"))
+      text = text.sub(%("/practice/#{r}"), %("#{runner_paths[r]}"))
+    end
+    text = text.sub('hiddenV: ""', %(hiddenV: "#{ver.(hidden.join)}"))
+  end
+  write("practice/#{f}", text)
+  [f, "/practice/#{f}?v=#{ver.(text)}"]
+end
+practice_assets["judge.js"] = runner_paths["judge.js"]
 FileUtils.cp(File.join(ROOT, "_practice/og.png"), File.join(ROOT, "practice/og.png"))
 write("practice/index.html", page.call(
   title: "Practice interviews — Crack Tech",
-  description: "Free 45-minute practice sessions for behavioral, system design and coding interviews. Write or dictate your answers, draw your design, code in your language, then send it for review.",
+  description: "Free 45-minute practice sessions for behavioral, system design and coding interviews, plus ten coding practice sets with runnable tests. Write or dictate your answers, draw your design, code in your language, then send it for review.",
   path: "/practice/",
   image: "#{SITE}/practice/og.png",
   header: header_for.call("/practice/", "Practice"),
   styles: [practice_assets["practice.css"]],
-  scripts: [practice_assets["sessions.js"], practice_assets["practice.js"]],
+  scripts: [practice_assets["problems.js"], practice_assets["judge.js"], practice_assets["sessions.js"], practice_assets["practice.js"]],
   body: <<~HTML
     <div id="list">
       <div class="wrap">
         <div class="practice-head">
           <div class="kicker">Practice</div>
           <h1>Practise like it's <em>the real round.</em></h1>
-          <p class="lede">Seven 45-minute sessions built like real interview rounds: two behavioral, three system design and two coding. Answer against the clock, then send your answers for review.</p>
+          <p class="lede">45-minute sessions built like real interview rounds: two behavioral, three system design and two coding, plus ten coding practice sets with tests you can run. Answer against the clock, then send your answers for review.</p>
           <ol class="psteps">
             <li><b>Pick a session</b><span>Each one follows a real 45-minute agenda.</span></li>
             <li><b>Answer against the clock</b><span>Type or dictate. Code in your language. Draw your design.</span></li>
