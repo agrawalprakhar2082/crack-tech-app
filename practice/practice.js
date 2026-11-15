@@ -39,7 +39,7 @@
   const PY_LOAD_MS = 90000;
   const PYODIDE = ["https://cdn.jsdelivr.net/pyodide/v0.26.4/full/", CDN + "pyodide@0.26.4/"];
   // Built files (the build adds ?v= to each, so new versions aren't served from cache).
-  const FILES = { js: "/practice/runner-js.js?v=34e6f101", py: "/practice/runner-py.js?v=a60c0055", harness: "/practice/harness.py?v=9d1673d3", hidden: "/practice/hidden/", hiddenV: "51d72452" };
+  const FILES = { js: "/practice/runner-js.js?v=82753dd5", py: "/practice/runner-py.js?v=009fd3f8", harness: "/practice/harness.py?v=7d1900ef", hidden: "/practice/hidden/", hiddenV: "aa796d37" };
 
   const LANGS = {
     python:     { label: "Python",     mode: "python",          fence: "python",     file: "python/python" },
@@ -121,7 +121,18 @@
     bool:      { python: "bool", java: "boolean", cpp: "bool", javascript: "boolean", typescript: "boolean", go: "bool", csharp: "bool" },
     string:    { python: "str", java: "String", cpp: "string", javascript: "string", typescript: "string", go: "string", csharp: "string" },
     "int[]":   { python: "list[int]", java: "int[]", cpp: "vector<int>", javascript: "number[]", typescript: "number[]", go: "[]int", csharp: "int[]" },
-    "int[][]": { python: "list[list[int]]", java: "int[][]", cpp: "vector<vector<int>>", javascript: "number[][]", typescript: "number[][]", go: "[][]int", csharp: "int[][]" }
+    "int[][]": { python: "list[list[int]]", java: "int[][]", cpp: "vector<vector<int>>", javascript: "number[][]", typescript: "number[][]", go: "[][]int", csharp: "int[][]" },
+    tree:      { python: "TreeNode | None", java: "TreeNode", cpp: "TreeNode*", javascript: "TreeNode|null", typescript: "TreeNode | null", go: "*TreeNode", csharp: "TreeNode" }
+  };
+  // Shown above the starter code when a question takes a binary tree (the page provides TreeNode).
+  const TREE_NOTE = {
+    python: "# TreeNode is provided by the page:\n# class TreeNode:\n#     def __init__(self, val=0, left=None, right=None):\n#         self.val, self.left, self.right = val, left, right\n\n",
+    javascript: "// TreeNode is provided by the page:\n// class TreeNode { constructor(val = 0, left = null, right = null) }  (fields: val, left, right)\n\n",
+    typescript: "// TreeNode is provided:\n// class TreeNode { val: number; left: TreeNode | null; right: TreeNode | null }\n\n",
+    java: "// TreeNode is provided:\n// class TreeNode { int val; TreeNode left; TreeNode right; }\n\n",
+    cpp: "// TreeNode is provided:\n// struct TreeNode { int val; TreeNode* left; TreeNode* right; };\n\n",
+    go: "// TreeNode is provided:\n// type TreeNode struct { Val int; Left, Right *TreeNode }\n\n",
+    csharp: "// TreeNode is provided:\n// public class TreeNode { public int val; public TreeNode left, right; }\n\n"
   };
   // The function name in each language: snake_case in Python, PascalCase in C#.
   const fnName = (prob, lang) => lang === "python" ? snake(prob.fn) : lang === "csharp" ? prob.fn[0].toUpperCase() + prob.fn.slice(1) : prob.fn;
@@ -130,7 +141,9 @@
     const t = ty => TYPES[ty][lang], name = fnName(prob, lang), ps = prob.params, ret = t(prob.returns);
     const typed = sep => ps.map(([n, ty]) => sep(n, ty)).join(", ");
     const cppArg = (n, ty) => (/\[\]|string/.test(ty) ? `${t(ty)}& ` : `${t(ty)} `) + n;
-    switch (lang) {
+    const pre = ps.some(([, ty]) => ty === "tree") ? TREE_NOTE[lang] : "";
+    return pre + body();
+    function body() { switch (lang) {
       case "python": return `def ${name}(${typed((n, ty) => `${n}: ${t(ty)}`)}) -> ${ret}:\n    # Your code here\n    pass\n`;
       case "javascript": return `/**\n${ps.map(([n, ty]) => ` * @param {${t(ty)}} ${n}`).join("\n")}\n * @return {${ret}}\n */\nfunction ${name}(${ps.map(p => p[0]).join(", ")}) {\n    // Your code here\n}\n`;
       case "typescript": return `function ${name}(${typed((n, ty) => `${n}: ${t(ty)}`)}): ${ret} {\n    // Your code here\n}\n`;
@@ -139,7 +152,17 @@
       case "go": return `func ${name}(${typed((n, ty) => `${n} ${t(ty)}`)}) ${ret} {\n    // Your code here\n}\n`;
       case "csharp": return `public class Solution {\n    public ${ret} ${name}(${typed((n, ty) => `${t(ty)} ${n}`)}) {\n        // Your code here\n    }\n}\n`;
     }
-    return "";
+    return ""; }
+  }
+  // What the runners need besides the function name: which arguments are trees, which list
+  // may be changed in place, and which must stay unchanged.
+  function runSpec(prob, lang) {
+    const spec = prob.cls ? { cls: prob.cls } : { fn: lang === "python" ? snake(prob.fn) : prob.fn };
+    if (prob.keep) spec.keep = prob.keep;
+    if (prob.inplace !== undefined) spec.inplace = prob.inplace;
+    const trees = (prob.params || []).map((p, i) => p[1] === "tree" ? i : -1).filter(i => i >= 0);
+    if (trees.length) spec.trees = trees;
+    return spec;
   }
   // Code that is only a starter (in any language) doesn't count as an answer.
   const isStarter = (p, code) => !!p.prob && Object.keys(LANGS).some(l => starter(p.prob, l).trim() === code.trim());
@@ -157,7 +180,7 @@
     { name: "Behavioral", note: "Stories with structure: situation, what you did, and the result." },
     { name: "System design", note: "Notes for each step, plus a whiteboard to draw your design." },
     { name: "Coding", note: "A code editor in your language, with tests and complexity." },
-    { name: "Coding practice sets", note: "Ten sets of two questions, easier to harder. Run your code against sample and hidden tests in Python or JavaScript." }
+    { name: "Coding practice sets", note: "Fifteen sets of two questions, easier to harder. Run your code against sample and hidden tests in Python or JavaScript." }
   ];
   function renderList() {
     $("#tracks").innerHTML = TRACKS.map(t => {
@@ -301,17 +324,17 @@
   }
 
   // The problem statement, shown at the top of each question's first block.
-  function argText(name, v) {
-    const one = J.show(v, 100000);
+  function argText(name, v, lang) {
+    const one = J.show(v, 100000, lang);
     const multi = Array.isArray(v) && v.length > 1 && v.every(Array.isArray) && one.length > 70;
-    return `${name} = ${multi ? "[\n  " + v.map(r => J.show(r, 100000)).join(",\n  ") + "\n]" : one}`;
+    return `${name} = ${multi ? "[\n  " + v.map(r => J.show(r, 100000, lang)).join(",\n  ") + "\n]" : one}`;
   }
   const argNames = prob => prob.cls ? ["ops", "args"] : prob.params.map(p => p[0]);
   function problemCard(prob, s, bi) {
     const qn = s.blocks.slice(0, bi + 1).filter(b => b.problem).length;
     const ex = prob.samples.map((t, i) => `<div class="ex">
         <div class="ex-label">Example ${i + 1}</div>
-        <pre><code>${esc(t.args.map((a, j) => argText(argNames(prob)[j], a)).join("\n"))}</code></pre>
+        <pre><code data-args="${i}">${esc(t.args.map((a, j) => argText(argNames(prob)[j], a, state.lang)).join("\n"))}</code></pre>
         <p class="ex-out"><span>Output</span> <code data-ex="${i}">${esc(J.expectedText(prob.compare, t.expected, state.lang))}</code></p>
         ${t.why ? `<p class="ex-why">${rich(t.why)}</p>` : ""}
       </div>`).join("");
@@ -630,6 +653,7 @@
       $$(".problem[data-problem]").forEach(card => {
         const prob = PROBLEMS[card.dataset.problem];
         card.querySelectorAll("[data-ex]").forEach(el => { el.textContent = J.expectedText(prob.compare, prob.samples[+el.dataset.ex].expected, lang); });
+        card.querySelectorAll("[data-args]").forEach(el => { el.textContent = prob.samples[+el.dataset.args].args.map((v, j) => argText(argNames(prob)[j], v, lang)).join("\n"); });
       });
     }
   }
@@ -746,8 +770,7 @@
       if (all) cases = cases.concat(await loadHidden(p.problem));
       // Full-size hidden tests are generated here from a seed; only their output's hash ships.
       const args = cases.map(c => c.gen ? J.generate(p.problem, c.gen) : c.args);
-      const spec = prob.cls ? { cls: prob.cls } : { fn: lang === "python" ? snake(prob.fn) : prob.fn };
-      if (prob.keep) spec.keep = prob.keep;
+      const spec = runSpec(prob, lang);
       // Save everything first: runaway code can use so much memory that the browser closes the tab.
       dirty = true; save(); flushBoard();
       const out = lang === "python" ? await execPy(code, spec, args, status) : await execJs(code, spec, args);
@@ -825,7 +848,7 @@
       return `<details class="case ${c.pass ? "pass" : "fail"}"${c.pass ? "" : " open"}>
         <summary><span class="r-icon" aria-hidden="true">${c.pass ? "✓" : "✗"}</span>Sample ${i + 1}<span class="case-kind">${c.pass ? "passed" : esc(kindText[c.kind] || c.kind)}</span></summary>
         <dl>
-          <dt>Input</dt><dd><pre>${esc(t.args.map((a, j) => argText(argNames(p.prob)[j], a)).join("\n"))}</pre></dd>
+          <dt>Input</dt><dd><pre>${esc(t.args.map((a, j) => argText(argNames(p.prob)[j], a, lang)).join("\n"))}</pre></dd>
           <dt>Expected</dt><dd><pre>${esc(J.expectedText(p.prob.compare, t.expected, lang))}</pre></dd>
           ${c.kind === "pass" || c.kind === "wrong" ? `<dt>Your output</dt><dd><pre>${esc(c.out)}</pre>${c.why ? `<p class="case-why">${esc(c.why[0].toUpperCase() + c.why.slice(1))}.</p>` : ""}</dd>` : ""}
           ${c.err ? `<dt>Error</dt><dd><pre class="err">${esc(c.err)}</pre></dd>` : ""}

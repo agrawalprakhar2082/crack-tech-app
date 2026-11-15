@@ -11,14 +11,80 @@ import json
 import re
 import sys
 import traceback
+import weakref
 from collections.abc import Iterable, Mapping
 
 _dumps, _loads, _deepcopy = json.dumps, json.loads, copy.deepcopy
 _StringIO, _extract_tb, _sub = io.StringIO, traceback.extract_tb, re.sub
 _sys, _setlimit = sys, sys.setrecursionlimit
-_Iterable, _Mapping = Iterable, Mapping
+_Iterable, _Mapping, _weakref = Iterable, Mapping, weakref.ref
 _ns = {}
 MAX_STDOUT = 4000
+
+
+class TreeNode:
+    """Binary tree node given to the candidate's code (spec "trees": argument indexes)."""
+    def __init__(self, val=0, left=None, right=None):
+        self.val, self.left, self.right = val, left, right
+
+
+class _Fixed:
+    __slots__ = ("v",)
+
+    def __init__(self, v):
+        self.v = v
+
+
+def _complete_tree(n):
+    # A huge complete binary tree with n nodes (full-size tests: {"$complete": n}), made only
+    # as it's visited. n lives only in this closure, so the tree's size can't be read off a
+    # node. Nodes are TreeNodes, accept new attributes, and keep their children through weak
+    # references: node.left is node.left while you hold it, but a full traversal doesn't keep
+    # the whole tree in memory. Assigning node.left or node.right replaces that child.
+    def child(node, key, j):
+        ref = node.__dict__.get(key)
+        if isinstance(ref, _Fixed):
+            return ref.v
+        got = ref() if ref is not None else None
+        if got is None:
+            got = Node(j) if j < n else None
+            node.__dict__[key] = _Fixed(None) if got is None else _weakref(got)
+        return got
+
+    class Node(TreeNode):
+        def __init__(self, i):
+            self.__dict__["val"] = i + 1
+            self.__dict__["_index"] = i
+
+        left = property(lambda self: child(self, "_left", 2 * self._index + 1),
+                        lambda self, v: self.__dict__.__setitem__("_left", _Fixed(v)))
+        right = property(lambda self: child(self, "_right", 2 * self._index + 2),
+                         lambda self, v: self.__dict__.__setitem__("_right", _Fixed(v)))
+
+    Node.__name__ = Node.__qualname__ = "TreeNode"
+    return Node(0) if n > 0 else None
+
+
+def _build_tree(v):
+    # Level-order list with None for a missing child, e.g. [5, 3, 8, None, 4].
+    if isinstance(v, dict) and "$complete" in v:
+        return _complete_tree(v["$complete"])
+    if not v or v[0] is None:
+        return None
+    root = TreeNode(v[0])
+    queue, head, i = [root], 0, 1
+    while i < len(v):
+        node = queue[head]
+        head += 1
+        if v[i] is not None:
+            node.left = TreeNode(v[i])
+            queue.append(node.left)
+        i += 1
+        if i < len(v) and v[i] is not None:
+            node.right = TreeNode(v[i])
+            queue.append(node.right)
+        i += 1
+    return root
 RECURSION_LIMIT = 3000
 
 
@@ -102,7 +168,7 @@ def _run_ops(spec, args):
 
 def ct_load(code):
     global _ns
-    _ns = {"__name__": "solution"}
+    _ns = {"__name__": "solution", "TreeNode": TreeNode}
     _setlimit(RECURSION_LIMIT)
     buf, old = _Capture(), _sys.stdout
     _sys.stdout = buf
@@ -120,13 +186,18 @@ def ct_load(code):
 def ct_case(spec_json, args_json):
     spec, args = _loads(spec_json), _loads(args_json)
     keep = {i: _deepcopy(args[i]) for i in spec.get("keep", [])}
+    for i in spec.get("trees", []):
+        args[i] = _build_tree(args[i])
     buf, old = _Capture(), _sys.stdout
     _sys.stdout = buf
     try:
         if spec.get("cls"):
             out = _run_ops(spec, args)
         else:
-            out = _jsonable(_find(spec["fn"])(*args))
+            out = _find(spec["fn"])(*args)
+            if out is None and "inplace" in spec:
+                out = args[spec["inplace"]]  # changed the list in place and returned nothing
+            out = _jsonable(out)
         changed = [i for i, v in keep.items() if args[i] != v]
         if changed:
             res = {"ok": False, "err": {"type": "Changed input", "msg": "your function changed its input list; it must leave it as it was", "line": None}}

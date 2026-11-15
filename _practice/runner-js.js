@@ -39,6 +39,50 @@
     return v;
   }
 
+  // Binary trees (spec.trees: argument indexes) arrive as level-order lists with null for a
+  // missing child; TreeNode is a global the candidate's code can use. {$complete: n} is a
+  // huge complete tree whose nodes are made only when visited (full-size tests).
+  class TreeNode { constructor(val = 0, left = null, right = null) { this.val = val; this.left = left; this.right = right; } }
+  // The huge tree's size lives only in this closure; nodes are TreeNodes whose index and
+  // children are private. Children are kept through weak references: node.left === node.left
+  // while you hold it, but a full traversal doesn't keep the whole tree in memory.
+  function completeTree(n) {
+    const state = new WeakMap(); // node -> { i, l, r }, out of reach of the candidate's code
+    function CompleteNode(i) { this.val = i + 1; state.set(this, { i, l: undefined, r: undefined }); }
+    function child(node, side, j) {
+      const st = state.get(node), slot = side ? st.r : st.l;
+      if (slot && slot.fixed) return slot.v;
+      let got = slot ? slot.deref() : undefined;
+      if (!got) {
+        got = j < n ? new CompleteNode(j) : null;
+        const keep = got ? new WeakRef(got) : { fixed: true, v: null };
+        if (side) st.r = keep; else st.l = keep;
+      }
+      return got;
+    }
+    CompleteNode.prototype = Object.create(TreeNode.prototype, {
+      constructor: { value: TreeNode },
+      left: { get() { return child(this, 0, 2 * state.get(this).i + 1); }, set(v) { state.get(this).l = { fixed: true, v }; } },
+      right: { get() { return child(this, 1, 2 * state.get(this).i + 2); }, set(v) { state.get(this).r = { fixed: true, v }; } }
+    });
+    return n > 0 ? new CompleteNode(0) : null;
+  }
+  function buildTree(v) {
+    if (v && !Array.isArray(v) && typeof v === "object" && "$complete" in v) return completeTree(v.$complete);
+    if (!v || !v.length || v[0] === null) return null;
+    const root = new TreeNode(v[0]), queue = [root];
+    let head = 0, i = 1;
+    while (i < v.length) {
+      const node = queue[head++];
+      if (v[i] !== null) { node.left = new TreeNode(v[i]); queue.push(node.left); }
+      i++;
+      if (i < v.length && v[i] !== null) { node.right = new TreeNode(v[i]); queue.push(node.right); }
+      i++;
+    }
+    return root;
+  }
+  if (typeof globalThis !== "undefined") globalThis.TreeNode = TreeNode;
+
   function makeConsole(sink) {
     const log = (...a) => sink(a.map(fmt).join(" ") + "\n");
     return { log, info: log, warn: log, error: log, debug: log, table: log, dir: log };
@@ -61,7 +105,10 @@
   function runOne(entry, spec, args) {
     if (!spec.cls) {
       const keep = (spec.keep || []).map(i => [i, stringify(args[i])]);
-      const out = entry(...args);
+      args = args.slice();
+      (spec.trees || []).forEach(i => { args[i] = buildTree(args[i]); });
+      let out = entry(...args);
+      if ((out === undefined || out === null) && spec.inplace !== undefined) out = args[spec.inplace]; // changed in place, returned nothing
       if (keep.some(([i, before]) => stringify(args[i]) !== before)) {
         const e = new Error("your function changed its input list; it must leave it as it was"); e.name = "Changed input"; e.stack = ""; throw e;
       }

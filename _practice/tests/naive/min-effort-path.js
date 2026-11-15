@@ -1,0 +1,2 @@
+// Naive approach (too slow on purpose): used by verify.js --speed.
+function minEffort(h) { const R = h.length, C = h[0].length; for (let lim = 0; ; lim++) { const seen = new Uint8Array(R * C), st = [0]; seen[0] = 1; while (st.length) { const id = st.pop(), r = Math.floor(id / C), c = id % C; for (const [x, y] of [[r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1]]) if (x >= 0 && x < R && y >= 0 && y < C && !seen[x * C + y] && Math.abs(h[x][y] - h[r][c]) <= lim) { seen[x * C + y] = 1; st.push(x * C + y); } } if (seen[R * C - 1]) return lim; } }

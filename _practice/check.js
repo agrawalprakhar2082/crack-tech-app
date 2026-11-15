@@ -7,7 +7,7 @@ for (const f of ["problems.js", "sessions.js"]) vm.runInNewContext(fs.readFileSy
 const sessions = ctx.window.PRACTICE_SESSIONS || [], problems = ctx.window.PRACTICE_PROBLEMS || {};
 const errors = [], ids = new Set(), used = new Set();
 const tracks = { Behavioral: 0, "System design": 0, Coding: 0, "Coding practice sets": 0 };
-const TYPES = ["int", "long", "bool", "string", "int[]", "int[][]"];
+const TYPES = ["int", "long", "bool", "string", "int[]", "int[][]", "tree"];
 for (const s of sessions) {
   if (!s.id || ids.has(s.id)) errors.push(`missing or duplicate id: ${s.id}`); ids.add(s.id);
   if (!(s.track in tracks)) errors.push(`${s.id}: unknown track "${s.track}"`); else tracks[s.track]++;
@@ -33,7 +33,8 @@ for (const [id, p] of Object.entries(problems)) {
   if (!p.fn === !p.cls) errors.push(`${where}: needs fn (a function) or cls (a class), not both`);
   if (p.fn) {
     if (!Array.isArray(p.params) || p.params.some(([n, t]) => !n || !TYPES.includes(t))) errors.push(`${where}: params must be [name, type] with a type from ${TYPES.join(", ")}`);
-    if (!TYPES.includes(p.returns)) errors.push(`${where}: unknown return type ${p.returns}`);
+    if (!TYPES.includes(p.returns) || p.returns === "tree") errors.push(`${where}: unknown return type ${p.returns}`);
+    if (p.inplace !== undefined && !(p.params[p.inplace] && /\[\]/.test(p.params[p.inplace][1]))) errors.push(`${where}: inplace must point at a list argument`);
   }
   if (p.cls && !(p.starters && ["python", "javascript", "typescript", "java", "cpp", "go", "csharp"].every(l => p.starters[l]))) errors.push(`${where}: a class question needs starters for every language`);
   (p.samples || []).forEach((t, i) => {

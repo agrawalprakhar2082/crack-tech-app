@@ -97,7 +97,23 @@
       return [ops, args];
     },
     "subarray-sum-k": (r, g) => { const a = []; for (let i = 0; i < g.n; i++) a.push(Math.floor(r() * 2001) - 1000); return [a, g.k]; },
-    "age-halves": (r, g) => { const a = [], s = []; for (let i = 0; i < g.n; i++) { a.push(1 + Math.floor(r() * 100)); s.push(Math.floor(r() * 10001)); } return [a, s]; }
+    "age-halves": (r, g) => { const a = [], s = []; for (let i = 0; i < g.n; i++) { a.push(1 + Math.floor(r() * 100)); s.push(Math.floor(r() * 10001)); } return [a, s]; },
+    // A complete tree too big to list: the runners build its nodes only when visited.
+    "complete-tree-count": (r, g) => [{ $complete: g.lo + Math.floor(r() * (g.hi - g.lo)) }],
+    // Mostly falling temperatures (the slow case for scanning ahead), then one warm day.
+    "warmer-days": (r, g) => { const t = []; for (let i = 0; i < g.n - 1; i++) t.push(Math.floor(r() * 76) - 30); t.sort((a, b) => b - a); t.push(46); return [t]; },
+    // One long falling run of ratings (the slow case for repeated fixing passes), then noise.
+    "fair-candies": (r, g) => { const a = []; for (let i = 0; i < g.n; i++) a.push(i < g.n * 0.98 ? g.n - i : Math.floor(r() * g.n)); return [a]; },
+    // A palindrome with some stray letters inserted.
+    "k-palindrome": (r, g) => {
+      const half = []; for (let i = 0; i < g.n / 2 - 20; i++) half.push("abcdef"[Math.floor(r() * 6)]);
+      const s = half.concat(half.slice().reverse());
+      for (let i = 0; i < 40; i++) s.splice(Math.floor(r() * (s.length + 1)), 0, "xyz"[Math.floor(r() * 3)]);
+      return [s.join(""), 30 + Math.floor(r() * 20)];
+    },
+    "nearest-exit": (r, g) => { const grid = []; for (let i = 0; i < g.rows; i++) { const row = []; for (let j = 0; j < g.cols; j++) { const x = r(); row.push(x < 0.2 ? -1 : x < 0.201 ? 0 : 2147483647); } grid.push(row); } return [grid]; },
+    "min-effort-path": (r, g) => { const h = []; for (let i = 0; i < g.rows; i++) { const row = []; for (let j = 0; j < g.cols; j++) row.push(1 + Math.floor(r() * 1e6)); h.push(row); } return [h]; },
+    "heater-radius": (r, g) => { const a = [], b = []; for (let i = 0; i < g.n; i++) a.push(1 + Math.floor(r() * 1e9)); for (let i = 0; i < g.m; i++) b.push(1 + Math.floor(r() * 1e9)); return [a, b]; }
   };
   function generate(id, g) {
     if (!GENS[id]) throw new Error("no generator for " + id);
