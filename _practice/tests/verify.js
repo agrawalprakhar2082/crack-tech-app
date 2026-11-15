@@ -35,6 +35,9 @@ const jobs = Object.entries(PROBLEMS).map(([id, p]) => {
   if (!p.speed && hidden.some(h => h.gen)) throw new Error(`${id}: full-size hidden tests but no speed: true`);
   const spec = p.cls ? { cls: p.cls } : { fn: p.fn };
   if (p.keep) spec.keep = p.keep;
+  if (p.inplace !== undefined) spec.inplace = p.inplace;
+  const trees = (p.params || []).map((x, i) => x[1] === "tree" ? i : -1).filter(i => i >= 0);
+  if (trees.length) spec.trees = trees;
   return { id, p, cases, spec };
 });
 const pySpec = j => j.p.cls ? j.spec : { ...j.spec, fn: j.p.fn };
@@ -60,7 +63,8 @@ const runPy = (list, timeoutMs) => {
 };
 const runJs = (code, job, cases) => {
   const out = [];
-  runner.run({ code, spec: job.spec, cases: cases.map(c => c.args), stdout: false, nonce: "verify" }, m => { if (m.type === "case") out[m.i] = m; });
+  // A deep copy, as postMessage makes in the browser (answers may change their input in place).
+  runner.run({ code, spec: job.spec, cases: cases.map(c => JSON.parse(JSON.stringify(c.args))), stdout: false, nonce: "verify" }, m => { if (m.type === "case") out[m.i] = m; });
   return out;
 };
 
