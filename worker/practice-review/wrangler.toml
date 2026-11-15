@@ -1,0 +1,17 @@
+# Deploy config for the practice-review Worker (see README.md).
+# The destination address is set at deploy time as REVIEW_TO and on the send_email
+# binding; it is the owner's verified Email Routing destination and is not stored here.
+name = "practice-review"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[[send_email]]
+name = "EMAIL"
+# destination_address = "<owner's verified destination address>"
+
+[[unsafe.bindings]]
+name = "RATE"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
