@@ -32,6 +32,12 @@
     const follow = e => { const s = stored(); if (s !== 'dark' && s !== 'light') setTheme(e.matches); };
     if (mq.addEventListener) mq.addEventListener('change', follow); else if (mq.addListener) mq.addListener(follow);
   }
+  // A choice made in another tab applies here too (and clearing it goes back to the device).
+  window.addEventListener('storage', e => {
+    if (e.key !== 'ct-theme' && e.key !== null) return;
+    const s = stored(), dark = s === 'dark' || (s !== 'light' && !!mq && mq.matches);
+    if (dark !== (root.dataset.theme === 'dark')) setTheme(dark);
+  });
   paint();
 
   // mobile menu
