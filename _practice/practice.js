@@ -179,7 +179,7 @@
   // An answer counts only when it has text, and isn't just the code we pre-filled.
   const answerOf = (p, st) => {
     const a = ((st && st.answers && st.answers[p.id]) || "").trim();
-    return (p.given && a === p.given.trim()) || isStarter(p, a) ? "" : a;
+    return isStarter(p, a) ? "" : a;
   };
   // `code` in problem text.
   const rich = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
@@ -187,11 +187,10 @@
 
   /* ======================= Session list ======================= */
   const TRACKS = [
-    { name: "Behavioral", note: "Stories with structure: situation, what you did, and the result." },
-    { name: "System design", note: "Notes for each step, plus a whiteboard to draw your design." },
-    { name: "Coding", note: "A code editor in your language, with tests and complexity." },
     { name: "Coding practice sets", note: "Fifteen sets of two questions, easier to harder. Run your code against sample and hidden tests in Python or JavaScript." },
-    { name: "AI coding rounds", note: "Six rounds where you work with an AI assistant: catch its bug, extend code, debug, test first, refactor, add resilience. The assistant is a small model and can be wrong." }
+    { name: "AI coding rounds", note: "Six rounds where you work with an AI assistant: catch its bug, extend code, debug, test first, refactor, add resilience. The assistant is a small model and can be wrong." },
+    { name: "System design", note: "Six senior-level design rounds: notes for each step, plus a whiteboard to draw your design." },
+    { name: "Behavioral", note: "Three rounds of stories with structure: situation, what you did, and the result." }
   ];
   function renderList() {
     $("#tracks").innerHTML = TRACKS.map(t => {
@@ -272,7 +271,7 @@
       const ta = $("#a-" + p.id);
       // The "review the AI's code" answer starts as a copy of the AI's code to edit;
       // runnable questions start with the function signature in the chosen language.
-      ta.value = state.answers[p.id] || (p.given || "") || (p.prob ? starter(p.prob, state.lang) : "") || (p.testsProb ? testStarter(p.testsProb, state.lang) : "");
+      ta.value = state.answers[p.id] || (p.prob ? starter(p.prob, state.lang) : "") || (p.testsProb ? testStarter(p.testsProb, state.lang) : "");
       count(p.id);
       ta.addEventListener("input", () => { if (!applying) { state.answers[p.id] = ta.value; queueSave(); } count(p.id); });
       if (p.kind === "code") ta.addEventListener("keydown", tabKey);
@@ -309,7 +308,7 @@
 
   function hintFor(s) {
     const parts = ["Start the timer and answer each part as you would out loud."];
-    if (s.track !== "Coding") parts.push(SR ? "Type, or press <b>Dictate</b> and speak." : "Type your answers. (Dictation works in Chrome, Edge and Safari.)");
+    parts.push(SR ? "Type, or press <b>Dictate</b> and speak." : "Type your answers. (Dictation works in Chrome, Edge and Safari.)");
     if (s.board) parts.push("Draw your design on the whiteboard.");
     if (s.hasCode) parts.push("Pick your language for the code editor.");
     if (s.ai) parts.push("Ask the assistant in the panel beside the editor. It's a deliberately small model (or a scripted offline one) and it can be wrong, so check its work. Your prompts, its replies and your test runs are logged and sent with your answers, with your self-scorecard.");
@@ -323,7 +322,6 @@
     const langSel = code ? `<label class="lang-pick">Language <select class="lang">${Object.entries(LANGS).map(([k, l]) => `<option value="${k}">${esc(l.label)}</option>`).join("")}</select></label>` : "";
     return `<article class="prompt${code ? " is-code" : ""}">
       <p class="q" id="q-${p.id}">${rich(p.q)}</p>
-      ${p.given ? `<div class="given"><div class="given-label">The AI's code (Python)</div><pre><code id="g-${p.id}">${esc(p.given)}</code></pre></div>` : ""}
       ${code ? `<div class="editor-top">${langSel}<span class="editor-note" id="en-${p.id}"></span></div>` : ""}
       <textarea id="a-${p.id}" class="${code ? "ta-code" : "ta-text"}" spellcheck="${code ? "false" : "true"}" rows="${code ? 12 : 5}" placeholder="${code ? "Write your code here" : "Your answer"}" aria-labelledby="q-${p.id}"></textarea>
       ${p.prob ? runArea(p) : p.testsProb ? checkArea(p) : ""}
@@ -420,7 +418,7 @@
     const v = (state.answers[id] || "").trim();
     const el = $("#c-" + id); if (!el) return;
     const p = cur.prompts.find(x => x.id === id);
-    el.textContent = !v || (p.given && v === p.given.trim()) || isStarter(p, v) ? "" : p.kind === "code" ? plural(v.split("\n").length, "line") : plural(v.split(/\s+/).length, "word");
+    el.textContent = !v || isStarter(p, v) ? "" : p.kind === "code" ? plural(v.split("\n").length, "line") : plural(v.split(/\s+/).length, "word");
   }
   function autoGrow(ta) {
     const fit = () => { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight + 2, 640) + "px"; };
@@ -551,7 +549,7 @@
     if (!state.runs || typeof state.runs !== "object") state.runs = {};
     applying = true;
     cur.prompts.forEach(p => {
-      const v = state.answers[p.id] || (p.given || "") || (p.prob ? starter(p.prob, state.lang) : "") || (p.testsProb ? testStarter(p.testsProb, state.lang) : "");
+      const v = state.answers[p.id] || (p.prob ? starter(p.prob, state.lang) : "") || (p.testsProb ? testStarter(p.testsProb, state.lang) : "");
       if (editors[p.id]) { if (editors[p.id].getValue() !== v) editors[p.id].setValue(v); }
       else { const ta = $("#a-" + p.id); if (ta && ta.value !== v) { ta.value = v; ta.dispatchEvent(new Event("input")); } }
       count(p.id);
@@ -633,12 +631,7 @@
         // Start loading Python when someone starts on a runnable question in Python.
         if (p.prob) cm.on("focus", () => { if (state.lang === "python") warmPython(); });
         editors[p.id] = cm;
-        $("#en-" + p.id).textContent = p.given ? "Starts as the AI's code: edit it · Esc leaves the editor" : p.prob ? "Ctrl+Enter runs · Shift+Ctrl+Enter submits · Esc leaves the editor" : "Tab indents · Esc leaves the editor";
-        if (p.given) {
-          const g = $("#g-" + p.id), pre = g.parentElement;
-          const view = CodeMirror(el => pre.replaceWith(el), { value: p.given, mode: "python", theme: "ct", readOnly: "nocursor", lineNumbers: true, lineWrapping: true, viewportMargin: Infinity });
-          view.getWrapperElement().classList.add("cm-given");
-        }
+        $("#en-" + p.id).textContent = p.prob ? "Ctrl+Enter runs · Shift+Ctrl+Enter submits · Esc leaves the editor" : "Tab indents · Esc leaves the editor";
       });
     }).catch(() => {
       if (cur !== session) return;
@@ -1459,7 +1452,6 @@
       b.prompts.forEach(p => {
         const a = answerOf(p, state);
         md += `**${p.q}**\n\n`;
-        if (p.given) md += "Given code:\n\n" + fence(p.given, "python");
         md += a ? (p.kind === "code" ? fence(a, lang.fence) : a + "\n\n") : "_(no answer)_\n\n";
         if (p.prob) md += testsLine(p) + "\n\n";
         if (p.testsProb) { const r = ((state.runs[p.id] || {})[state.lang] || {}).last; md += (r ? checkSummary(p, r) : `Tests check: not run (${lang.label})`) + "\n\n"; }

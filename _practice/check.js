@@ -6,12 +6,13 @@ const ctx = { window: {} };
 for (const f of ["problems.js", "ai-problems.js", "sessions.js"]) vm.runInNewContext(fs.readFileSync(path.join(__dirname, f), "utf8"), ctx, { filename: f });
 const sessions = ctx.window.PRACTICE_SESSIONS || [], problems = ctx.window.PRACTICE_PROBLEMS || {};
 const errors = [], ids = new Set(), used = new Set();
-const tracks = { Behavioral: 0, "System design": 0, Coding: 0, "Coding practice sets": 0, "AI coding rounds": 0 };
+const tracks = { "Coding practice sets": 0, "AI coding rounds": 0, "System design": 0, Behavioral: 0 };
 const TYPES = ["int", "long", "bool", "string", "int[]", "int[][]", "tree"];
 for (const s of sessions) {
   if (!s.id || ids.has(s.id)) errors.push(`missing or duplicate id: ${s.id}`); ids.add(s.id);
   if (!(s.track in tracks)) errors.push(`${s.id}: unknown track "${s.track}"`); else tracks[s.track]++;
   if (!s.title || !s.blurb) errors.push(`${s.id}: needs a title and blurb`);
+  if (s.track === "System design" && !s.board) errors.push(`${s.id}: system design sessions need board: true`);
   const total = (s.blocks || []).reduce((n, b) => n + b.min, 0);
   if (total !== 45) errors.push(`${s.id}: blocks add up to ${total} minutes, not 45`);
   for (const b of s.blocks || []) {

@@ -231,7 +231,7 @@ practice_assets["judge.js"] = runner_paths["judge.js"]
 FileUtils.cp(File.join(ROOT, "_practice/og.png"), File.join(ROOT, "practice/og.png"))
 write("practice/index.html", page.call(
   title: "Practice interviews — Crack Tech",
-  description: "Free 45-minute practice sessions for behavioral, system design and coding interviews, plus fifteen coding practice sets with runnable tests and six AI coding rounds. Write or dictate your answers, draw your design, code in your language, then send it for review.",
+  description: "Free 45-minute interview practice: fifteen coding practice sets with runnable tests, six AI coding rounds, six system design rounds and three behavioral rounds. Code in your language, draw your design, write or dictate your answers, then send them for review.",
   path: "/practice/",
   image: "#{SITE}/practice/og.png",
   header: header_for.call("/practice/", "Practice"),
@@ -243,7 +243,7 @@ write("practice/index.html", page.call(
         <div class="practice-head">
           <div class="kicker">Practice</div>
           <h1>Practise like it's <em>the real round.</em></h1>
-          <p class="lede">45-minute sessions built like real interview rounds: two behavioral, three system design and two coding, plus fifteen coding practice sets with tests you can run and six AI coding rounds with an assistant beside the editor. Answer against the clock, then send your answers for review.</p>
+          <p class="lede">45-minute sessions built like real interview rounds: fifteen coding practice sets with tests you can run, six AI coding rounds with an assistant beside the editor, six system design rounds with a whiteboard, and three behavioral rounds. Answer against the clock, then send your answers for review.</p>
           <ol class="psteps">
             <li><b>Pick a session</b><span>Each one follows a real 45-minute agenda.</span></li>
             <li><b>Answer against the clock</b><span>Type or dictate. Code in your language. Draw your design.</span></li>

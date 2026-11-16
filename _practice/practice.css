@@ -112,10 +112,7 @@ details.look .pnote{margin:8px 0 0;font-size:13.5px;color:var(--muted)}
 .prompt .CodeMirror{height:auto;min-height:280px;border:1px solid var(--line-2);border-radius:12px;font:14.5px/1.6 var(--mono);transition:border-color .2s}
 .prompt .CodeMirror-focused{border-color:var(--olive);box-shadow:0 0 0 3px color-mix(in srgb,var(--olive) 22%,transparent)}
 .prompt .CodeMirror-scroll{min-height:280px}
-.prompt .cm-given{min-height:0;border:0;border-radius:0}
-.prompt .cm-given .CodeMirror-scroll{min-height:0}
 .cm-s-ct.CodeMirror{background:var(--bg);color:var(--fg)}
-.cm-given.cm-s-ct.CodeMirror{background:var(--bg-2)}
 .cm-s-ct .CodeMirror-gutters{background:transparent;border-right:1px solid var(--line)}
 .cm-s-ct .CodeMirror-linenumber{color:var(--muted);padding:0 10px 0 6px}
 .cm-s-ct .CodeMirror-cursor{border-left:2px solid var(--olive)}
