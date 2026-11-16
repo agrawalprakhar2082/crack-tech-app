@@ -15,6 +15,15 @@
     return false;
   }
   const key = v => JSON.stringify(v);
+  function near(a, b) {
+    if (typeof a === "number" && typeof b === "number") return Math.abs(a - b) <= 1e-6 * Math.max(1, Math.abs(b));
+    if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((x, i) => near(x, b[i]));
+    if (a && b && typeof a === "object" && typeof b === "object" && !Array.isArray(a) && !Array.isArray(b)) {
+      const ka = Object.keys(a).sort(), kb = Object.keys(b).sort();
+      return same(ka, kb) && ka.every(k => near(a[k], b[k]));
+    }
+    return same(a, b);
+  }
   function validParens(t) {
     let depth = 0;
     for (const ch of t) { depth += ch === "(" ? 1 : ch === ")" ? -1 : 0; if (depth < 0) return false; }
@@ -44,6 +53,8 @@
       if (!Array.isArray(got)) return { pass: false };
       return { pass: same(got.map(key).sort(), expected.map(key).sort()) };
     }
+    // Numbers anywhere in the value may differ by 1e-6 (e.g. computed delays).
+    if (how === "approx") return { pass: near(got, expected) };
     if (how === "float") return { pass: typeof got === "number" && Math.abs(got - expected) <= 1e-6 * Math.max(1, Math.abs(expected)) };
     return { pass: same(got, expected) };
   }
@@ -113,6 +124,13 @@
     },
     "nearest-exit": (r, g) => { const grid = []; for (let i = 0; i < g.rows; i++) { const row = []; for (let j = 0; j < g.cols; j++) { const x = r(); row.push(x < 0.2 ? -1 : x < 0.201 ? 0 : 2147483647); } grid.push(row); } return [grid]; },
     "min-effort-path": (r, g) => { const h = []; for (let i = 0; i < g.rows; i++) { const row = []; for (let j = 0; j < g.cols; j++) row.push(1 + Math.floor(r() * 1e6)); h.push(row); } return [h]; },
+    // Visit events: many users plus one very active user (the slow case for the given code).
+    "ai-sessions": (r, g) => {
+      const ev = [];
+      for (let i = 0; i < g.n; i++) ev.push([i < g.heavy ? 0 : 1 + Math.floor(r() * g.users), Math.floor(r() * 1e9)]);
+      for (let i = ev.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ev[i], ev[j]] = [ev[j], ev[i]]; }
+      return [ev, 3600];
+    },
     "heater-radius": (r, g) => { const a = [], b = []; for (let i = 0; i < g.n; i++) a.push(1 + Math.floor(r() * 1e9)); for (let i = 0; i < g.m; i++) b.push(1 + Math.floor(r() * 1e9)); return [a, b]; }
   };
   function generate(id, g) {

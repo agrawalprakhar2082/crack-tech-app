@@ -83,6 +83,60 @@
   }
   if (typeof globalThis !== "undefined") globalThis.TreeNode = TreeNode;
 
+  /* ---- AI coding rounds: fake clock for classes, a flaky service, tests-first grading ---- */
+  class ServiceError extends Error { constructor(kind, retryable) { super(kind); this.name = "ServiceError"; this.kind = kind; this.retryable = retryable; } }
+  if (typeof globalThis !== "undefined") globalThis.ServiceError = ServiceError;
+  const RETRYABLE = ["timeout", "unavailable"];
+  function runEnv(entry, args) {
+    const [scenario, policy] = args, sleeps = [];
+    let t = 0, calls = 0, used = 0;
+    const seq = scenario.rand && scenario.rand.length ? scenario.rand : [0.5];
+    const clock = {
+      now: () => t,
+      sleep: s => { if (typeof s !== "number" || !(s >= 0)) throw new RangeError("clock.sleep needs a non-negative number of seconds"); sleeps.push(s); t += s; }
+    };
+    const service = {
+      call: () => {
+        const [kind, latency, value] = scenario.outcomes[Math.min(calls, scenario.outcomes.length - 1)];
+        calls++; t += latency;
+        if (kind === "ok") return value === undefined ? null : value;
+        throw new ServiceError(kind, RETRYABLE.includes(kind));
+      }
+    };
+    const rand = () => seq[Math.min(used++, seq.length - 1)];
+    let result = null, error = null;
+    try { result = entry(service, clock, rand, policy); }
+    catch (e) { if (e instanceof ServiceError) error = e.kind; else throw e; }
+    return { result: plain(result), error, attempts: calls, sleeps: sleeps.map(x => Math.round(x * 1e9) / 1e9) };
+  }
+  // Tests-first round: the candidate's test functions (names starting with "test") run
+  // against one implementation; assert(cond) and assertEqual(actual, expected) are provided.
+  function testNames(code) {
+    const names = [], re = /(?:function\s+(test\w*)\s*\(|(?:const|let|var)\s+(test\w*)\s*=)/g;
+    let m;
+    while ((m = re.exec(code))) { const n = m[1] || m[2]; if (!names.includes(n)) names.push(n); }
+    return names;
+  }
+  function runTests(code, impl, con) {
+    const names = testNames(code);
+    const assert = (cond, msg) => { if (!cond) { const e = new Error(msg || "assertion failed"); e.name = "AssertionError"; throw e; } };
+    const assertEqual = (actual, expected, msg) => {
+      const a = stringify(plain(actual)), b = stringify(expected);
+      if (a !== b) { const e = new Error((msg ? msg + ": " : "") + "expected " + b + ", got " + a); e.name = "AssertionError"; throw e; }
+    };
+    // eslint-disable-next-line no-new-func
+    const fns = new Function("console", "assert", "assertEqual", code + "\n;" + impl + "\n;return {" + names.map(n => `${stringify(n)}: typeof ${n} === "function" ? ${n} : undefined`).join(",") + "};")(con, assert, assertEqual);
+    return names.filter(n => fns[n]).map(n => {
+      try {
+        const r = fns[n]();
+        const isAsync = r && (typeof r.then === "function" || (typeof r.next === "function" && typeof r[Symbol.iterator] === "function"));
+        if (isAsync) { if (typeof r.then === "function") r.then(null, () => {}); return [n, false, "tests must be synchronous: no async functions, promises or generators"]; }
+        return [n, true, ""];
+      }
+      catch (e) { const info = errInfo(e); return [n, false, (info.type === "AssertionError" ? info.msg : info.type + ": " + info.msg) + (info.line ? ` (line ${info.line})` : "")]; }
+    });
+  }
+
   function makeConsole(sink) {
     const log = (...a) => sink(a.map(fmt).join(" ") + "\n");
     return { log, info: log, warn: log, error: log, debug: log, table: log, dir: log };
@@ -103,6 +157,7 @@
   }
 
   function runOne(entry, spec, args) {
+    if (spec.env) return runEnv(entry, args);
     if (!spec.cls) {
       const keep = (spec.keep || []).map(i => [i, stringify(args[i])]);
       args = args.slice();
@@ -114,10 +169,17 @@
       }
       return out;
     }
-    const [ops, opArgs] = args, out = [];
+    const [ops, opArgs] = args, out = [], clocks = [];
     let obj = null;
     ops.forEach((op, i) => {
-      if (op === spec.cls) { obj = new entry(...opArgs[i]); out.push(null); return; }
+      if (op === "$advance") { clocks.forEach(c => { c.t += opArgs[i][0]; }); out.push(null); return; }
+      if (op === spec.cls) {
+        const real = opArgs[i].map(x => {
+          if (x && typeof x === "object" && !Array.isArray(x) && "$clock" in x) { const c = () => c.t; c.t = x.$clock; clocks.push(c); return c; }
+          return x;
+        });
+        obj = new entry(...real); out.push(null); return;
+      }
       if (!obj || typeof obj[op] !== "function") throw new TypeError(`${spec.cls} has no method ${op}`);
       out.push(plain(obj[op](...opArgs[i])));
     });
@@ -130,6 +192,21 @@
     const sink = s => { if (buf.length < MAX_STDOUT + 100) buf += s; };
     const con = makeConsole(sink);
     let entry, loadErr = null;
+    if (msg.spec.tests) {
+      // Tests-first: each case is one implementation to test the candidate's tests against.
+      // The candidate's code is evaluated again for each one, and globals it adds are removed
+      // afterwards, so state left by one implementation's run doesn't reach the next.
+      const before = new Set(Reflect.ownKeys(globalThis));
+      msg.cases.forEach((args, i) => {
+        const res = { type: "case", i, nonce: msg.nonce };
+        try { res.out = runTests(msg.code, args[0], con); res.ok = true; } catch (e) { res.ok = false; res.err = errInfo(e); }
+        for (const k of Reflect.ownKeys(globalThis)) if (!before.has(k)) { try { delete globalThis[k]; } catch (e) { /* not configurable */ } }
+        res.stdout = msg.stdout ? buf.slice(0, MAX_STDOUT) : ""; buf = "";
+        post(res);
+      });
+      post({ type: "done", nonce: msg.nonce });
+      return;
+    }
     try { entry = compile(msg.code, msg.spec, con); } catch (e) { loadErr = errInfo(e); }
     const loadOut = buf; buf = "";
     msg.cases.forEach((args, i) => {

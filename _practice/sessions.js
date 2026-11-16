@@ -1,11 +1,314 @@
 // Practice sessions shown on /practice/. Each session must add up to 45 minutes.
-// kind: "text" (written answer, dictation allowed) or "code" (monospace editor, no dictation).
-// look: what interviewers look for (shown on demand). given: code shown to the candidate.
+// kind: "text" (written answer, dictation allowed) or "code" (code editor, no dictation).
+// look: what interviewers look for (shown on demand).
 // board: true adds the whiteboard (Excalidraw). Check totals with: node _practice/check.js
 // problem: an id from problems.js. On a block it shows the problem statement; on a code
 // prompt it adds starter code and the Run / Submit tests. The coding practice sets at the
 // end are built from problems.js by codingSet().
 window.PRACTICE_SESSIONS = [
+  /* ---------------- System design: six senior-level rounds, whiteboard on ---------------- */
+  {
+    id: "design-twitter",
+    track: "System design",
+    tag: "High-level design", board: true,
+    title: "Design Twitter: the celebrity problem",
+    blurb: "Posts, follows and a home timeline for hundreds of millions of users, where a few accounts have 100 million followers. Fan-out on write, on read, or both?",
+    after: { label: "Read: back-of-the-envelope estimation with the 10⁵ trick", href: "/blog/estimation-10-5-trick/" },
+    blocks: [
+      { name: "Requirements", min: 5, prompts: [
+        { q: "List the functional and non-functional requirements you'd confirm with the interviewer. What's in scope for 45 minutes, and what do you leave out?", look: [
+          "Core: post a tweet, follow and unfollow, home timeline, a user's own timeline; likes and replies as secondary",
+          "Asks whether the home timeline is reverse-chronological or ranked, and whether media is in scope",
+          "Non-functional: availability over strict consistency, timeline reads fast (e.g. p99 under 200 ms), a few seconds of delay for new tweets is acceptable",
+          "Calls out the skew early: most users have a few hundred followers, a few have tens of millions"] } ] },
+      { name: "Estimates", min: 5, prompts: [
+        { q: "Estimate tweets per second, timeline reads per second, timeline writes caused by fan-out, and storage per year. What do the numbers tell you?", look: [
+          "Quick maths with a day ≈ 10⁵ s: e.g. 200M daily users, ~50M tweets a day ≈ 500/s (peaks 2–3×), ~1B timeline reads a day ≈ 10k/s",
+          "Fan-out: average ~200 followers turns 500 tweets/s into ~100k timeline inserts/s; one tweet from a 100M-follower account is 100M inserts on its own",
+          "Storage: ~500 bytes per tweet is on the order of 10 TB a year of text; media stored separately in blob storage",
+          "Conclusion: read-heavy, so precompute timelines, but the follower skew breaks naive fan-out"] } ] },
+      { name: "APIs", min: 4, prompts: [
+        { q: "Write the main APIs: endpoints, key fields and responses.", look: [
+          "POST /tweets with an idempotency key; GET /timeline?cursor=&limit= with cursor pagination, not offsets",
+          "POST and DELETE /follows/{userId}; GET /users/{id}/tweets",
+          "Timeline responses return hydrated tweets (author, text, counts), not only ids",
+          "Auth on every call and per-user rate limits on posting"] } ] },
+      { name: "Data model", min: 6, prompts: [
+        { q: "Design the main tables, keys and sharding. How do you store the follow graph so both 'who do I follow' and 'who follows me' are fast?", look: [
+          "Tweets keyed by a time-sortable id (Snowflake-style), with an index or shard layout that makes a user's tweets one range read",
+          "Follow edges stored twice, by follower and by followee: double writes and storage in exchange for single-shard reads either way",
+          "Home timeline as a capped list of tweet ids per user in a cache (e.g. the latest ~800), rebuilt from storage when missing",
+          "Counters (likes, retweets) kept apart from the tweet row, approximate and sharded to avoid hot rows"] } ] },
+      { name: "High-level design", min: 11, prompts: [
+        { q: "Draw the components on the whiteboard. Then walk through posting a tweet and reading the home timeline, and compare fan-out on write with fan-out on read.", look: [
+          "Write path: tweet service stores the tweet, emits an event; fan-out workers read followers and push the tweet id into each timeline cache",
+          "Read path: read the cached id list, hydrate tweets from a tweet cache, fall back to storage",
+          "Fan-out on write: fast reads, heavy and partly wasted writes (inactive users); fan-out on read: cheap writes, slow merges at read time",
+          "Skips fan-out for inactive users and rebuilds their timeline when they return"] } ] },
+      { name: "Deep dive: the celebrity problem", min: 7, prompts: [
+        { q: "An account with 100 million followers tweets. What happens in your design, and how do you fix it?", look: [
+          "Hybrid: fan-out on write for normal accounts; above a follower threshold, skip fan-out and merge those accounts' recent tweets into the timeline at read time",
+          "Celebrity tweets are cached hot and replicated, with request coalescing so a burst of readers doesn't stampede storage",
+          "Handles users who follow many celebrities (bound the merge, cache per celebrity) and accounts crossing the threshold",
+          "Quantifies the trade-off: a few extra reads per timeline instead of 100M writes per tweet"] } ] },
+      { name: "Deep dive: deletes and failures", min: 7, prompts: [
+        { q: "How do deletes, unfollows and blocks reach timelines that already contain a tweet? What happens if a fan-out worker crashes halfway through?", look: [
+          "Timelines hold ids only, and hydration filters deleted, blocked or unfollowed authors, so correctness doesn't depend on cleaning every list",
+          "Fan-out is idempotent (dedupe by tweet id) and resumable: at-least-once delivery from the queue with progress checkpoints per batch of followers",
+          "Following someone backfills their recent tweets; unfollowing removes them lazily",
+          "Monitors fan-out lag as a key metric"] } ] }
+    ]
+  },
+  {
+    id: "design-calendar",
+    track: "System design",
+    tag: "High-level design", board: true,
+    title: "Design Google Calendar",
+    blurb: "Meetings, invites, reminders and recurring events across time zones, for hundreds of millions of users. Full walkthrough on our blog after you finish.",
+    after: { label: "Compare with our walkthrough", href: "/blog/design-calendar-system/" },
+    blocks: [
+      { name: "Requirements", min: 5, prompts: [
+        { q: "List the functional and non-functional requirements you'd confirm with the interviewer.", look: [
+          "Create, update, delete meetings; invite people (including people without an account); accept, decline, propose a new time; day/week/month views; reminders",
+          "Non-functional: availability, low latency for calendar views, scale, consistency where it matters",
+          "Says why each matters, e.g. read-your-writes for the organiser after an edit",
+          "Asks whether recurring meetings, time zones and free/busy lookups are in scope"] } ] },
+      { name: "Estimates", min: 5, prompts: [
+        { q: "Estimate reads and writes per second and storage per year. State your assumptions, then say what the numbers mean for the design.", look: [
+          "A day is about 10⁵ seconds; quick maths, not precision (e.g. 100M daily users, ~100M meetings a day ≈ 1k writes/s, ~3 invitees each)",
+          "Read-heavy: calendar views far outnumber writes",
+          "Uses the numbers: cache views, shape the data for the read path"] } ] },
+      { name: "APIs", min: 4, prompts: [
+        { q: "Write the main APIs: endpoints, key fields and responses.", look: [
+          "Create, read a time range, update, delete, RSVP",
+          "The calendar view returns meeting summaries for the range, not only ids",
+          "Updates carry a version (optimistic locking); creates carry an idempotency key"] } ] },
+      { name: "Data model", min: 6, prompts: [
+        { q: "Design the tables and keys. How does 'show my week' stay a single fast query?", look: [
+          "Meetings table keyed by meeting id",
+          "Participants table keyed by (user, start time, meeting): one range scan per user per week",
+          "Explains denormalising the start time into the participants table, and what that costs when a meeting moves"] } ] },
+      { name: "High-level design", min: 11, prompts: [
+        { q: "Draw the components on the whiteboard, then describe the write path, the read path and the async path.", look: [
+          "Stateless services behind a gateway, sharded storage, a read-through cache for views",
+          "Change data capture into an event stream instead of dual writes",
+          "Fan-out workers for notifications: push to apps, email with an .ics file to people without an account"] } ] },
+      { name: "Deep dive: reminders", min: 7, prompts: [
+        { q: "Send a reminder 15 minutes before every meeting. What do you use, and what happens if the meeting moves after the reminder is scheduled?", look: [
+          "Compares cron scans, key-expiry tricks, database TTLs and a delay queue",
+          "Delay queue carrying the meeting's version; stale reminders are dropped on delivery",
+          "At-least-once delivery, so sending is idempotent",
+          "Plans for spikes at :45 and :15 (many meetings start on the hour)"] } ] },
+      { name: "Deep dive: recurring meetings & time zones", min: 7, prompts: [
+        { q: "How do you store a weekly meeting with exceptions, and show it correctly to people in different time zones across daylight saving changes?", look: [
+          "One series row with a recurrence rule (RRULE) plus exceptions; expand instances for the requested window, or materialise a few months ahead",
+          "The series keeps local wall time plus the organiser's IANA zone (e.g. 10:00 Asia/Kolkata); expanded instances are stored in UTC",
+          "Explains why storing the series in UTC alone drifts by an hour across daylight saving changes",
+          "Editing 'this and following events' splits the series"] } ] }
+    ]
+  },
+  {
+    id: "design-job-scheduler",
+    track: "System design",
+    tag: "High-level design", board: true,
+    title: "Design a Job Scheduler",
+    blurb: "One-off and recurring jobs at 100 million runs a day, with priorities, retries and a history of every run, without running a job twice by mistake.",
+    after: { label: "Read: a 4-step plan for any system design question", href: "/blog/system-design-4-step-plan/" },
+    blocks: [
+      { name: "Requirements", min: 5, prompts: [
+        { q: "What would you clarify? Write the functional and non-functional requirements.", look: [
+          "Submit, cancel and pause jobs; one-off (run at time T) and recurring (cron-style) schedules; priorities; retries with a limit; status and history of every run",
+          "Asks what a job is (a call to a registered task with parameters), how long jobs run, and how late a run may start",
+          "Non-functional: scale (e.g. 100M runs a day), high availability of scheduling, each run executes at least once and duplicates are avoided",
+          "Out of scope unless asked: job dependencies (DAGs) and checkpointing inside long jobs"] } ] },
+      { name: "Estimates", min: 4, prompts: [
+        { q: "Estimate runs per second, peak load and storage for run history.", look: [
+          "100M runs a day ≈ 1k runs/s average; peaks are much higher because many jobs are scheduled on the hour",
+          "History: ~1 KB per run attempt is ~100 GB a day; keep recent history hot, archive the rest",
+          "Worker capacity depends on job duration: concurrency ≈ rate × average runtime"] } ] },
+      { name: "APIs", min: 4, prompts: [
+        { q: "Write the main APIs.", look: [
+          "POST /jobs (task, params, schedule, priority, retry policy, idempotency key) → job id",
+          "DELETE or PATCH /jobs/{id} to cancel or pause; GET /jobs/{id} and GET /jobs/{id}/runs for status and history",
+          "Internal worker API: claim work, heartbeat, report result"] } ] },
+      { name: "Data model", min: 7, prompts: [
+        { q: "Design the tables. How does the scheduler find the jobs due in the next second without scanning everything?", look: [
+          "Job (definition, schedule, priority, retry policy, state) separate from Run (one per scheduled execution) and Attempt (one per try, with error)",
+          "An index of due work keyed by (time bucket, priority, run id), partitioned so many schedulers can read their own slice",
+          "Recurring jobs: compute and insert the next run when a run is created, not by scanning cron strings",
+          "Run states: scheduled → queued → running → succeeded / failed / retrying / cancelled"] } ] },
+      { name: "High-level design", min: 11, prompts: [
+        { q: "Draw the components on the whiteboard and walk through a recurring job from submission to its third run.", look: [
+          "API service writes jobs; scheduler (partitioned by time bucket) moves due runs into priority queues; a worker fleet claims and executes",
+          "Results and attempts written to the run history; failures re-enqueued with backoff until the retry limit",
+          "Scheduler instances own partitions via leases, so a failed scheduler's slice is picked up by another",
+          "Separate queues or weighted fair queueing so low-priority jobs don't starve"] } ] },
+      { name: "Deep dive: running exactly once (almost)", min: 7, prompts: [
+        { q: "A worker claims a run and then goes silent. How do you detect that, retry safely, and make sure two workers don't both finish the same run?", look: [
+          "Leases with a timeout and heartbeats; an expired lease makes the run claimable again",
+          "Fencing token (lease version) checked when a worker reports results, so a zombie worker's late write is rejected",
+          "Honest guarantee: at-least-once execution, with idempotent jobs (idempotency keys) for exactly-once effects",
+          "Retries with exponential backoff and jitter; a dead-letter state after the limit"] } ] },
+      { name: "Deep dive: timing at scale", min: 7, prompts: [
+        { q: "A million jobs are scheduled for exactly 09:00. How do you start them on time without overloading anything?", look: [
+          "Pre-load upcoming buckets into the queues a little early; workers start them at the scheduled time",
+          "Spreads load with allowed jitter where the job permits it; autoscale workers ahead of known peaks",
+          "Back-pressure: rate limits per tenant or task type so one customer can't flood the fleet",
+          "Measures schedule lag (start time − scheduled time) as the key SLO"] } ] }
+    ]
+  },
+  {
+    id: "design-doordash",
+    track: "System design",
+    tag: "High-level design", board: true,
+    title: "Design DoorDash",
+    blurb: "Customers order from restaurants and couriers (dashers) deliver. Orders, dispatch with geo matching, live tracking, ETAs and payments.",
+    after: { label: "Read: a 4-step plan for any system design question", href: "/blog/system-design-4-step-plan/" },
+    blocks: [
+      { name: "Requirements", min: 5, prompts: [
+        { q: "Who are the actors, and what does each need? Write the functional and non-functional requirements you'd confirm.", look: [
+          "Customers browse and order and track; restaurants manage menus and accept, prepare and hand over orders; dashers go online, accept deliveries and share location",
+          "System: match a dasher to each order, compute ETAs, take payment, notify everyone of status changes",
+          "Non-functional: orders and payments strongly consistent; location and ETAs eventually consistent and near real time; high availability at meal-time peaks",
+          "Scopes out reviews, promotions and restaurant onboarding unless asked"] } ] },
+      { name: "Estimates", min: 4, prompts: [
+        { q: "Estimate orders per second at peak, location updates per second, and what dominates the load.", look: [
+          "e.g. 20M orders a day ≈ 200/s average, several times that at lunch and dinner",
+          "Location: e.g. 1M active dashers sending every 4 s ≈ 250k updates/s, far more than orders",
+          "Conclusion: the location pipeline and geo queries dominate; orders are low volume but must be correct"] } ] },
+      { name: "APIs", min: 4, prompts: [
+        { q: "Write the main APIs for customers, restaurants and dashers.", look: [
+          "POST /orders (cart, address, payment method, idempotency key); GET /orders/{id} with status and ETA",
+          "Restaurant: accept or reject, mark ready; dasher: go online, accept or decline an offer, picked up, delivered",
+          "Location updates over a persistent connection or batched POSTs; live tracking pushed to customers (WebSocket or server-sent events)"] } ] },
+      { name: "Data model", min: 6, prompts: [
+        { q: "Design the main entities, including the order state machine.", look: [
+          "Order states: created → paid (authorised) → accepted → preparing → ready → picked up → delivered, plus cancelled and rejected, with an append-only status history",
+          "Orders sharded by order id or by region; restaurants and menus read-heavy and cached",
+          "Dasher location kept in an in-memory geo index (geohash or H3 cells) with a short TTL, not in the order database",
+          "Payment records: authorise at order, capture at delivery, refunds as separate entries"] } ] },
+      { name: "High-level design", min: 11, prompts: [
+        { q: "Draw the components on the whiteboard and walk an order from checkout to delivery.", look: [
+          "Order service owns the state machine; transitions are published as events that drive notifications, dispatch and analytics",
+          "Payment service with idempotency keys; authorise first, capture on delivery",
+          "Location ingestion service updating the geo index; tracking service streaming dasher position to the customer",
+          "Clear ownership: each service owns its data, and events (not shared tables) connect them"] } ] },
+      { name: "Deep dive: dispatch & matching", min: 8, prompts: [
+        { q: "An order will be ready in 12 minutes. How do you choose and offer a dasher, and what if they decline or go offline?", look: [
+          "Candidate search in nearby geo cells, ranked by ETA to the restaurant and the food-ready time, not only straight-line distance",
+          "Batching: match several orders and dashers per region every few seconds instead of greedy one-by-one",
+          "Offers with a timeout; on decline or timeout, offer to the next candidate; one dasher per order enforced with a conditional update",
+          "Regional partitioning of the dispatcher so each city scales independently"] } ] },
+      { name: "Deep dive: live tracking & ETAs", min: 7, prompts: [
+        { q: "How do customers see the dasher move in near real time, and how do you keep the ETA honest?", look: [
+          "Location updates go to the geo index and a pub/sub channel per active order; the customer's connection subscribes",
+          "Throttle and smooth updates for display; drop stale points",
+          "ETA = prep time estimate + travel time from a routing service, recomputed on key events and as the dasher moves",
+          "Learns prep times per restaurant and time of day from history"] } ] }
+    ]
+  },
+  {
+    id: "design-distributed-queue",
+    track: "System design",
+    tag: "High-level design", board: true,
+    title: "Design a Distributed Queue",
+    blurb: "A Kafka-like log: topics and partitions, consumer groups and offsets, replication, ordering, retention, plus delayed messages and a dead-letter queue.",
+    after: { label: "Read: delay queues in practice (calendar reminders)", href: "/blog/design-calendar-system/" },
+    blocks: [
+      { name: "Requirements", min: 5, prompts: [
+        { q: "What would you clarify? Write the functional and non-functional requirements.", look: [
+          "Producers publish to topics; consumers read; consumer groups share the work so each message is processed by one member of a group",
+          "Ordering per key (e.g. per user), not across the whole topic; replay from an earlier point; retention by time or size",
+          "Non-functional: high throughput, durability (no loss of acknowledged messages), fault tolerance, horizontal scaling",
+          "Asks whether delayed delivery and a dead-letter queue are needed"] } ] },
+      { name: "Estimates", min: 4, prompts: [
+        { q: "Estimate throughput, storage and the number of partitions you need.", look: [
+          "e.g. 1M messages/s × 1 KB = 1 GB/s in; × replication factor 3 on disk and network",
+          "Retention: 7 days at 1 GB/s ≈ 600 TB before replication",
+          "Partitions sized from per-partition throughput and the number of consumers you want in parallel"] } ] },
+      { name: "APIs", min: 4, prompts: [
+        { q: "Write the producer, consumer and admin APIs.", look: [
+          "produce(topic, key, value, acks) → (partition, offset); key chooses the partition",
+          "poll(group, max) → messages; commit(group, partition, offset)",
+          "Admin: create topic with partitions, replication factor and retention"] } ] },
+      { name: "Storage & data model", min: 7, prompts: [
+        { q: "How is a partition stored on disk, and how do consumers keep their place?", look: [
+          "Append-only log split into segment files with a sparse offset index; sequential writes and the page cache make it fast",
+          "Retention deletes or compacts whole segments (compaction keeps the latest value per key)",
+          "Consumer group offsets stored in the system itself (an internal topic) per (group, partition)",
+          "Batching and compression on the producer; zero-copy reads to consumers"] } ] },
+      { name: "High-level design", min: 10, prompts: [
+        { q: "Draw brokers, partitions, leaders and followers, the metadata/controller service, producers and consumer groups on the whiteboard. Walk a message from producer to consumer.", look: [
+          "Each partition has one leader broker and followers; producers write to the leader",
+          "A controller (consensus-backed metadata, e.g. Raft) tracks brokers, leaders and assignments",
+          "Within a group, each partition is read by one consumer; adding consumers beyond the partition count adds no parallelism",
+          "Rebalancing when consumers join or leave, and its cost (cooperative rebalancing)"] } ] },
+      { name: "Deep dive: replication & durability", min: 8, prompts: [
+        { q: "A leader broker dies right after acknowledging a write. Is the message lost? Explain replication, acknowledgements and leader election.", look: [
+          "In-sync replicas (ISR): followers that have caught up; acks=all waits for every ISR member",
+          "High watermark: consumers only see messages replicated to all ISR members",
+          "min.insync.replicas with acks=all trades availability for durability; unclean leader election trades durability for availability",
+          "Leader epochs to truncate divergent logs after a failover"] } ] },
+      { name: "Deep dive: delivery, delay & DLQ", min: 7, prompts: [
+        { q: "What delivery guarantee do consumers get, and how would you add delayed messages and a dead-letter queue?", look: [
+          "At-least-once by committing offsets after processing; idempotent consumers or an idempotent producer plus transactions for exactly-once processing",
+          "Delayed delivery: delay topics or buckets by due time (or a timing wheel), moved to the main topic when due; ordering caveats",
+          "Dead-letter topic after N failed attempts, with the error recorded, so one bad message doesn't block a partition",
+          "Monitors consumer lag per group and partition"] } ] }
+    ]
+  },
+  {
+    id: "design-amazon",
+    track: "System design",
+    tag: "High-level design", board: true,
+    title: "Design Amazon E-commerce",
+    blurb: "Catalog and search, cart, checkout and payments, with inventory that never oversells and orders that expire if they aren't paid within 10 minutes.",
+    after: { label: "Read: back-of-the-envelope estimation with the 10⁵ trick", href: "/blog/estimation-10-5-trick/" },
+    blocks: [
+      { name: "Requirements", min: 5, prompts: [
+        { q: "Write the functional and non-functional requirements for buyers, sellers and the system.", look: [
+          "Buyers: search and browse, cart, checkout, pay, order history and status; sellers: list products, manage inventory, update order status",
+          "System: don't oversell; reserve stock at checkout; cancel orders not paid within 10 minutes and release their stock",
+          "Non-functional: orders, payments and inventory strongly consistent; catalog and search eventually consistent; very high read traffic and flash-sale peaks",
+          "Scopes out recommendations, reviews and shipping logistics unless asked"] } ] },
+      { name: "Estimates", min: 4, prompts: [
+        { q: "Estimate searches, product page views and orders per second, and the read/write ratio.", look: [
+          "e.g. 10M daily users × 10 searches ≈ 1k searches/s average, much more at peak; 2M orders a day ≈ 20/s average",
+          "Reads exceed writes by orders of magnitude: cache product pages, serve search from an index",
+          "Flash sales concentrate writes on a few hot products"] } ] },
+      { name: "APIs", min: 4, prompts: [
+        { q: "Write the main APIs.", look: [
+          "GET /search?q=&filters=&cursor=; GET /products/{id}",
+          "PUT /cart/items; POST /checkout → order id with status pending_payment and an expiry time",
+          "POST /orders/{id}/pay with an idempotency key; GET /orders/{id}; seller APIs to list products and set stock"] } ] },
+      { name: "Data model", min: 6, prompts: [
+        { q: "Design the main entities and where each lives.", look: [
+          "Catalog (product, SKU, seller offers) in a document store, indexed into a search engine; prices and stock not trusted from the index",
+          "Inventory per (SKU, warehouse) with available and reserved counts in a strongly consistent store",
+          "Order with line items, a status machine (pending_payment → paid → shipped → delivered, or cancelled/expired) and an expires_at",
+          "Payments as separate records linked to orders, keyed by idempotency key"] } ] },
+      { name: "High-level design", min: 11, prompts: [
+        { q: "Draw the services on the whiteboard and walk through search → cart → checkout → payment.", look: [
+          "Catalog and search services with caching and a CDN for product media; changes flow to the index asynchronously",
+          "Cart service (per-user, durable, tolerant of being slightly stale)",
+          "Checkout orchestrates inventory reservation, order creation and payment, as a saga with compensations rather than a distributed transaction",
+          "Events notify sellers, email and analytics"] } ] },
+      { name: "Deep dive: inventory & the 10-minute expiry", min: 8, prompts: [
+        { q: "Two buyers try to buy the last unit at the same moment, and one of them never pays. Walk through how your design handles both.", look: [
+          "Reserve with an atomic conditional update (available ≥ qty → available −= qty, reserved += qty), so only one succeeds",
+          "The reservation and the pending order carry expires_at = now + 10 min; a delay queue or scheduled sweep cancels unpaid orders and releases stock",
+          "Payment arriving after expiry: reject and refund, or re-reserve if stock remains; idempotent release so it never runs twice",
+          "Hot products in flash sales: shard the stock counter or pre-allocate tokens, and queue buyers"] } ] },
+      { name: "Deep dive: payments & idempotency", min: 7, prompts: [
+        { q: "The payment provider times out and the client retries. How do you make sure the buyer is charged exactly once and the order ends in the right state?", look: [
+          "Idempotency key per payment attempt stored with the result; retries return the stored outcome",
+          "Pending state while the provider's result is unknown; reconcile via provider webhooks and status polling",
+          "Outbox pattern: the order update and the 'payment succeeded' event are written atomically, then published",
+          "Clear handling of partial failures: payment succeeded but the order expired → automatic refund"] } ] }
+    ]
+  },
+
+  /* ---------------- Behavioral ---------------- */
   {
     id: "behavioral-leadership",
     track: "Behavioral",
@@ -74,203 +377,35 @@ window.PRACTICE_SESSIONS = [
     ]
   },
   {
-    id: "design-calendar",
-    track: "System design",
-    tag: "High-level design", board: true,
-    title: "Design a calendar app",
-    blurb: "Meetings, invites and reminders for hundreds of millions of users. Full walkthrough on our blog after you finish.",
-    after: { label: "Compare with our walkthrough", href: "/blog/design-calendar-system/" },
+    id: "behavioral-collaboration",
+    track: "Behavioral",
+    title: "Collaboration, feedback & growth",
+    blurb: "Hard feedback, a difficult teammate or stakeholder, changing your mind with data, and where you want to grow next.",
     blocks: [
-      { name: "Requirements", min: 5, prompts: [
-        { q: "List the functional and non-functional requirements you'd confirm with the interviewer.", look: [
-          "Create, update, delete meetings; invite people (including non-users); day/week/month views; reminders",
-          "Non-functional: availability, latency for calendar views, scale, consistency",
-          "Says why each matters, e.g. read-your-writes for the organiser",
-          "Asks whether recurring meetings and time zones are in scope"] } ] },
-      { name: "Estimates", min: 5, prompts: [
-        { q: "Estimate reads and writes per second and storage per year. State your assumptions. Then say what the numbers mean for the design.", look: [
-          "A day is about 10⁵ seconds; quick maths, not precision",
-          "Read-heavy: calendar views far outnumber writes",
-          "Uses the numbers: cache, shape data for reads"] } ] },
-      { name: "APIs", min: 5, prompts: [
-        { q: "Write the main APIs: endpoints, key fields and responses.", look: [
-          "Create, read range, update, delete, RSVP",
-          "The calendar view returns summaries, not only IDs",
-          "Updates carry a version (optimistic locking) and an idempotency key on create"] } ] },
-      { name: "Data model", min: 7, prompts: [
-        { q: "Design the tables and keys. How does 'show my week' stay a single fast query?", look: [
-          "Meetings table keyed by meeting ID",
-          "Participants table keyed by (user, start time, meeting): one range scan per user",
-          "Explains denormalising the start time and its cost on updates",
-          "Recurring meetings: one series row with a recurrence rule (RRULE) plus exceptions; expand into instances per requested window, or materialise a few months ahead",
-          "Time zones: the series keeps local wall time plus the organiser's IANA zone (e.g. 10:00 Asia/Kolkata) with its RRULE, and expanded instances are stored in UTC; storing the series in UTC alone drifts by an hour across daylight saving changes"] } ] },
-      { name: "High-level design", min: 13, prompts: [
-        { q: "Draw the components on the whiteboard, then describe the write path, read path and async path here.", look: [
-          "Stateless services behind a gateway, sharded databases, a read-through cache",
-          "Change data capture into an event stream instead of dual writes",
-          "Fan-out workers for notifications; push to apps, email with .ics to non-users"] } ] },
-      { name: "Deep dive: reminders", min: 10, prompts: [
-        { q: "Send a reminder 15 minutes before every meeting. What do you use, and what happens if the meeting moves after the reminder is scheduled?", look: [
-          "Compares cron, Redis key expiry, database TTL and a delay queue",
-          "Delay queue with the meeting's version; drop stale reminders on delivery",
-          "At-least-once delivery, so sending is idempotent",
-          "Plans for spikes at :45 and :15"] } ] }
-    ]
-  },
-  {
-    id: "design-rate-limiter",
-    track: "System design",
-    tag: "Low-level design", board: true,
-    title: "Design a rate limiter library",
-    blurb: "Classes, interfaces, an algorithm and real code. A low-level design round in 45 minutes.",
-    blocks: [
-      { name: "Requirements", min: 5, prompts: [
-        { q: "What would you clarify? Write the requirements: limits per what, single process or distributed, behaviour when limited.", look: [
-          "Limit per key (user, IP, API key) with configurable rules",
-          "In-process first, distributed as a follow-up",
-          "Returns allow/deny plus retry-after; thread-safe"] } ] },
-      { name: "Classes & interfaces", min: 10, prompts: [
-        { q: "List the classes and interfaces with their main methods, and how they relate. Sketch a class diagram on the whiteboard if it helps.", look: [
-          "A RateLimiter interface (allow(key)) with strategy implementations",
-          "A rule/config object and a clock you can inject for tests",
-          "Storage behind an interface so a Redis version can be added later"], kind: "text" } ] },
-      { name: "Algorithm", min: 10, prompts: [
-        { q: "Compare token bucket, fixed window and sliding window. Which do you pick, and why?", look: [
-          "Fixed window allows bursts at window edges",
-          "Sliding window log is accurate but memory-heavy; sliding window counter approximates it",
-          "Token bucket allows controlled bursts with constant memory per key",
-          "Picks one with a reason tied to the requirements"] } ] },
-      { name: "Code it", min: 12, prompts: [
-        { q: "Write the core class for your chosen algorithm in the language you'll use in the interview.", kind: "code", look: [
-          "Correct refill or window maths, using an injected clock",
-          "Per-key state created lazily, and idle keys evicted (TTL or LRU) so memory doesn't grow forever",
-          "Thread safety (lock per key or atomic operations)",
-          "Readable names, no dead code"] } ] },
-      { name: "Concurrency & scale", min: 8, prompts: [
-        { q: "How do you make it safe under concurrency, and how would you share limits across 50 servers?", look: [
-          "Locks or compare-and-set in process",
-          "Redis with an atomic script (Lua) for distributed limits",
-          "Trade-offs: latency of a central store, approximate local limits, failure mode (fail open or closed)"] } ] }
-    ]
-  },
-  {
-    id: "design-ai-agent",
-    track: "System design",
-    tag: "Agentic AI design", board: true,
-    title: "Design an AI customer-support agent",
-    blurb: "An LLM agent that answers questions, looks up orders and issues refunds. Tools, guardrails, evaluation and cost.",
-    after: { label: "Read: the model isn't the agent", href: "/blog/the-model-isnt-the-agent/" },
-    blocks: [
-      { name: "Scope", min: 6, prompts: [
-        { q: "What should the agent do, and what should it never do? Write the requirements and success metrics.", look: [
-          "Answers from docs, looks up orders, issues small refunds, hands off to humans",
-          "Never acts outside the customer's own account; limits on money moved",
-          "Metrics: resolution rate, escalation rate, customer satisfaction, cost per conversation"] } ] },
-      { name: "Agent vs plain code", min: 6, prompts: [
-        { q: "Which parts need an LLM, and which should stay deterministic code? Why?", look: [
-          "LLM for understanding the request and writing the reply",
-          "Deterministic code for refunds, eligibility rules, payments and permissions",
-          "Says latency, cost and non-determinism of model calls out loud"] } ] },
-      { name: "Tools & permissions", min: 8, prompts: [
-        { q: "List the tools the agent can call, their inputs, and how permissions are enforced.", look: [
-          "Small, typed tools: search_docs, get_order, refund(order, amount), handoff",
-          "Tools run with the customer's scope, never an admin token",
-          "Refunds above a threshold need human approval; idempotency keys on writes"] } ] },
-      { name: "Loop, memory & context", min: 10, prompts: [
-        { q: "Describe the agent loop, what goes into the context window, and how you handle long conversations.", look: [
-          "Plan, call a tool, read the result, repeat, with a step limit",
-          "Retrieval (RAG) over help docs instead of stuffing everything in",
-          "Summarise or trim old turns; store conversation state outside the model"] } ] },
-      { name: "Guardrails", min: 8, prompts: [
-        { q: "How do you defend against prompt injection, wrong answers and costly mistakes?", look: [
-          "Treat customer messages and retrieved text as untrusted data",
-          "Least-privilege tools, confirmation for risky actions, output checks",
-          "Grounded answers with sources; 'I don't know' plus hand-off when unsure",
-          "Audit log of every action"] } ] },
-      { name: "Evaluation & cost", min: 7, prompts: [
-        { q: "How do you test it before launch and monitor it after? Estimate the model cost per day for 50,000 conversations.", look: [
-          "Offline eval set from real tickets; check tool calls and policy compliance, not just text",
-          "Online: escalation rate, refunds issued, user ratings, sampled reviews",
-          "Cost: e.g. 50,000 conversations × ~4 model calls × ~3,000 tokens ≈ 600M tokens a day; a small model for simple turns"] } ] }
-    ]
-  },
-  {
-    id: "coding-intervals",
-    track: "Coding",
-    tag: "Classic coding",
-    title: "Meeting intervals",
-    blurb: "Two classic interval problems: merge meetings, then count the rooms you need. Clarify, code, test, explain.",
-    blocks: [
-      { name: "Problem 1: clarify & plan", min: 5, prompts: [
-        { q: "Given a list of meetings as [start, end] pairs, merge the ones that overlap. Example: [[1,3],[8,10],[2,6],[15,18]] → [[1,6],[8,10],[15,18]]. What would you ask, and what's your approach?", look: [
-          "Asks: is the input sorted? do touching meetings like [1,4] and [4,5] count as overlapping?",
-          "Plan: sort by start, then one pass merging into the last interval"] } ] },
-      { name: "Problem 1: code", min: 12, prompts: [
-        { q: "Write a function merge(meetings) that returns the merged list. Touching meetings, like [1,4] and [4,5], should merge.", kind: "code", look: [
-          "Sorts by start time",
-          "Compares with <= so touching intervals merge",
-          "Extends the end with max(), handling a meeting inside another",
-          "Handles an empty list"] } ] },
-      { name: "Problem 1: test & complexity", min: 5, prompts: [
-        { q: "Write your test cases and state the time and space complexity.", look: [
-          "Empty list, one meeting, touching, nested, unsorted input",
-          "O(n log n) time for the sort, O(n) space for the output"] } ] },
-      { name: "Problem 2: plan", min: 5, prompts: [
-        { q: "Now return the minimum number of rooms needed so no two overlapping meetings share a room. Example: [[0,30],[5,10],[15,20]] → 2. What's your approach? (Unlike Problem 1, where touching meetings merge, here a meeting ending at 10 frees its room for one starting at 10.)", look: [
-          "Sort by start and keep a min-heap of end times, or sort starts and ends separately",
-          "A room is freed when the earliest end is ≤ the next start"] } ] },
-      { name: "Problem 2: code", min: 13, prompts: [
-        { q: "Write a function min_rooms(meetings) that returns the number of rooms needed.", kind: "code", look: [
-          "Correct heap or two-pointer logic",
-          "A meeting ending at 10 frees its room for one starting at 10",
-          "Returns the maximum rooms in use, not the final count"] } ] },
-      { name: "Problem 2: complexity", min: 5, prompts: [
-        { q: "State the time and space complexity, and one follow-up you'd expect from the interviewer.", look: [
-          "O(n log n) time, O(n) space",
-          "Follow-ups: return which room each meeting gets; meetings arriving as a stream"] } ] }
-    ]
-  },
-  {
-    id: "coding-with-ai",
-    track: "Coding",
-    tag: "Code-with-AI round",
-    title: "Top K frequent words, with an AI assistant",
-    blurb: "A code-with-AI round: you direct and check the AI's code. Find the bug it wrote, then prove your fix.",
-    blocks: [
-      { name: "Clarify", min: 5, prompts: [
-        { q: "Problem: given a list of words and k, return the k most frequent words, sorted by frequency (highest first). Words with the same frequency are sorted alphabetically. What do you clarify, and which edge cases do you write down?", look: [
-          "Case sensitivity ('The' vs 'the') and punctuation",
-          "Empty input, k = 0, and k larger than the number of distinct words",
-          "Input size: do all distinct words fit in memory?",
-          "Writes the edge cases down before prompting"] } ] },
-      { name: "Plan & prompt", min: 5, prompts: [
-        { q: "In one sentence, what's your approach? Then write the exact prompt you'd give the AI assistant.", look: [
-          "Count with a hash map, then sort by (-count, word) or use a heap",
-          "The prompt states the tie-breaking rule and the function signature",
-          "Asks for one function, not a whole program"] } ] },
-      { name: "Review the AI's code", min: 12, prompts: [
-        { q: "The AI returned the code below. Does it meet the requirements? Find any bug, explain it, and write the corrected version.", kind: "code",
-          given: "from collections import Counter\n\ndef top_k_frequent(words, k):\n    counts = Counter(words)\n    return [word for word, _ in counts.most_common(k)]",
-          look: [
-            "Spots that most_common() breaks ties by first appearance, not alphabetically",
-            "Example that fails: ['b', 'a'] with k = 1 returns ['b'], expected ['a']",
-            "Fix: sorted(counts, key=lambda w: (-counts[w], w))[:k], or heapq.nsmallest(k, counts, key=lambda w: (-counts[w], w)), or a size-k min-heap whose eviction puts the alphabetically later word first",
-            "Explains the fix out loud, not just pastes it"] } ] },
-      { name: "Tests", min: 8, prompts: [
-        { q: "Write the tests that would catch the bug and the edge cases you listed.", kind: "code", look: [
-          "A tie case that fails the AI's version",
-          "k equal to and larger than the number of distinct words",
-          "Empty list"] } ] },
-      { name: "Complexity & trade-offs", min: 7, prompts: [
-        { q: "State time and space complexity for sorting versus a heap of size k. When would you pick each?", look: [
-          "With n words and m distinct words: sort is O(n + m log m); a size-k heap is O(n + m log k)",
-          "Heap wins when k is much smaller than the number of distinct words",
-          "Mentions readability as a fair reason to sort in an interview"] } ] },
-      { name: "Follow-up", min: 8, prompts: [
-        { q: "Follow-up: words arrive as an endless stream and you must answer 'top k' at any time. How does your design change?", look: [
-          "Keep counts in a hash map and update a structure incrementally",
-          "Approximate options for huge streams: Count-Min Sketch plus a heap",
-          "Discusses memory limits and accuracy trade-offs"] } ] }
+      { name: "Hard feedback", min: 11, prompts: [
+        { q: "Tell me about the hardest feedback you've received. How did you react, and what did you change?", look: [
+          "Real, specific feedback that stung, not a disguised strength",
+          "Listened and asked questions before defending",
+          "A concrete change in behaviour, and evidence it stuck (what others noticed later)",
+          "Shows they now ask for feedback, not only receive it"] } ] },
+      { name: "A difficult relationship", min: 12, prompts: [
+        { q: "Describe a time you worked with a difficult teammate or stakeholder. What made it hard, and how did you handle it?", look: [
+          "Describes the other person fairly: their goals and constraints, not their character",
+          "Went to them directly first, and looked for shared goals",
+          "Escalated only with a reason, and kept the work moving",
+          "Outcome for the project and for the working relationship"] } ] },
+      { name: "Changing your mind", min: 11, prompts: [
+        { q: "Tell me about a time data or a colleague's argument changed your mind on something you felt strongly about.", look: [
+          "Starts with a strong, reasonable position, not a straw man",
+          "What evidence changed it, and how they tested their own view",
+          "Said so openly and helped move the team to the better option",
+          "What they learned about how they make decisions"] } ] },
+      { name: "Why this role, and growth", min: 11, prompts: [
+        { q: "Why this role and this company? Where do you want to grow in the next two to three years, and how will this role help?", look: [
+          "Specific to the company: its product, problems or engineering culture, not generic praise",
+          "Links past experience to what the role needs",
+          "A growth goal that is honest and concrete (scope, skill, level), with steps already taken",
+          "Reasons to join rather than only reasons to leave the current job"] } ] }
     ]
   }
 ];
@@ -310,4 +445,28 @@ window.PRACTICE_SESSIONS = [
     codingSet(14, "Graphs · BFS · Dijkstra", "Distance from every room to the nearest exit, then the gentlest path across a height map.", "nearest-exit", "min-effort-path"),
     codingSet(15, "Heaps · Binary search", "Schedule tasks with a cooldown, then find the smallest heater range that warms every house.", "cooldown-schedule", "heater-radius")
   );
+})();
+
+// AI coding rounds: built from AI_ROUNDS in ai-problems.js. Each round: clarify & plan,
+// work with the assistant (chat beside the editor, Run / Submit), verify & explain.
+// Round 4 (tests first) adds a block to write tests before implementing.
+(function () {
+  const P = window.PRACTICE_PROBLEMS || {};
+  (window.AI_ROUNDS || []).forEach(([id, tag, blurb], i) => {
+    const n = i + 1, p = P[id] || { title: id, clarify: ["(missing)"], look: ["(missing)"], testing: ["(missing)"] };
+    const plan = { name: "Clarify & plan", min: 5, problem: id, prompts: [
+      { q: `Round ${n}, ${p.title}: what would you clarify, and what's your plan? Write the first prompt you'll give the assistant.`, look: p.clarify }] };
+    const work = min => ({ name: "Work with the AI", min, prompts: [
+      { q: p.testStarters ? "Now implement it. Ask the assistant if you like, check its code with your tests and with Run, then Submit." : "Work with the assistant: ask for code, tests or explanations, insert what you choose into the editor, and check it with Run and Submit. The assistant can be wrong.", kind: "code", problem: id, chat: true, look: p.look }] });
+    const verify = { name: "Verify & explain", min: 10, prompts: [
+      { q: `Which test exposed the problem, or which tests did you add? Explain the root cause, your fix and the complexity, as you would to the interviewer.${p.followup ? " If there's time, the follow-up: " + p.followup : ""}`, look: p.testing }] };
+    const blocks = p.testStarters
+      ? [plan, { name: "Write tests first", min: 10, prompts: [
+          { q: "Write your tests before asking the assistant anything, then press \"Check my tests\".", kind: "code", testsFor: id, look: [
+            "Each rule in the spec has a test: boundary, rejected requests, same-second requests, the exact limit, sliding windows",
+            "Expected values worked out by hand, not copied from code",
+            "Small tests with names that say what they check"] }] }, work(20), verify]
+      : [plan, work(30), verify];
+    window.PRACTICE_SESSIONS.push({ id: `ai-round-${n}`, track: "AI coding rounds", ai: true, tag, title: `Round ${n}: ${p.title}`, blurb, blocks });
+  });
 })();

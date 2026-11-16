@@ -65,6 +65,120 @@ def _complete_tree(n):
     return Node(0) if n > 0 else None
 
 
+# ---- AI coding rounds: fake clock for classes, a flaky service, and tests-first grading ----
+class _FakeClock:
+    """{"$clock": t} in a constructor's arguments: a clock function starting at t; the
+    test step "$advance" [seconds] moves every fake clock forward."""
+    def __init__(self, t=0):
+        self.t = t
+
+    def __call__(self):
+        return self.t
+
+
+class ServiceError(Exception):
+    """Raised by the fake service in the resilience round (available to the candidate)."""
+    def __init__(self, kind, retryable):
+        Exception.__init__(self, kind)
+        self.kind, self.retryable = kind, retryable
+
+
+_RETRYABLE = ("timeout", "unavailable")
+
+
+class _EnvClock:
+    def __init__(self):
+        self.t, self.sleeps = 0.0, []
+
+    def now(self):
+        return self.t
+
+    def sleep(self, seconds):
+        if not isinstance(seconds, (int, float)) or isinstance(seconds, bool) or seconds < 0:
+            raise ValueError("clock.sleep needs a non-negative number of seconds")
+        self.sleeps.append(seconds)
+        self.t += seconds
+
+
+class _EnvService:
+    def __init__(self, outcomes, clock):
+        self.outcomes, self.clock, self.calls = outcomes, clock, 0
+
+    def call(self):
+        kind, latency, *value = self.outcomes[min(self.calls, len(self.outcomes) - 1)]
+        self.calls += 1
+        self.clock.t += latency
+        if kind == "ok":
+            return value[0] if value else None
+        raise ServiceError(kind, kind in _RETRYABLE)
+
+
+def _run_env(fn, args):
+    # args: [{"outcomes": [[kind, latency, value?], ...], "rand": [...]}, policy]
+    scenario, policy = args
+    clock = _EnvClock()
+    service = _EnvService(scenario["outcomes"], clock)
+    seq, used = scenario.get("rand") or [0.5], [0]
+
+    def rand():
+        v = seq[min(used[0], len(seq) - 1)]
+        used[0] += 1
+        return v
+
+    result = error = None
+    try:
+        result = fn(service, clock, rand, policy)
+    except ServiceError as e:
+        error = e.kind
+    return {"result": _jsonable(result), "error": error, "attempts": service.calls,
+            "sleeps": [round(x, 9) for x in clock.sleeps]}
+
+
+_code = ""
+
+
+def _fresh_ns():
+    return {"__name__": "solution", "TreeNode": TreeNode, "ServiceError": ServiceError}
+
+
+def _test_names(ns):
+    return [n for n, f in list(ns.items()) if n.startswith("test") and callable(f) and getattr(f, "__code__", None) is not None]
+
+
+def _run_tests(target, impl):
+    # Tests-first round: run the candidate's test_* functions against one implementation.
+    # Each implementation starts from a fresh namespace (the candidate's code runs again), so
+    # state a test leaves behind for one implementation doesn't reach the next.
+    global _ns
+    _ns = _fresh_ns()
+    _setlimit(RECURSION_LIMIT)
+    exec(compile(_code, "solution.py", "exec"), _ns)
+    names = _test_names(_ns)
+    exec(compile(impl, "implementation.py", "exec"), _ns)
+    if not callable(_ns.get(target)):
+        raise NameError("internal: implementation missing")
+    out = []
+    for name in names:
+        try:
+            r = _ns[name]()
+            if r is not None and (hasattr(r, "__await__") or (hasattr(r, "send") and hasattr(r, "throw"))):
+                if hasattr(r, "close"):
+                    r.close()
+                out.append([name, False, "tests must be synchronous: define it with def, not async def, and don't yield"])
+                continue
+            out.append([name, True, ""])
+        except AssertionError as e:
+            line = None
+            for fr in _extract_tb(e.__traceback__):
+                if fr.filename == "solution.py":
+                    line = fr.lineno
+            out.append([name, False, (str(e) or "assertion failed") + (" (line %d)" % line if line else "")])
+        except BaseException as e:  # noqa: BLE001
+            info = _err(e)
+            out.append([name, False, "%s: %s" % (info["type"], info["msg"]) + (" (line %d)" % info["line"] if info["line"] else "")])
+    return out
+
+
 def _build_tree(v):
     # Level-order list with None for a missing child, e.g. [5, 3, 8, None, 4].
     if isinstance(v, dict) and "$complete" in v:
@@ -153,10 +267,21 @@ def _run_ops(spec, args):
     cls = _ns.get(spec["cls"])
     if not isinstance(cls, type):
         raise NameError("define a class named %s" % spec["cls"])
-    obj, out = None, []
+    obj, out, clocks = None, [], []
     for op, a in zip(ops, op_args):
+        if op == "$advance":
+            for c in clocks:
+                c.t += a[0]
+            out.append(None)
+            continue
         if op == spec["cls"]:
-            obj = cls(*a)
+            real = []
+            for x in a:
+                if isinstance(x, dict) and "$clock" in x:
+                    clocks.append(_FakeClock(x["$clock"]))
+                    x = clocks[-1]
+                real.append(x)
+            obj = cls(*real)
             out.append(None)
             continue
         m = getattr(obj, _snake(op), None) or getattr(obj, op, None)
@@ -168,7 +293,9 @@ def _run_ops(spec, args):
 
 def ct_load(code):
     global _ns
-    _ns = {"__name__": "solution", "TreeNode": TreeNode}
+    global _code
+    _ns = _fresh_ns()
+    _code = code
     _setlimit(RECURSION_LIMIT)
     buf, old = _Capture(), _sys.stdout
     _sys.stdout = buf
@@ -193,6 +320,10 @@ def ct_case(spec_json, args_json):
     try:
         if spec.get("cls"):
             out = _run_ops(spec, args)
+        elif spec.get("tests"):
+            out = _run_tests(_snake(spec["tests"]), args[0])
+        elif spec.get("env"):
+            out = _run_env(_find(spec["fn"]), args)
         else:
             out = _find(spec["fn"])(*args)
             if out is None and "inplace" in spec:

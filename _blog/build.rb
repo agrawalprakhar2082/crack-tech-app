@@ -55,7 +55,7 @@ page = lambda do |title:, description:, path:, image: nil, type: "website", body
   og_image = image ? %(\n<meta property="og:image" content="#{h(image)}">) : ""
   <<~HTML
     <!DOCTYPE html>
-    <html lang="en" data-theme="dark">
+    <html lang="en">
     <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -66,8 +66,8 @@ page = lambda do |title:, description:, path:, image: nil, type: "website", body
     <meta property="og:title" content="#{h(title)}">
     <meta property="og:description" content="#{h(description)}">
     <meta property="og:url" content="#{SITE}#{path}">#{og_image}
-    <meta name="theme-color" content="#13150e">
-    <script>try{if(localStorage.getItem("ct-theme")==="light")delete document.documentElement.dataset.theme}catch(e){}</script>
+    <meta name="theme-color" content="#f6f3ec">
+    <script>(function(){var r=document.documentElement,s=null;try{s=localStorage.getItem("ct-theme")}catch(e){}var d=s==="dark"||(s!=="light"&&!!window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);if(d)r.dataset.theme="dark";var m=document.querySelector("meta[name=theme-color]");if(m)m.content=d?"#13150e":"#f6f3ec"})()</script>
     #{favicon}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -215,7 +215,7 @@ runner_paths = %w[runner-js.js runner-py.js harness.py judge.js].to_h do |f|
   write("practice/#{f}", text)
   [f, "/practice/#{f}?v=#{ver.(text)}"]
 end
-practice_assets = %w[practice.css problems.js sessions.js practice.js].to_h do |f|
+practice_assets = %w[practice.css problems.js ai-problems.js assistant.js sessions.js practice.js].to_h do |f|
   text = read("_practice/#{f}")
   if f == "practice.js"
     %w[runner-js.js runner-py.js harness.py].each do |r|
@@ -231,19 +231,19 @@ practice_assets["judge.js"] = runner_paths["judge.js"]
 FileUtils.cp(File.join(ROOT, "_practice/og.png"), File.join(ROOT, "practice/og.png"))
 write("practice/index.html", page.call(
   title: "Practice interviews — Crack Tech",
-  description: "Free 45-minute practice sessions for behavioral, system design and coding interviews, plus fifteen coding practice sets with runnable tests. Write or dictate your answers, draw your design, code in your language, then send it for review.",
+  description: "Free 45-minute interview practice: fifteen coding practice sets with runnable tests, six AI coding rounds, six system design rounds and three behavioral rounds. Code in your language, draw your design, write or dictate your answers, then send them for review.",
   path: "/practice/",
   image: "#{SITE}/practice/og.png",
   header: header_for.call("/practice/", "Practice"),
   styles: [practice_assets["practice.css"]],
-  scripts: [practice_assets["problems.js"], practice_assets["judge.js"], practice_assets["sessions.js"], practice_assets["practice.js"]],
+  scripts: [practice_assets["problems.js"], practice_assets["ai-problems.js"], practice_assets["judge.js"], practice_assets["assistant.js"], practice_assets["sessions.js"], practice_assets["practice.js"]],
   body: <<~HTML
     <div id="list">
       <div class="wrap">
         <div class="practice-head">
           <div class="kicker">Practice</div>
           <h1>Practise like it's <em>the real round.</em></h1>
-          <p class="lede">45-minute sessions built like real interview rounds: two behavioral, three system design and two coding, plus fifteen coding practice sets with tests you can run. Answer against the clock, then send your answers for review.</p>
+          <p class="lede">45-minute sessions built like real interview rounds: fifteen coding practice sets with tests you can run, six AI coding rounds with an assistant beside the editor, six system design rounds with a whiteboard, and three behavioral rounds. Answer against the clock, then send your answers for review.</p>
           <ol class="psteps">
             <li><b>Pick a session</b><span>Each one follows a real 45-minute agenda.</span></li>
             <li><b>Answer against the clock</b><span>Type or dictate. Code in your language. Draw your design.</span></li>

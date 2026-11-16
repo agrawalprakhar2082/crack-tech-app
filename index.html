@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +7,9 @@
 <meta name="description" content="Private 1:1 mentorship for coding (including code-with-AI interviews), system design (HLD, LLD and agentic AI systems) and behavioral interviews, from a software engineer with 10+ years of industry experience at one of the top-tier tech companies. Book a free 15-minute call.">
 <meta property="og:title" content="Crack Tech — 1:1 mentorship for tech interviews">
 <meta property="og:description" content="The tech interview is a skill. Train for it with private mentorship and realistic mock interviews, including code-with-AI and agentic AI system design rounds.">
-<meta name="theme-color" content="#13150e">
-<!-- dark by default; a visitor who switched to light keeps it -->
-<script>try{if(localStorage.getItem("ct-theme")==="light")delete document.documentElement.dataset.theme}catch(e){}</script>
+<meta name="theme-color" content="#f6f3ec">
+<!-- theme before first paint: the visitor's stored choice, else the device setting, light when unknown -->
+<script>(function(){var r=document.documentElement,s=null;try{s=localStorage.getItem("ct-theme")}catch(e){}var d=s==="dark"||(s!=="light"&&!!window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);if(d)r.dataset.theme="dark";var m=document.querySelector("meta[name=theme-color]");if(m)m.content=d?"#13150e":"#f6f3ec"})()</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f5d2a'/%3E%3Cpath d='M12 10l-5 6 5 6M20 10l5 6-5 6' stroke='%23f6f3ec' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -913,17 +913,36 @@
   const onScroll = () => hdr.classList.toggle('scrolled', scrollY > 8);
   addEventListener('scroll', onScroll, {passive:true}); onScroll();
 
-  // theme: light by default, remembers the visitor's choice
+  // theme: follows the device setting (light when unknown) until the visitor picks one
+  // (The script in <head> sets the starting theme before the page paints.)
   const root = document.documentElement, tBtn = $('#theme');
   const paint = () => {
     const dark = root.dataset.theme === 'dark';
     tBtn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
     $('meta[name=theme-color]').content = dark ? '#13150e' : '#f6f3ec';
   };
-  tBtn.addEventListener('click', () => {
-    if (root.dataset.theme === 'dark') delete root.dataset.theme; else root.dataset.theme = 'dark';
-    try { localStorage.setItem('ct-theme', root.dataset.theme || 'light'); } catch (e) {}
+  const setTheme = dark => {
+    if (dark) root.dataset.theme = 'dark'; else delete root.dataset.theme;
     paint();
+    root.dispatchEvent(new Event('ct-themechange')); // e.g. the booking calendar follows
+  };
+  const stored = () => { try { return localStorage.getItem('ct-theme'); } catch (e) { return null; } };
+  tBtn.addEventListener('click', () => {
+    const dark = root.dataset.theme !== 'dark';
+    try { localStorage.setItem('ct-theme', dark ? 'dark' : 'light'); } catch (e) {}
+    setTheme(dark);
+  });
+  // Without a stored choice, follow the device setting as it changes.
+  const mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  if (mq) {
+    const follow = e => { const s = stored(); if (s !== 'dark' && s !== 'light') setTheme(e.matches); };
+    if (mq.addEventListener) mq.addEventListener('change', follow); else if (mq.addListener) mq.addListener(follow);
+  }
+  // A choice made in another tab applies here too (and clearing it goes back to the device).
+  window.addEventListener('storage', e => {
+    if (e.key !== 'ct-theme' && e.key !== null) return;
+    const s = stored(), dark = s === 'dark' || (s !== 'light' && !!mq && mq.matches);
+    if (dark !== (root.dataset.theme === 'dark')) setTheme(dark);
   });
   paint();
 
@@ -995,7 +1014,7 @@
     const bio = new IntersectionObserver(es => { if (es[0].isIntersecting) { loadCal(); bio.disconnect(); } }, { rootMargin: '600px' });
     bio.observe($('#book'));
     // keep the calendar in step with the site theme
-    tBtn.addEventListener('click', () => { if (loaded) Cal.ns.ct("ui", { theme: calTheme() }); });
+    root.addEventListener('ct-themechange', () => { if (loaded) Cal.ns.ct("ui", { theme: calTheme() }); });
   }
 
   // pricing buttons open the matching booking option
