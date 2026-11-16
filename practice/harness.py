@@ -134,18 +134,38 @@ def _run_env(fn, args):
             "sleeps": [round(x, 9) for x in clock.sleeps]}
 
 
-_tests = []
+_code = ""
+
+
+def _fresh_ns():
+    return {"__name__": "solution", "TreeNode": TreeNode, "ServiceError": ServiceError}
+
+
+def _test_names(ns):
+    return [n for n, f in list(ns.items()) if n.startswith("test") and callable(f) and getattr(f, "__code__", None) is not None]
 
 
 def _run_tests(target, impl):
     # Tests-first round: run the candidate's test_* functions against one implementation.
+    # Each implementation starts from a fresh namespace (the candidate's code runs again), so
+    # state a test leaves behind for one implementation doesn't reach the next.
+    global _ns
+    _ns = _fresh_ns()
+    _setlimit(RECURSION_LIMIT)
+    exec(compile(_code, "solution.py", "exec"), _ns)
+    names = _test_names(_ns)
     exec(compile(impl, "implementation.py", "exec"), _ns)
     if not callable(_ns.get(target)):
         raise NameError("internal: implementation missing")
     out = []
-    for name in _tests:
+    for name in names:
         try:
-            _ns[name]()
+            r = _ns[name]()
+            if r is not None and (hasattr(r, "__await__") or (hasattr(r, "send") and hasattr(r, "throw"))):
+                if hasattr(r, "close"):
+                    r.close()
+                out.append([name, False, "tests must be synchronous: define it with def, not async def, and don't yield"])
+                continue
             out.append([name, True, ""])
         except AssertionError as e:
             line = None
@@ -273,14 +293,14 @@ def _run_ops(spec, args):
 
 def ct_load(code):
     global _ns
-    global _tests
-    _ns = {"__name__": "solution", "TreeNode": TreeNode, "ServiceError": ServiceError}
+    global _code
+    _ns = _fresh_ns()
+    _code = code
     _setlimit(RECURSION_LIMIT)
     buf, old = _Capture(), _sys.stdout
     _sys.stdout = buf
     try:
         exec(compile(code, "solution.py", "exec"), _ns)
-        _tests = [n for n, f in list(_ns.items()) if n.startswith("test") and callable(f) and getattr(f, "__code__", None) is not None]
         res = {"ok": True}
     except BaseException as e:  # noqa: BLE001 - report any error in the candidate's code
         res = {"ok": False, "err": _err(e)}

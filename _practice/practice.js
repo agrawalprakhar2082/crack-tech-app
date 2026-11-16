@@ -917,7 +917,7 @@
         <textarea id="ci-${p.id}" rows="3" placeholder="Ask for code, tests or an explanation. Ctrl+Enter sends."></textarea>
         <button class="btn btn-primary btn-sm" type="submit">Send</button>
       </form>
-      <p class="chat-note">A deliberately small model, so it can be wrong: that's part of the exercise. Check everything it gives you. Your prompts are logged and sent with your answers.</p>
+      <p class="chat-note">A deliberately small model, so it can be wrong: that's part of the exercise. Check everything it gives you. ${AI_ENDPOINT ? "To answer, your prompts and the code in your editor are sent to Cloudflare Workers AI. They're also logged and sent with your answers." : "Your prompts are logged and sent with your answers."}</p>
     </aside>`;
   }
   function chatHtml(text) {
@@ -930,17 +930,28 @@
     }
     return html;
   }
+  // New messages are appended (not the whole log redrawn), so screen readers announce only them.
   function paintChat(p) {
     const box = $("#cl-" + p.id); if (!box) return;
     const msgs = (state.log || []).filter(e => e.pid === p.id && (e.kind === "prompt" || e.kind === "reply"));
-    box.innerHTML = msgs.length ? msgs.map((m, i) => m.kind === "prompt"
-      ? `<div class="msg me"><div class="msg-who">You</div><p>${esc(m.text).replace(/\n/g, "<br>")}</p></div>`
-      : `<div class="msg ai" data-m="${i}"><div class="msg-who">Assistant <span>${m.src === "live" ? "live · small model" : "offline assistant"}</span></div>${chatHtml(m.text)}${m.note ? `<p class="msg-note">${esc(m.note)}</p>` : ""}</div>`).join("")
-      : `<p class="chat-empty">Try: “Write ${p.prob.fn ? fnName(p.prob, RUNNABLE[state.lang] ? state.lang : "python") : p.prob.cls} for the spec above”, “What edge cases should I test?” or “Explain your approach”.</p>`;
-    box.querySelectorAll(".msg.ai").forEach(div => {
-      const m = msgs[+div.dataset.m];
-      div.querySelectorAll(".insert").forEach(b => b.onclick = () => insertCode(p, m.text, +b.dataset.code));
-    });
+    const msgHtml = (m, i) => m.kind === "prompt"
+      ? `<div class="msg me" data-m="${i}"><div class="msg-who">You</div><p>${esc(m.text).replace(/\n/g, "<br>")}</p></div>`
+      : `<div class="msg ai" data-m="${i}"><div class="msg-who">Assistant <span>${m.src === "live" ? "live · small model" : "offline assistant"}</span></div>${chatHtml(m.text)}${m.note ? `<p class="msg-note">${esc(m.note)}</p>` : ""}</div>`;
+    const shown = box.querySelectorAll(".msg").length;
+    const sameStart = shown <= msgs.length && [...box.querySelectorAll(".msg")].every((d, i) => d.dataset.m === String(i) && d.dataset.at === String(msgs[i].at));
+    box.querySelectorAll(".chat-wait").forEach(el => el.remove());
+    if (!msgs.length) box.innerHTML = `<p class="chat-empty">Try: “Write ${p.prob.fn ? fnName(p.prob, RUNNABLE[state.lang] ? state.lang : "python") : p.prob.cls} for the spec above”, “What edge cases should I test?” or “Explain your approach”.</p>`;
+    else {
+      if (!sameStart || !shown) { box.innerHTML = ""; }
+      const from = sameStart && shown ? shown : 0;
+      box.querySelectorAll(".chat-empty").forEach(el => el.remove());
+      msgs.slice(from).forEach((m, k) => {
+        const i = from + k;
+        box.insertAdjacentHTML("beforeend", msgHtml(m, i));
+        const div = box.lastElementChild; div.dataset.at = String(m.at);
+        div.querySelectorAll(".insert").forEach(b => b.onclick = () => insertCode(p, m.text, +b.dataset.code));
+      });
+    }
     box.scrollTop = box.scrollHeight;
     const src = $("#cs-" + p.id);
     if (src) src.textContent = AI_ENDPOINT ? (aiDown ? "Offline assistant (live one unavailable)" : "Small model") : "Offline assistant";
@@ -956,24 +967,53 @@
     dirty = true; save();
   }
   let aiDown = false;
+  // Within the Worker's limits (AI_LIMITS in worker/practice-review/src/index.js), with room to spare.
+  const AI_LIM = { message: 4000, assistant: 3000, code: 8000, total: 20000, messages: 15 };
+  const clipTo = (t, n) => { t = String(t || ""); return t.length > n ? t.slice(0, n - 2) + " …" : t; };
+  function liveBody(p, prompt, trim) {
+    const msgs = [{ role: "user", content: clipTo(prompt, AI_LIM.message) }];
+    let total = msgs[0].content.length;
+    if (!trim) {
+      // Newest first, keeping strictly alternating turns (the prompt just logged is skipped).
+      const past = (state.log || []).filter(e => e.pid === p.id && (e.kind === "prompt" || e.kind === "reply"));
+      let want = "assistant";
+      for (let i = past.length - 1; i >= 0 && msgs.length < AI_LIM.messages; i--) {
+        const role = past[i].kind === "prompt" ? "user" : "assistant";
+        if (role !== want) continue;
+        const content = clipTo(past[i].text, role === "user" ? AI_LIM.message : AI_LIM.assistant);
+        if (total + content.length > AI_LIM.total) break;
+        msgs.unshift({ role, content }); total += content.length; want = role === "user" ? "assistant" : "user";
+      }
+      if (msgs[0].role === "assistant") msgs.shift();
+    }
+    return { round: cur.id, lang: RUNNABLE[state.lang] ? state.lang : "python", code: clipTo(codeOf(p), trim ? 4000 : AI_LIM.code), messages: msgs };
+  }
+  // Throws { rate } (busy: offline for this prompt), { down } (offline for the rest of the
+  // visit: no answer twice, or too slow) or a plain error (offline for this prompt only).
   async function askLive(p, prompt) {
-    const history = (state.log || []).filter(e => e.pid === p.id && (e.kind === "prompt" || e.kind === "reply")).slice(-12)
-      .map(e => ({ role: e.kind === "prompt" ? "user" : "assistant", content: clip(e.text, 4000) }));
-    const body = { round: cur.id, lang: RUNNABLE[state.lang] ? state.lang : "python", code: clip(codeOf(p), 8000), messages: history.concat([{ role: "user", content: clip(prompt, 4000) }]) };
-    const r = await timeout(fetch(AI_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(body) }), AI_TIMEOUT_MS);
-    if (r.status === 429) { const e = new Error("rate"); e.rate = true; throw e; }
-    if (!r.ok) throw new Error(String(r.status));
-    const d = await r.json();
-    if (!d || typeof d.reply !== "string" || !d.reply.trim()) throw new Error("empty");
-    return d.reply;
+    let trim = false;
+    const fail = (k, m) => { const e = new Error(m || k); e[k] = true; return e; };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      let r;
+      try { r = await timeout(fetch(AI_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(liveBody(p, prompt, trim)) }), AI_TIMEOUT_MS); }
+      catch (e) { if (attempt || (e && e.message === "timeout")) throw fail("down"); continue; }
+      if (r.status === 429) throw fail("rate");
+      if (r.status === 413 && !trim) { trim = true; continue; }
+      if (r.status >= 500) { if (attempt) throw fail("down"); continue; }
+      if (!r.ok) throw new Error(String(r.status));
+      const d = await r.json().catch(() => null);
+      if (!d || typeof d.reply !== "string" || !d.reply.trim()) throw new Error("empty");
+      return d.reply;
+    }
+    throw new Error("gave up");
   }
   const sendingChat = {};
   async function sendChat(p) {
     const ta = $("#ci-" + p.id), prompt = ta.value.trim();
     if (!prompt || sendingChat[p.id]) return;
     const session = cur;
-    const history = (state.log || []).filter(e => e.pid === p.id && e.kind === "prompt").map(e => e.text);
-    ta.value = ""; sendingChat[p.id] = true;
+    const history = (state.log || []).filter(e => e.pid === p.id && (e.kind === "prompt" || e.kind === "reply")).map(e => ({ role: e.kind === "prompt" ? "user" : "assistant", text: e.text }));
+    ta.value = ""; ta.focus(); sendingChat[p.id] = true;
     logEvent("prompt", prompt, { pid: p.id }); paintChat(p);
     const box = $("#cl-" + p.id); box.insertAdjacentHTML("beforeend", `<p class="chat-wait">Thinking…</p>`); box.scrollTop = box.scrollHeight;
     let reply, src = "offline", note = "";
@@ -981,7 +1021,8 @@
       try { reply = await askLive(p, prompt); src = "live"; }
       catch (e) {
         if (e && e.rate) note = "The live assistant is busy (too many requests), so the offline assistant answered.";
-        else { aiDown = true; note = "The live assistant didn't answer, so the offline assistant took over for this session."; }
+        else if (e && e.down) { aiDown = true; note = "The live assistant didn't answer, so the offline assistant took over for this session."; }
+        else note = "The live assistant couldn't answer this one, so the offline assistant did.";
       }
     }
     if (!reply) reply = window.PRACTICE_ASSISTANT ? window.PRACTICE_ASSISTANT.reply(session.id, prompt, history, state.lang) : "The assistant isn't available right now.";
@@ -989,6 +1030,7 @@
     if (cur !== session) return;
     logEvent("reply", reply, { pid: p.id, src, note });
     dirty = true; save(); paintChat(p);
+    const ta2 = $("#ci-" + p.id); if (ta2 && document.activeElement === document.body) ta2.focus();
   }
   function setupChat() {
     $$(".chat-form").forEach(form => {
@@ -1018,24 +1060,41 @@
     status("Checking…");
     let result;
     try {
-      const doc = await loadDoc(p.testsFor), impls = doc.mutants[lang];
+      const doc = await loadDoc(p.testsFor), impls = doc.mutants[lang], nBugs = impls.length - 1;
       dirty = true; save();
       const spec = { tests: prob.fn };
-      const out = lang === "python" ? await execPy(code, spec, impls.map(c => [c]), status) : await execJs(code, spec, impls.map(c => [c]));
-      if (out.failed) result = { failed: out.failed };
+      // The correct version runs first and last, with the buggy versions in a random order in
+      // between; each one starts from a clean state (see the runners). JavaScript gets a fresh
+      // worker per implementation; Python restarts after a timeout and carries on with the rest.
+      const order = [0, ...shuffled(Array.from({ length: nBugs }, (_, i) => i + 1)), 0], rows = [];
+      let failed = null;
+      for (let at = 0; at < order.length && !failed;) {
+        const chunk = lang === "python" ? order.slice(at) : [order[at]];
+        const out = lang === "python" ? await execPy(code, spec, chunk.map(k => [impls[k]]), status) : await execJs(code, spec, chunk.map(k => [impls[k]]));
+        if (out.failed) { failed = out.failed; break; }
+        let got = 0;
+        while (got < chunk.length && out[got]) { rows[at + got] = out[got]; got++; if (rows[at + got - 1].timeout) break; }
+        if (!got) { rows[at] = { timeout: true }; got = 1; }
+        at += got;
+        if (!rows[0] || rows[0].timeout || !rows[0].ok) break; // the correct version failed: report that
+      }
+      const base = { at: Date.now(), lang, code: hashCode(code) }, first = rows[0], last = rows[order.length - 1];
+      const sig = r => (r && r.ok && !r.timeout ? JSON.stringify(r.out.map(t => [t[0], t[1]])) : "");
+      if (failed) result = { failed };
+      else if (!first || first.timeout) result = { ...base, error: "Your tests took longer than 5 s." };
+      else if (!first.ok) result = { ...base, error: errText(first.err) };
+      else if (!first.out.length) result = { ...base, error: lang === "python" ? "No tests found: name each test function test_something." : "No tests found: name each test function testSomething." };
+      else if (sig(last) !== sig(first)) result = { ...base, error: "Your tests gave different results when the correct version ran a second time. Make each test independent: no state kept between tests or runs, no randomness or timing." };
       else {
-        const first = out[0];
-        if (!first || first.timeout) result = { at: Date.now(), lang, code: hashCode(code), error: "Your tests took longer than 5 s." };
-        else if (!first.ok) result = { at: Date.now(), lang, code: hashCode(code), error: errText(first.err) };
-        else if (!first.out.length) result = { at: Date.now(), lang, code: hashCode(code), error: lang === "python" ? "No tests found: name each test function test_something." : "No tests found: name each test function testSomething." };
-        else {
-          const broken = first.out.filter(t => !t[1]);
-          const bugs = out.slice(1).map((r, i) => {
-            const caughtBy = r && r.ok ? r.out.filter(t => !t[1]).map(t => t[0]) : [];
-            return { caught: !r || !r.ok || r.timeout || caughtBy.length > 0, by: caughtBy[0] || "" };
-          });
-          result = { at: Date.now(), lang, code: hashCode(code), tests: first.out.length, broken: broken.map(t => [t[0], clip(t[2], 300)]), bugs, caught: broken.length ? null : bugs.filter(b => b.caught).length };
-        }
+        const broken = first.out.filter(t => !t[1]);
+        const bugs = Array.from({ length: nBugs }, (_, i) => {
+          const r = rows[order.indexOf(i + 1)];
+          if (!r || r.timeout) return { caught: false, unchecked: "timed out" };
+          if (!r.ok) return { caught: false, unchecked: "couldn't run" };
+          const caughtBy = r.out.filter(t => !t[1]).map(t => t[0]);
+          return { caught: caughtBy.length > 0, by: caughtBy[0] || "" };
+        });
+        result = { ...base, tests: first.out.length, broken: broken.map(t => [t[0], clip(t[2], 300)]), bugs, caught: broken.length ? null : bugs.filter(b => b.caught).length };
       }
     } catch (e) { result = { failed: "Couldn't load the checks. Check your connection and try again." }; }
     running[p.id] = false;
@@ -1046,10 +1105,16 @@
     logEvent("tests", checkSummary(p, result), { pid: p.id });
     dirty = true; save(); paintCheck(p);
   }
+  function shuffled(a) {
+    const r = new Uint32Array(a.length); crypto.getRandomValues(r);
+    for (let i = a.length - 1; i > 0; i--) { const j = r[i] % (i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  const uncheckedText = r => { const n = r.bugs.filter(b => b.unchecked).length; return n ? ` · ${n} not checked (${[...new Set(r.bugs.filter(b => b.unchecked).map(b => b.unchecked))].join(", ")})` : ""; };
   function checkSummary(p, r) {
     if (r.error) return `Checked tests (${LANGS[r.lang].label}): ${r.error}`;
-    if (r.broken.length) return `Checked tests (${LANGS[r.lang].label}): ${plural(r.broken.length, "test")} fail on a correct implementation`;
-    return `Checked tests (${LANGS[r.lang].label}): ${plural(r.tests, "test")} pass on a correct implementation; caught ${r.caught}/${r.bugs.length} buggy versions`;
+    if (r.broken.length) return `Checked tests (${LANGS[r.lang].label}): ${plural(r.broken.length, "test")} ${r.broken.length === 1 ? "fails" : "fail"} on a correct implementation`;
+    return `Checked tests (${LANGS[r.lang].label}): ${plural(r.tests, "test")} pass on a correct implementation; caught ${r.caught}/${r.bugs.length} buggy versions${uncheckedText(r)}`;
   }
   function paintCheck(p) {
     const lang = state.lang, ok = RUNNABLE[lang];
@@ -1065,15 +1130,15 @@
     const when = `<span class="r-when">${esc(LANGS[r.lang].label)} · ${new Date(r.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}${edited ? " · tests edited since" : ""}</span>`;
     if (r.error) { box.innerHTML = `<p class="r-sum fail"><span class="r-icon" aria-hidden="true">✗</span><b>${esc(r.error)}</b>${when}</p>`; return; }
     if (r.broken.length) {
-      box.innerHTML = `<p class="r-sum fail"><span class="r-icon" aria-hidden="true">✗</span><b>${plural(r.broken.length, "test")} fail on a correct implementation</b>${when}</p>
+      box.innerHTML = `<p class="r-sum fail"><span class="r-icon" aria-hidden="true">✗</span><b>${plural(r.broken.length, "test")} ${r.broken.length === 1 ? "fails" : "fail"} on a correct implementation</b>${when}</p>
         <p class="r-hidden">Fix these tests first: a test that fails on correct code would also flag every implementation.</p>
         ${r.broken.map(([n, m]) => `<p class="mut"><b>${esc(n)}</b>: ${esc(m)}</p>`).join("")}`;
       return;
     }
     const all = r.caught === r.bugs.length;
-    box.innerHTML = `<p class="r-sum ${all ? "pass" : "fail"}"><span class="r-icon" aria-hidden="true">${all ? "✓" : "◐"}</span><b>Your tests caught ${r.caught}/${r.bugs.length} buggy versions</b>${when}</p>
-      <p class="r-hidden">All ${plural(r.tests, "test")} pass on a correct implementation. ${all ? "Every buggy version failed at least one of them." : "The ones that slipped through hint at a rule your tests don't pin down yet."}</p>
-      ${r.bugs.map((b, i) => `<p class="mut ${b.caught ? "pass" : "fail"}"><span class="r-icon" aria-hidden="true">${b.caught ? "✓" : "✗"}</span>Bug ${i + 1} ${b.caught ? `caught${b.by ? ` by <code>${esc(b.by)}</code>` : ""}` : `slipped through: a version that ${esc(hints[i])}`}</p>`).join("")}`;
+    box.innerHTML = `<p class="r-sum ${all ? "pass" : "fail"}"><span class="r-icon" aria-hidden="true">${all ? "✓" : "◐"}</span><b>Your tests caught ${r.caught}/${r.bugs.length} buggy versions${uncheckedText(r)}</b>${when}</p>
+      <p class="r-hidden">${r.tests === 1 ? "Your test passes" : `All ${r.tests} tests pass`} on a correct implementation. ${all ? "Every buggy version failed at least one of them." : "The ones that slipped through hint at a rule your tests don't pin down yet."}</p>
+      ${r.bugs.map((b, i) => `<p class="mut ${b.caught ? "pass" : "fail"}"><span class="r-icon" aria-hidden="true">${b.caught ? "✓" : "✗"}</span>Bug ${i + 1} ${b.caught ? `caught${b.by ? ` by <code>${esc(b.by)}</code>` : ""}` : b.unchecked ? `not checked: your tests ${b.unchecked === "timed out" ? "took longer than 5 s" : "couldn't run"} on a version that ${esc(hints[i])}` : `slipped through: a version that ${esc(hints[i])}`}</p>`).join("")}`;
   }
 
   // Self-scorecard (1–4 on four criteria) and a short note, sent with the answers.

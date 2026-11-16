@@ -5,16 +5,21 @@
 // the round's intended flaw; it corrects a flaw only when the candidate names it (the
 // "fixes" keywords below), so being specific pays off.
 // reply(roundId, prompt, history, lang) -> text, with code in ```python / ```javascript blocks.
+// history: the earlier messages, oldest first, as { role: "user" | "assistant", text }. A fix
+// counts only when it's named after the assistant has given code in this chat.
 // verify.js checks that each round's first code answer fails the hidden tests and the fully
 // corrected one passes.
 (function (root) {
   const fence = (lang, code) => "```" + lang + "\n" + code.replace(/\n+$/, "") + "\n```";
   const has = (text, words) => words.some(w => text.includes(w));
+  // Fix keywords match whole words or phrases only, so "tie" doesn't match "properties".
+  const esc = w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const hasWord = (text, words) => words.some(w => new RegExp("(?<![a-z0-9_])" + esc(w) + "(?![a-z0-9_])").test(text));
 
   /* ---------------- code variants per round ---------------- */
   const CODE = {
     "ai-round-1": {
-      fixes: { tie: ["tie", "tied", "same score", "equal score", "skip", "competition", "1, 2, 2, 4", "1,2,2,4", "dense"] },
+      fixes: { tie: ["tie", "ties", "tied", "same score", "equal scores", "skip", "skips", "competition", "1, 2, 2, 4", "1,2,2,4", "dense"] },
       code(lang, f) {
         if (lang === "python") return f.tie
           ? "def rank_scores(scores):\n    # rank = 1 + number of strictly higher scores: the first position of each\n    # score in a descending sort, so ties share a rank and the next rank skips.\n    first = {}\n    for i, s in enumerate(sorted(scores, reverse=True)):\n        first.setdefault(s, i + 1)\n    return [first[s] for s in scores]\n"
@@ -32,7 +37,7 @@
       complexity: "Sorting is O(n log n); building the map and the lookups are O(n). Extra space is O(n)."
     },
     "ai-round-2": {
-      fixes: { commit: ["commit", "release", "expired reservation", "still commit", "still succeed", "everywhere", "all methods", "sweep", "purge"] },
+      fixes: { commit: ["expired reservation", "expired reservations", "still commit", "still succeed", "every method", "all methods", "everywhere", "sweep", "purge"] },
       code(lang, f) {
         if (lang === "python") return "class Inventory:\n    def __init__(self, clock=None, ttl=None):\n        self.stock = {}\n        self.reservations = {}   # id -> (sku, qty, expires_at or None)\n        self.next_id = 1\n        self.clock, self.ttl = clock, ttl\n\n    def _expires_at(self):\n        if self.clock is None or self.ttl is None:\n            return None\n        return self.clock() + self.ttl\n\n    def _active(self, rid):\n        exp = self.reservations[rid][2]\n        return exp is None or self.clock() < exp\n" +
           (f.commit ? "\n    def _sweep(self):\n        for rid in [r for r in self.reservations if not self._active(r)]:\n            del self.reservations[rid]\n" : "") +
@@ -58,7 +63,7 @@
       complexity: "Each call sweeps the reservations: O(r). A min-heap of expiry times would make the sweep O(log r) per expired reservation."
     },
     "ai-round-3": {
-      fixes: { ws: ["tab", "whitespace", "white space", "double space", "two spaces", "multiple spaces", "extra space", "split"], median: ["median", "even", "middle", "lower"] },
+      fixes: { ws: ["whitespace", "white space", "double space", "double spaces", "two spaces", "multiple spaces", "repeated spaces", "extra spaces", "single space"], median: ["lower median", "upper middle", "even count", "even number", "even length", "wrong median", "median is wrong"] },
       code(lang, f) {
         let c = root.PRACTICE_PROBLEMS && root.PRACTICE_PROBLEMS["ai-log-summary"] ? root.PRACTICE_PROBLEMS["ai-log-summary"].starters[lang] : "";
         if (lang === "python") {
@@ -81,7 +86,7 @@
       complexity: "One pass over the lines plus a sort of the latencies: O(n log n)."
     },
     "ai-round-4": {
-      fixes: { rejected: ["reject", "denied", "blocked", "only allowed", "count allowed", "should not count", "shouldn't count", "don't count", "doesn't count"] },
+      fixes: { rejected: ["rejected requests", "rejected request", "rejections", "only allowed", "count allowed", "should not count", "shouldn't count", "don't count", "doesn't count"] },
       code(lang, f) {
         if (lang === "python") return "from collections import deque\n\n\ndef allow_requests(times, limit, window):\n    recent, out = deque(), []\n    for t in times:\n        while recent and recent[0] <= t - window:\n            recent.popleft()\n" +
           (f.rejected ? "        if len(recent) < limit:\n            recent.append(t)   # only allowed requests count\n            out.append(True)\n        else:\n            out.append(False)\n" : "        out.append(len(recent) < limit)\n        recent.append(t)\n") + "    return out\n";
@@ -97,7 +102,7 @@
       complexity: "Each time enters and leaves the queue at most once: O(n) time, O(limit + rejected) space in my version."
     },
     "ai-round-5": {
-      fixes: { gap: ["gap", "boundary", "exactly", "equal", ">=", "> gap", "off by one", "off-by-one"] },
+      fixes: { gap: ["boundary", "exactly", "off by one", "off-by-one", ">=", "equal to"] },
       code(lang, f) {
         if (lang === "python") return "from collections import defaultdict\n\n\ndef count_sessions(events, gap):\n    by_user = defaultdict(list)\n    for user, t in events:\n        by_user[user].append(t)\n    result = []\n    for user in sorted(by_user):\n        times = sorted(by_user[user])\n        sessions = 1 + sum(1 for a, b in zip(times, times[1:]) if b - a " + (f.gap ? ">" : ">=") + " gap)\n        result.append([user, sessions])\n    return result\n";
         return "function countSessions(events, gap) {\n    const byUser = new Map();\n    for (const [user, t] of events) {\n        if (!byUser.has(user)) byUser.set(user, []);\n        byUser.get(user).push(t);\n    }\n    return [...byUser.keys()].sort((a, b) => a - b).map(user => {\n        const times = byUser.get(user).sort((a, b) => a - b);\n        let sessions = 1;\n        for (let i = 1; i < times.length; i++) if (times[i] - times[i - 1] " + (f.gap ? ">" : ">=") + " gap) sessions++;\n        return [user, sessions];\n    });\n}\n";
@@ -111,7 +116,7 @@
       complexity: "Grouping is O(n), sorting all users' times is O(n log n) in total, counting is O(n)."
     },
     "ai-round-6": {
-      fixes: { retryable: ["retryable", "non-retryable", "not retryable", "bad_request", "bad request", "forbidden", "permanent", "4xx", "don't retry", "shouldn't retry", "should not retry"], deadline: ["timeout", "deadline", "overall", "budget", "time limit"] },
+      fixes: { retryable: ["non-retryable", "not retryable", "permanent", "4xx", "don't retry", "shouldn't retry", "should not retry", "never retry"], deadline: ["deadline", "overall", "budget", "time limit", "past the timeout"] },
       code(lang, f) {
         if (lang === "python") return "def call_with_retry(service, clock, rand, policy):\n" + (f.deadline ? "    start = clock.now()\n" : "") +
           "    for attempt in range(1, policy[\"attempts\"] + 1):\n        try:\n            return service.call()\n        except ServiceError as e:\n" +
@@ -144,12 +149,21 @@
     if (!R) return HELP;
     const text = String(prompt || "").toLowerCase().trim();
     if (!text) return HELP;
-    // Fixes the candidate has named so far (this prompt or earlier ones).
-    const all = (history || []).concat([prompt]).map(x => String(x).toLowerCase());
+    // Fixes the candidate has named since the assistant first gave code (this prompt or earlier ones).
+    let codeSeen = false;
+    const after = [];
+    for (const m of history || []) {
+      if (!m || typeof m !== "object") continue;
+      if (m.role === "assistant") { if (/```/.test(String(m.text))) codeSeen = true; }
+      else if (codeSeen) after.push(String(m.text).toLowerCase());
+    }
     const f = {}, named = [];
-    for (const [k, words] of Object.entries(R.fixes)) {
-      if (all.some(t => has(t, words))) f[k] = true;
-      if (has(text, words)) named.push(k);
+    if (codeSeen) {
+      after.push(text);
+      for (const [k, words] of Object.entries(R.fixes)) {
+        if (after.some(t => hasWord(t, words))) f[k] = true;
+        if (hasWord(text, words)) named.push(k);
+      }
     }
     const codeReply = intro => note + intro + "\n\n" + fence(L, R.code(L, f));
     if (named.length) return codeReply(R.intro(f, named));

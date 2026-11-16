@@ -122,6 +122,18 @@ const runJs = (code, job, cases) => {
       const ok = correctOk && caught === impls.length - 1;
       if (!ok) failures++;
       console.log(`  ${ok ? "OK  " : "FAIL"} ${j.id} ${lang} thorough tests: pass the correct version ${correctOk}, catch ${caught}/${impls.length - 1} buggy versions`);
+      // Gaming checks: a test that keeps state between implementations must see a clean state
+      // each time (so it can't "catch" every buggy version), and async tests fail.
+      const gaming = lang === "python"
+        ? "import builtins\nseen = []\ndef test_stateful():\n    seen.append(1)\n    assert len(seen) == 1\nasync def test_async():\n    assert False\n"
+        : "var seen = [];\nfunction testStateful() { seen.push(1); assert(seen.length === 1); globalThis.__n = (globalThis.__n || 0) + 1; assert(globalThis.__n === 1); }\nasync function testAsync() { assert(false); }\nfunction testGenerator() { return (function* () { assert(false); })(); }\n";
+      let gr;
+      if (lang === "python") gr = runPy([{ id: j.id, spec, code: gaming, cases: impls.map(c => [c]) }])[0].results;
+      else { gr = []; runner.run({ code: gaming, spec, cases: impls.map(c => [c]), stdout: false, nonce: "v" }, msg => { if (msg.type === "case") gr[msg.i] = msg; }); }
+      const stateOk = gr.every(r => r.ok && r.out.find(t => /tateful/.test(t[0]))[1]);
+      const asyncOk = gr.every(r => r.ok && r.out.filter(t => /sync|enerator/.test(t[0])).every(t => !t[1] && /synchronous/.test(t[2])));
+      if (!stateOk || !asyncOk) failures++;
+      console.log(`  ${stateOk && asyncOk ? "OK  " : "FAIL"} ${j.id} ${lang} tests run from a clean state for each implementation (${stateOk}), async tests fail (${asyncOk})`);
       // The assistant's own (weak) tests, for comparison.
       const weak = assistant.reply("ai-round-4", "write some tests", [], lang).match(/```\w+\n([\s\S]*?)```/)[1];
       let wr;
@@ -136,9 +148,17 @@ const runJs = (code, job, cases) => {
     const pid = s.blocks.flatMap(b => b.prompts).find(p => p.chat).problem, j = jobs.find(x => x.id === pid);
     for (const lang of ["python", "javascript"]) {
       const code = text => { const m = text.match(/```\w+\n([\s\S]*?)```/); return m ? m[1] : null; };
-      const first = code(assistant.reply(s.id, "Please write the code for this", [], lang));
+      const ask = "Please write the code for this", firstReply = assistant.reply(s.id, ask, [], lang), first = code(firstReply);
       const words = Object.values(assistant.fixWords(s.id)).map(w => w[0]);
-      const fixed = code(assistant.reply(s.id, "Please fix the " + words.join(" and the "), ["Please write the code for this"], lang));
+      const fixed = code(assistant.reply(s.id, "Please fix the " + words.join(" and the "), [{ role: "user", text: ask }, { role: "assistant", text: firstReply }], lang));
+      // A first prompt that repeats the spec (parameter names, method names, words like "even"
+      // or "properties") must still get the flawed first answer, with no "You're right".
+      const statement = [].concat(j.p.statement || []).join(" ").replace(/<[^>]+>/g, "");
+      for (const opener of ["Write the code for this spec: " + statement, "Implement it. Watch the gap, timeout, commit, release, split, tab, even, lower, event properties and retryable flag.", "Please fix the " + words.join(" and the ")]) {
+        const r = assistant.reply(s.id, opener, [], lang), c = code(r);
+        const flawed = !c || c.trim() === first.trim() || /Some tests to start with/.test(r), polite = !/^(\(.*\)\s*)?(you're right|good catch|right,|agreed|good point)/i.test(r.trim());
+        if (!flawed || !polite) { failures++; console.log(`  FAIL ${s.id} ${lang}: first prompt "${opener.slice(0, 50)}…" got a corrected answer or an apology`); }
+      }
       const res1 = lang === "python" ? pyRun(j, first, j.cases) : runJs(first, j, j.cases);
       const res2 = lang === "python" ? pyRun(j, fixed, j.cases) : runJs(fixed, j, j.cases);
       const a = await failsSome(lang, j, res1), b = await passesAll(lang, j, res2);

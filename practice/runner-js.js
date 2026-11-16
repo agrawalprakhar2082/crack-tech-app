@@ -127,7 +127,12 @@
     // eslint-disable-next-line no-new-func
     const fns = new Function("console", "assert", "assertEqual", code + "\n;" + impl + "\n;return {" + names.map(n => `${stringify(n)}: typeof ${n} === "function" ? ${n} : undefined`).join(",") + "};")(con, assert, assertEqual);
     return names.filter(n => fns[n]).map(n => {
-      try { fns[n](); return [n, true, ""]; }
+      try {
+        const r = fns[n]();
+        const isAsync = r && (typeof r.then === "function" || (typeof r.next === "function" && typeof r[Symbol.iterator] === "function"));
+        if (isAsync) { if (typeof r.then === "function") r.then(null, () => {}); return [n, false, "tests must be synchronous: no async functions, promises or generators"]; }
+        return [n, true, ""];
+      }
       catch (e) { const info = errInfo(e); return [n, false, (info.type === "AssertionError" ? info.msg : info.type + ": " + info.msg) + (info.line ? ` (line ${info.line})` : "")]; }
     });
   }
@@ -189,9 +194,13 @@
     let entry, loadErr = null;
     if (msg.spec.tests) {
       // Tests-first: each case is one implementation to test the candidate's tests against.
+      // The candidate's code is evaluated again for each one, and globals it adds are removed
+      // afterwards, so state left by one implementation's run doesn't reach the next.
+      const before = new Set(Reflect.ownKeys(globalThis));
       msg.cases.forEach((args, i) => {
         const res = { type: "case", i, nonce: msg.nonce };
         try { res.out = runTests(msg.code, args[0], con); res.ok = true; } catch (e) { res.ok = false; res.err = errInfo(e); }
+        for (const k of Reflect.ownKeys(globalThis)) if (!before.has(k)) { try { delete globalThis[k]; } catch (e) { /* not configurable */ } }
         res.stdout = msg.stdout ? buf.slice(0, MAX_STDOUT) : ""; buf = "";
         post(res);
       });

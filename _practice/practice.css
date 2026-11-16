@@ -194,7 +194,7 @@ details.case[open] summary::after{content:"−"}
 .chat-log:focus-visible{outline:2px solid var(--olive);outline-offset:-2px}
 .chat-empty{margin:0;color:var(--muted);font-size:14.5px;line-height:1.55}
 .chat-wait{margin:0;color:var(--muted);font:13px var(--mono)}
-.msg{min-width:0;font-size:14.5px;line-height:1.55}
+.msg{min-width:0;font-size:14.5px;line-height:1.55;overflow-wrap:anywhere}
 .msg p{margin:0 0 6px}
 .msg-who{font:500 11px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
 .msg-who span{text-transform:none;letter-spacing:0;margin-left:6px}
