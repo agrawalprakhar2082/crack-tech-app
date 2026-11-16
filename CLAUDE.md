@@ -66,6 +66,11 @@ Attach this file (and the latest `index.html` if needed) to the new session and 
 - GitHub Pages builds the site with Jekyll. Folders starting with `_` (`_blog`, `_practice`) are never published, and the root `_config.yml` excludes `CLAUDE.md`, `worker/` and package folders, so these notes and the Worker code aren't served at cracktech.app. Don't add a `.nojekyll` file: it would publish everything, including `_practice/` with the reference solutions. A local Jekyll build (November 2026) confirmed the output is exactly `CNAME`, `index.html`, `blog/`, `brand/` and `practice/`.
 - `.gitignore` keeps Python caches (`__pycache__/`) out of the repository.
 
+## Skills and content toolkit (November 2026)
+
+- Repeatable work has project skills in `.claude/skills/` (dot-folder, so never published): `short-video` (YouTube Short + Instagram Reel from one spec), `medium-post` (article in the owner's voice + cover + LinkedIn post), `blog-to-site` (add a Medium article to `/blog/`), `carousel` (LinkedIn PDF / Instagram slides), `monthly-offer` (change `PROMO`), `pr-with-screenshots` (branch, verify, PR with screenshots, merge on the owner's OK).
+- Tools they use live in `_content/` (underscore, so not published): `_content/video/` (`make_short.py` builds the YouTube and Instagram folders from a spec, `synth.py` makes the Kokoro `am_michael` voice-over, `render.js` + `render.sh` render, encode and make a preview sheet and cover; `examples/ai-terms-part-5.json` is a full spec), `_content/covers/` (1400×788 cover template + `shot.js`), `_content/carousel/` (1080×1350 slide template + `shot.js`, writes PNGs and a PDF). The Kokoro model files (~340 MB) aren't in git: download them into `_content/video/model/` (URLs at the top of `synth.py`). Rendered videos never go in git.
+
 ## Analytics
 
 - Cloudflare Web Analytics (October 2026): the beacon snippet sits just before `</body>` in `index.html` (token `3edb0d5b74ba49fbbd020cb86b027147`, which is public by design). The site is DNS-only on Cloudflare, so automatic injection doesn't apply; the snippet must stay in the page. Cookieless, so no cookie banner. It counts visits, referrers, countries, devices and speed, not clicks; Plausible is the option if click tracking is needed.

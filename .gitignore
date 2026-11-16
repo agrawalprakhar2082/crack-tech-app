@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 node_modules/
+
+# Content toolkit: TTS model files and render output
+_content/video/model/
+_content/**/out/

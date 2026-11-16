@@ -1,0 +1,149 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#000}
+#v{width:1080px;height:1920px;position:relative;overflow:hidden;background:#13150e;color:#f6f3ec;font-family:Geist,sans-serif}
+#v::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(179,192,122,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(179,192,122,.06) 1px,transparent 1px);background-size:36px 36px}
+.glow{position:absolute;right:-300px;top:-300px;width:1000px;height:1000px;border-radius:50%;background:radial-gradient(circle,rgba(79,93,42,.55),transparent 65%)}
+.top{position:absolute;left:80px;right:80px;top:150px;display:flex;justify-content:space-between;align-items:center;font-family:"Geist Mono",monospace;font-size:26px;letter-spacing:.14em;color:#b3c07a;text-transform:uppercase}
+.brand{display:flex;align-items:center;gap:14px;font-family:"Instrument Serif",serif;font-size:38px;letter-spacing:0;text-transform:none;color:#f6f3ec}
+.mark{width:52px;height:52px;border-radius:14px;background:#4f5d2a;display:grid;place-items:center}
+.prog{position:absolute;left:80px;right:80px;top:225px;display:flex;gap:10px}
+.prog i{flex:1;height:8px;border-radius:4px;background:rgba(246,243,236,.14)}
+.prog i.on{background:#b3c07a}
+.scene{position:absolute;left:80px;right:80px;top:300px;bottom:620px;display:none}
+.scene.show{display:block}
+.k{font-family:"Geist Mono",monospace;font-size:28px;letter-spacing:.14em;color:#b3c07a;text-transform:uppercase}
+.badge{display:inline-block;margin-left:14px;padding:6px 16px;border-radius:999px;background:#d6dfa8;color:#13150e;letter-spacing:.08em}
+.hook{font-weight:700;font-size:98px;line-height:1.04;letter-spacing:-.02em;margin-top:24px}
+.hook em{font-style:normal;color:#13150e;background:#d6dfa8;padding:0 14px;border-radius:12px;box-decoration-break:clone;-webkit-box-decoration-break:clone;line-height:1.18}
+.map{display:flex;flex-direction:column;gap:16px;margin-top:44px}
+.m{display:flex;align-items:center;gap:20px;font-size:44px;font-weight:600;border:1px solid rgba(179,192,122,.5);background:rgba(79,93,42,.3);border-radius:22px;padding:22px 26px}
+.m b{flex:none;display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:#b3c07a;color:#13150e;font-size:40px}
+.m span{color:#b3c07a;font-weight:500;font-size:38px;margin-left:auto;font-family:"Geist Mono",monospace}
+.num{font-family:"Instrument Serif",serif;font-size:200px;line-height:.9;color:#b3c07a}
+.ttl{font-weight:700;font-size:100px;line-height:1;letter-spacing:-.02em;margin-top:6px}
+.code{margin-top:44px;font-family:"Geist Mono",monospace;font-size:46px;padding:30px 34px;border-radius:24px;background:#0d0f09;border:1px solid rgba(246,243,236,.18)}
+.code i{font-style:normal;color:#b3c07a}.code s{text-decoration:none;color:rgba(246,243,236,.5)}
+.calls{margin-top:30px;display:flex;flex-direction:column;gap:12px}
+.call{display:flex;align-items:center;gap:14px;font-family:"Geist Mono",monospace;font-size:40px}
+.call>span{width:190px;color:rgba(246,243,236,.6)}
+.msg{display:inline-block;padding:10px 16px;border-radius:12px;background:rgba(179,192,122,.25);color:#d6dfa8;margin-right:8px}
+.msg.new{background:#d6dfa8;color:#13150e}
+.note{margin-top:22px;font-size:40px;font-weight:600;color:#e8a598}
+.toks{margin-top:44px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.word{font-size:52px;font-weight:700;margin-right:20px}
+.tok{font-family:"Geist Mono",monospace;font-size:44px;padding:12px 16px;border-radius:14px;background:rgba(79,93,42,.45);border:2px solid #b3c07a;color:#d6dfa8}
+.tok:nth-child(3){background:rgba(240,217,168,.18);border-color:#f0d9a8;color:#f0d9a8}
+.tok:nth-child(4){background:rgba(214,223,168,.22);border-color:#d6dfa8}
+.sub4{margin-top:16px;font-family:"Geist Mono",monospace;font-size:32px;color:rgba(246,243,236,.65)}
+.bars{margin-top:30px;display:flex;flex-direction:column;gap:12px}
+.bar{display:flex;align-items:center;gap:16px;font-family:"Geist Mono",monospace;font-size:30px;color:rgba(246,243,236,.65)}
+.bar i{display:block;height:46px;border-radius:10px;background:linear-gradient(90deg,#b3c07a,#f0d9a8)}
+.bar b{font-weight:500;color:#f0d9a8}
+.buf{margin-top:44px;display:flex;height:120px;border-radius:18px;overflow:hidden;border:3px solid #b3c07a;font-family:"Geist Mono",monospace;font-size:26px;font-weight:500}
+.buf span{display:grid;place-items:center;color:#13150e}
+.brk{display:flex;justify-content:space-between;font-family:"Geist Mono",monospace;font-size:28px;color:#b3c07a;margin-top:12px}
+.over{margin-top:34px;display:flex;align-items:center;gap:18px;font-size:42px;font-weight:600}
+.over .x{flex:none;padding:12px 20px;border-radius:14px;background:rgba(232,165,152,.18);color:#e8a598;font-family:"Geist Mono",monospace;font-size:34px}
+.over .ok{flex:none;padding:12px 20px;border-radius:14px;background:#d6dfa8;color:#13150e;font-family:"Geist Mono",monospace;font-size:34px}
+.bubble{display:inline-block;font-size:68px;font-weight:700;line-height:1.1;padding:30px 36px;border-radius:36px 36px 36px 8px;background:#f6f3ec;color:#13150e}
+.next{margin-top:44px;border:2px dashed rgba(179,192,122,.7);border-radius:26px;padding:28px 30px;background:rgba(79,93,42,.2)}
+.next .k{margin-bottom:16px}
+.chips span{display:inline-block;font-family:"Geist Mono",monospace;font-size:44px;border:1px solid #b3c07a;color:#d6dfa8;border-radius:999px;padding:12px 26px;margin:0 12px 12px 0}
+.sub{display:inline-flex;align-items:center;gap:16px;margin-top:34px;font-size:60px;font-weight:700;padding:26px 40px;border-radius:999px;background:#e5322d;color:#fff;box-shadow:0 10px 30px rgba(229,50,45,.35);white-space:nowrap}
+.flow{margin-top:30px;display:flex;flex-direction:column;gap:14px}
+.fl{display:flex;align-items:center;gap:18px;font-size:40px;font-weight:600;padding:18px 22px;border-radius:18px;border:1px solid rgba(246,243,236,.18);background:rgba(28,31,21,.92)}
+.fl b{flex:none;font-family:"Geist Mono",monospace;font-weight:500;font-size:30px;padding:8px 14px;border-radius:10px;background:rgba(179,192,122,.25);color:#d6dfa8}
+.fl.you{border-color:#b3c07a;background:rgba(79,93,42,.35)}
+.code.sm{font-size:36px;line-height:1.5;white-space:pre}
+.hl2{color:#13150e;background:#f0d9a8;border-radius:8px;padding:0 6px}
+.cycle{margin-top:28px;display:flex;align-items:center;gap:14px;font-size:42px;font-weight:600}
+.cycle span{padding:16px 24px;border-radius:16px;background:rgba(79,93,42,.4);border:1px solid #b3c07a}
+.cycle i{font-style:normal;color:#b3c07a}
+.ring{margin-top:40px;position:relative;height:420px}
+.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:260px;height:130px;display:grid;place-items:center;border-radius:24px;background:#d6dfa8;color:#13150e;font-size:52px;font-weight:700}
+.rc{position:absolute;font-family:"Geist Mono",monospace;font-size:36px;padding:12px 22px;border-radius:999px;border:1px solid #b3c07a;color:#d6dfa8;background:rgba(79,93,42,.35)}
+.ab{margin-top:20px;display:flex;flex-direction:column;gap:14px}
+.ab div{font-size:40px;font-weight:600;padding:18px 24px;border-radius:18px}
+.ab .y{background:rgba(179,192,122,.22);border:1px solid #b3c07a}.ab .n{background:rgba(232,165,152,.14);border:1px solid #e8a598;color:#f3c9bf}
+.p1{margin-top:34px;display:flex;align-items:center;gap:20px;font-size:40px;font-weight:600;padding:22px 26px;border-radius:22px;background:#f6f3ec;color:#13150e}
+.p1 small{display:block;font-family:"Geist Mono",monospace;font-weight:500;font-size:28px;color:#4f5d2a;margin-top:6px}
+.row2{display:flex;gap:20px;align-items:center;margin-top:30px}
+.row2 .next{margin-top:0;flex:1;padding:20px 24px}.row2 .sub{margin-top:0}
+.chips.s span{font-size:34px;padding:10px 18px;margin:0 8px 8px 0}
+.ctx{display:inline-block;font-family:"Geist Mono",monospace;font-size:28px;padding:6px 12px;border-radius:8px;margin-left:auto}
+.ctx.big{background:rgba(232,165,152,.18);color:#e8a598}.ctx.small{background:rgba(179,192,122,.25);color:#d6dfa8}
+.files{font-size:40px;letter-spacing:-6px}
+.skills{margin-top:30px;padding:24px;border-radius:22px;border:2px solid #b3c07a;background:rgba(28,31,21,.92)}
+.skills .k{margin-bottom:14px}
+.sk{display:inline-block;font-family:"Geist Mono",monospace;font-size:34px;padding:10px 18px;border-radius:12px;margin:0 10px 10px 0;background:rgba(246,243,236,.08);color:rgba(246,243,236,.7)}
+.sk.open{background:#d6dfa8;color:#13150e;font-weight:500}
+.pkg{margin-top:70px;padding:28px 28px 18px;border-radius:26px;border:3px solid #b3c07a;background:rgba(79,93,42,.28);position:relative}
+.pkg .lbl{position:absolute;top:-28px;left:26px;font-family:"Geist Mono",monospace;font-size:30px;padding:6px 16px;border-radius:10px;background:#b3c07a;color:#13150e}
+.pkg .chips span{font-size:40px}
+.cmd{margin-top:30px;font-family:"Geist Mono",monospace;font-size:40px;padding:24px 28px;border-radius:20px;background:#0d0f09;border:1px solid rgba(246,243,236,.18)}
+.cmd i{font-style:normal;color:#b3c07a}
+.team{margin-top:20px;font-size:44px;font-weight:600}
+.site{display:flex;width:fit-content;align-items:center;gap:18px;margin:30px 0 0 0;font-family:"Geist Mono",monospace;font-size:48px;padding:22px 32px;border-radius:999px;background:#4f5d2a;color:#f6f3ec;white-space:nowrap}
+.site small{font-family:Geist,sans-serif;font-size:30px;color:#d6dfa8}
+.hub{margin-top:36px;display:flex;flex-direction:column;align-items:stretch;gap:12px}
+.hub .lane{display:flex;gap:12px;flex-wrap:wrap}
+.hub .lane span{flex:1;text-align:center;font-size:36px;font-weight:600;padding:20px 10px;border-radius:18px;background:rgba(28,31,21,.92);border:1px solid rgba(246,243,236,.2)}
+.hub .lane.srv span{border-color:#f0d9a8;background:rgba(240,217,168,.12)}
+.hub .mcp{text-align:center;font-family:"Geist Mono",monospace;font-size:40px;font-weight:500;padding:18px;border-radius:18px;background:#d6dfa8;color:#13150e}
+.hub .tag{font-family:"Geist Mono",monospace;font-size:26px;color:#b3c07a;letter-spacing:.1em;text-transform:uppercase}
+.plot{position:relative;margin-top:36px;height:430px;border-radius:24px;background:#0d0f09;border:1px solid rgba(246,243,236,.18);overflow:hidden}
+.plot::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(179,192,122,.18) 1.5px,transparent 1.5px);background-size:40px 40px}
+.pt{position:absolute;display:flex;align-items:center;gap:14px;font-size:34px;font-weight:600;white-space:nowrap}
+.pt i{flex:none;width:26px;height:26px;border-radius:50%;background:#d6dfa8;box-shadow:0 0 0 8px rgba(214,223,168,.18)}
+.pt.far i{background:#e8a598;box-shadow:0 0 0 8px rgba(232,165,152,.18)}.pt.far{color:#f3c9bf}
+.near{position:absolute;left:40px;top:40px;width:470px;height:200px;border:3px dashed #b3c07a;border-radius:30px}
+.near b{position:absolute;right:16px;bottom:-46px;font-family:"Geist Mono",monospace;font-weight:500;font-size:28px;color:#b3c07a}
+.vec{margin-top:24px;font-family:"Geist Mono",monospace;font-size:34px;color:rgba(246,243,236,.75)}.vec b{color:#d6dfa8;font-weight:500}
+.vs{margin-top:36px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.vs .col{border-radius:22px;padding:24px;border:2px solid rgba(246,243,236,.2);background:rgba(28,31,21,.92)}
+.vs .col.ft{border-color:#b3c07a;background:rgba(79,93,42,.35)}
+.vs .col b{display:block;font-family:"Geist Mono",monospace;font-weight:500;font-size:34px;color:#d6dfa8;margin-bottom:12px}
+.vs .col span{display:block;font-size:38px;font-weight:600;line-height:1.25}
+.vs .col small{display:block;margin-top:12px;font-size:30px;color:rgba(246,243,236,.7);line-height:1.3}
+.bad{color:#e8a598}.ok{color:#d6dfa8}
+.mail{margin-top:30px;border-radius:22px;padding:24px 26px;background:#f6f3ec;color:#13150e;font-size:36px;line-height:1.35}
+.mail .from{font-family:"Geist Mono",monospace;font-size:26px;color:#4f5d2a;margin-bottom:8px}
+.mail mark{background:rgba(232,165,152,.45);padding:0 6px;border-radius:6px}
+.cap{position:absolute;left:80px;right:80px;top:1340px;text-align:center;font-size:54px;line-height:1.28;font-weight:600}
+.cap span{background:rgba(19,21,14,.9);box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:6px 18px;border-radius:14px;border:1px solid rgba(179,192,122,.45)}
+.a{opacity:0}
+</style></head><body>
+<div id="v"><div class="glow"></div>
+ <div class="top"><span class="brand"><span class="mark"><svg width="30" height="30" viewBox="0 0 32 32"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Crack Tech</span><span>{{TOPIC}}</span></div>
+ <div class="prog"><i></i><i></i><i></i></div>
+
+
+
+{{SCENES}}
+ <div class="cap" id="cap"></div>
+</div>
+<script>
+let TL;
+const ease = p => 1 - Math.pow(1 - p, 3);
+window.setup = tl => { TL = tl; };
+window.setT = t => {
+  const sc = TL.scenes.find(s => t >= s.start && t < s.end) || TL.scenes[TL.scenes.length - 1];
+  document.querySelectorAll('.scene').forEach(e => e.classList.toggle('show', e.dataset.s === sc.id));
+  const ci = sc.id === 'cta' ? 3 : sc.id === 'hook' ? 0 : ['t1','t2','t3'].indexOf(sc.id) + 1;
+  document.querySelectorAll('.prog i').forEach((e, i) => e.classList.toggle('on', i < ci));
+  const el = document.querySelector(`.scene[data-s="${sc.id}"]`);
+  el.querySelectorAll('.a').forEach(a => {
+    const L = sc.lines[+a.dataset.l]; const start = L ? L.start : sc.start;
+    const sib = [...el.querySelectorAll(`.a[data-l="${a.dataset.l}"]`)];
+    const span = L ? (L.end - L.start) : 1;
+    const stagger = sib.length > 1 ? sib.indexOf(a) * Math.min(0.3, span * 0.8 / sib.length) : 0;
+    const p = ease(Math.max(0, Math.min(1, (t - start - stagger) / 0.28)));
+    a.style.opacity = p; a.style.transform = `translateY(${(1 - p) * 30}px) scale(${0.96 + 0.04 * p})`;
+  });
+  const line = sc.lines.find(l => t >= l.start - 0.08 && t < l.end + 0.12);
+  const cap = document.getElementById('cap'); cap.innerHTML = '';
+  if (line) { const s = document.createElement('span'); s.textContent = line.text; cap.appendChild(s); }
+};
+</script></body></html>

@@ -1,0 +1,86 @@
+<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"><link rel="stylesheet" href="common.css"><style>
+@page{size:1080px 1350px;margin:0}
+html,body{margin:0;background:#13150e}
+.s{position:relative;overflow:hidden;width:1080px;height:1350px;background:#13150e;color:#f6f3ec;font-family:Geist,sans-serif;page-break-after:always;break-after:page}
+.s::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(179,192,122,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(179,192,122,.06) 1px,transparent 1px);background-size:36px 36px}
+.s .glow{right:-360px;top:-380px}
+.in{position:absolute;inset:0;padding:84px 84px;display:flex;flex-direction:column}
+.hd{display:flex;justify-content:space-between;align-items:center}
+.pg{font-family:"Geist Mono",monospace;font-size:26px;color:#b3c07a;letter-spacing:.1em}
+h1{margin:0;font-weight:800;font-size:96px;line-height:1.03;letter-spacing:-.035em}
+h2{margin:30px 0 0;font-weight:800;font-size:76px;line-height:1.05;letter-spacing:-.03em}
+.serif{font-family:"Instrument Serif",serif;font-weight:400;font-style:italic;color:#b3c07a;letter-spacing:0}
+.lead{font-size:40px;line-height:1.35;color:rgba(246,243,236,.82);margin-top:30px}
+.code{margin-top:44px;font-family:"Geist Mono",monospace;font-size:34px;line-height:1.6;padding:34px 38px;border-radius:26px;background:#1f2317;border:2px solid rgba(179,192,122,.45);white-space:pre}
+.code .c{color:#b3c07a}.code .bad{background:rgba(232,165,152,.28);color:#f3c9bf;border-radius:6px;padding:0 6px}.code .ok{background:#d6dfa8;color:#13150e;border-radius:6px;padding:0 6px}
+.tag{display:inline-block;margin-top:30px;padding:16px 26px;border-radius:16px;font-size:34px;font-weight:700}
+.tag.g{background:#d6dfa8;color:#13150e}.tag.r{background:rgba(232,165,152,.2);color:#f3c9bf;border:2px solid #e8a598}
+.list{margin-top:40px;display:flex;flex-direction:column;gap:18px}
+.it{display:flex;gap:24px;align-items:center;padding:26px 30px;border-radius:22px;background:rgba(28,31,21,.92);border:1px solid rgba(246,243,236,.16);font-size:38px;font-weight:600}
+.it b{flex:none;width:70px;height:70px;border-radius:50%;background:#b3c07a;color:#13150e;display:grid;place-items:center;font-size:34px}
+.it small{display:block;font-size:28px;font-weight:400;color:rgba(246,243,236,.7);margin-top:4px}
+.loop{margin-top:40px;display:flex;flex-direction:column;gap:8px}
+.st{font-size:44px;font-weight:700;padding:20px 30px;border-radius:22px;border:2px solid #b3c07a;background:rgba(79,93,42,.3)}
+.st span{font-family:"Geist Mono",monospace;font-size:30px;color:#d6dfa8;margin-right:18px}
+.arrow{font-size:32px;line-height:1;color:#b3c07a;margin-left:40px}
+.swipe{margin-top:auto;display:flex;justify-content:space-between;align-items:center;font-family:"Geist Mono",monospace;font-size:28px;color:#b3c07a}
+.swipe b{font-weight:500;padding:16px 28px;border-radius:999px;background:#d6dfa8;color:#13150e}
+.cta{margin-top:auto;display:flex;flex-direction:column;gap:16px}
+.cta div{font-size:40px;font-weight:700;padding:26px 34px;border-radius:999px;background:#4f5d2a}
+.cta div.alt{background:transparent;border:2px solid rgba(246,243,236,.3);font-weight:600}
+</style></head><body>
+<div class="s"><div class="glow"></div><div class="in">
+ <div class="hd"><div class="brand"><span class="mark"><svg width="26" height="26" viewBox="0 0 32 32"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Crack Tech</div><div class="pg">1/5</div></div>
+ <div class="k" style="margin-top:140px;font-size:28px">Coding interviews</div>
+ <h1 style="margin-top:24px">Allowed to use AI in your interview?</h1>
+ <div class="lead" style="font-size:46px">Here's what you're <b style="color:#d6dfa8">really</b> scored on.</div>
+ <div class="swipe"><span>The AI writes the code. You own it.</span><b>Swipe →</b></div>
+</div></div>
+<div class="s"><div class="glow"></div><div class="in">
+ <div class="hd"><div class="k" style="font-size:26px">The task</div><div class="pg">2/5</div></div>
+ <h2>Merge overlapping meetings. <span class="serif">Touching ones merge too.</span></h2>
+ <div class="code"><span class="c"># the AI's answer</span>
+meetings.sort()
+for start, end in meetings:
+  if result and start <span class="bad">&lt;</span> result[-1][1]:
+    result[-1][1] = max(...)
+  else:
+    result.append([start, end])</div>
+ <div class="tag g">Looks right. Most people move on.</div>
+ <div class="swipe"><span></span><b>Swipe →</b></div>
+</div></div>
+<div class="s"><div class="glow"></div><div class="in">
+ <div class="hd"><div class="k" style="font-size:26px">One quick test</div><div class="pg">3/5</div></div>
+ <div class="code" style="margin-top:60px">merge([[1,4],[4,5]])
+<span class="c"># expected</span>  [[1,5]]
+<span class="c"># got</span>       [[1,4],[4,5]]</div>
+ <div class="tag r">✕ Touching meetings didn't merge</div>
+ <div class="code"><span class="c"># the fix: one character</span>
+if result and start <span class="ok">&lt;=</span> result[-1][1]:</div>
+ <div class="lead" style="font-size:36px">The AI wrote the most common version, not the one you asked for.</div>
+ <div class="swipe"><span></span><b>Swipe →</b></div>
+</div></div>
+<div class="s"><div class="glow"></div><div class="in">
+ <div class="hd"><div class="k" style="font-size:26px">What interviewers score</div><div class="pg">4/5</div></div>
+ <h2>Not the code. <span class="serif">Everything else.</span></h2>
+ <div class="list">
+  <div class="it"><b>1</b><span>Understanding<small>clarified edge cases before prompting</small></span></div>
+  <div class="it"><b>2</b><span>Direction<small>small, specific prompts, not one big paste</small></span></div>
+  <div class="it"><b>3</b><span>Verification<small>tested it instead of trusting it</small></span></div>
+  <div class="it"><b>4</b><span>Ownership<small>can explain every line</small></span></div>
+  <div class="it"><b>5</b><span>Communication<small>kept talking while it typed</small></span></div>
+ </div>
+ <div class="swipe"><span></span><b>Swipe →</b></div>
+</div></div>
+<div class="s"><div class="glow"></div><div class="in">
+ <div class="hd"><div class="brand"><span class="mark"><svg width="26" height="26" viewBox="0 0 32 32"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Crack Tech</div><div class="pg">5/5</div></div>
+ <h2 style="margin-top:60px">The loop <span class="serif">I teach</span></h2>
+ <div class="loop">
+  <div class="st"><span>01</span>Clarify</div><div class="arrow">↓</div>
+  <div class="st"><span>02</span>Plan</div><div class="arrow">↓</div>
+  <div class="st"><span>03</span>Generate small</div><div class="arrow">↓</div>
+  <div class="st"><span>04</span>Verify</div>
+ </div>
+ <div class="cta"><div>Practise free at cracktech.app/practice</div><div class="alt">♻ Repost to help a friend prepping</div></div>
+</div></div>
+</body></html>
