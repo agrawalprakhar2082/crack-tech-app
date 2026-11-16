@@ -36,20 +36,30 @@ Test locally (MIME builder and the /ai route, with stubs): `node worker/practice
 The AI coding rounds on `/practice/` use a scripted offline assistant until this is done.
 
 - `POST /ai` takes `{round, lang, code?, messages: [{role: "user"|"assistant", content}]}`
-  from `https://cracktech.app` only and returns `{ok, reply}`. Limits: 16 messages, 4,000
-  characters each, 24,000 in total, 8,000 characters of editor code, 40 KB per request;
-  600 output tokens. Each round has its own system prompt (help with this round's code
-  only, refuse other chat, never claim to know the hidden tests). Prompt contents are
-  never logged.
+  from `https://cracktech.app` only and returns `{ok, reply}`. Messages must alternate
+  user / assistant, starting and ending with the user. Limits: 16 messages, 4,000
+  characters per user message and 3,000 per assistant message, 24,000 in total, 8,000
+  characters of editor code (cut, not refused), 40 KB per request (counted while reading,
+  whatever Content-Length says); 600 output tokens. Each round has a fixed system prompt
+  (help with this round's code only, refuse other chat, never claim to know the hidden
+  tests); the editor's code goes in as the candidate's own first message, never into the
+  system prompt, so code can't rewrite the instructions. Prompt contents are never logged.
+  The page keeps its requests well inside these limits and, on a 413, retries once with
+  only the latest prompt.
 - Model: `AI_MODEL` in `src/index.js` (`@cf/meta/llama-3.2-1b-instruct`, deliberately
   small). **Confirm it's still in the Workers AI catalogue** (dashboard > AI > Workers AI >
   Models) before deploying; swap in another small instruct model if not.
 - Rate limit: `AI_RATE` (10 prompts per minute per IP), falling back to `RATE` if missing.
+  Optional `AI_GLOBAL` (e.g. 60 prompts per minute, one key shared by every visitor) caps
+  spend further. Rate-limit bindings count per Cloudflare location, so neither is an exact
+  worldwide or daily cap: someone with many IP addresses can still use up the daily free
+  allocation (see step 4).
 
 Steps, with a Cloudflare API token that can edit Workers and use Workers AI:
 
-1. Redeploy as above with two more bindings: `{"type":"ai","name":"AI"}` and
-   `{"type":"ratelimit","name":"AI_RATE","namespace_id":"1002","simple":{"limit":10,"period":60}}`.
+1. Redeploy as above with more bindings: `{"type":"ai","name":"AI"}`,
+   `{"type":"ratelimit","name":"AI_RATE","namespace_id":"1002","simple":{"limit":10,"period":60}}`
+   and, recommended, `{"type":"ratelimit","name":"AI_GLOBAL","namespace_id":"1003","simple":{"limit":60,"period":60}}`.
 2. Test: `POST https://practice-review.cracktech-app.workers.dev/ai` with
    `Origin: https://cracktech.app` and
    `{"round":"ai-round-1","lang":"python","messages":[{"role":"user","content":"Write rank_scores"}]}`.
@@ -60,5 +70,9 @@ Steps, with a Cloudflare API token that can edit Workers and use Workers AI:
    (10,000 neurons a day at the time of writing); beyond it, usage is billed only on the
    Workers Paid plan. Check usage under AI > Workers AI, and if needed lower `AI_RATE` or
    `AI_MAX_TOKENS`. When the allocation runs out or the model errors, the page falls back to
-   the offline assistant automatically.
+   the offline assistant automatically. **Residual risk:** there's no exact daily cap without
+   a paid store (KV or Durable Objects), so on the Workers Paid plan abuse could cost money.
+   Set a billing notification for Workers AI usage (dashboard > Notifications > Add >
+   usage-based billing) so a spike is noticed the same day; on the Free plan, requests just
+   fail once the free allocation is used, and the page falls back to the offline assistant.
 5. Delete or expire the API token afterwards.
