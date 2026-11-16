@@ -1,0 +1,9 @@
+html,body{margin:0}
+#v{position:relative;overflow:hidden;background:#13150e;color:#f6f3ec;font-family:Geist,sans-serif}
+#v::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(179,192,122,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(179,192,122,.06) 1px,transparent 1px);background-size:36px 36px}
+.glow{position:absolute;right:-300px;top:-320px;width:1000px;height:1000px;border-radius:50%;background:radial-gradient(circle,rgba(79,93,42,.6),transparent 65%)}
+.brand{display:flex;align-items:center;gap:12px;font-family:"Instrument Serif",serif;font-size:34px}
+.mark{width:46px;height:46px;border-radius:12px;background:#4f5d2a;display:grid;place-items:center}
+.k{font-family:"Geist Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#b3c07a}
+em{font-style:normal;color:#13150e;background:#d6dfa8;padding:0 12px;border-radius:10px}
+.rel{position:relative}
