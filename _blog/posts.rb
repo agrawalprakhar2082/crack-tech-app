@@ -3,6 +3,27 @@
 # edit it, then run:  ruby _blog/build.rb
 POSTS = [
   {
+    slug: "code-with-ai-interviews",
+    title: "Code-with-AI Interviews Are Here: How to Pass When You're Allowed to Use AI",
+    category: "Coding",
+    date: "2026-11-16",
+    minutes: 6,
+    image: "https://cracktech.app/blog/images/code-with-ai-interviews.jpg",
+    medium: "https://medium.com/stackademic/code-with-ai-interviews-are-here-how-to-pass-when-youre-allowed-to-use-ai-1a0d6bdc4491",
+    teaser: "The AI writes the code. You're scored on everything else. A worked example and the loop to use.",
+    summary: [
+      "More companies now hand candidates an AI assistant in the coding round. It doesn't make the round easier: people who struggle usually stop thinking the moment the AI starts typing. Writing the code is the cheap part; the interviewer watches how you direct, check and own it.",
+      "The article, published in Stackademic, walks through a worked example (merging overlapping meetings, where the AI's answer looks right but a one-character bug breaks touching meetings), five common mistakes, and how to practise this week."
+    ],
+    takeaways: [
+      "You're scored on understanding, direction, verification, ownership and communication, not on whether the AI's code compiles.",
+      "Clarify edge cases before you prompt, and put them in the prompt. Then test exactly those cases.",
+      "The AI writes the most common version of a solution, not always the one you asked for: in the example, < instead of <= missed touching meetings.",
+      "Ask for one function or step at a time, read every line, and be ready to explain any of them.",
+      "Use the loop: Clarify, Plan, Generate small, Verify. Then repeat for the next part."
+    ]
+  },
+  {
     slug: "estimation-10-5-trick",
     title: "Back-of-the-Envelope Estimation for System Design Interviews: The 10⁵ Trick",
     category: "System Design",
