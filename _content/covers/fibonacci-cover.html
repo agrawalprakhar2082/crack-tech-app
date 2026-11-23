@@ -1,0 +1,103 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Fibonacci cover. Open with ?size=v (1080x1920, Reel / Short) or ?size=h (1280x720, YouTube thumbnail)
+     and &theme=neon or &theme=olive. Render: node shot.js "$PWD/fibonacci-cover.html?size=v&theme=neon" out.png 1080 1920 -->
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;600;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#000}
+:root{--bg:#060a13;--bg2:#0d1526;--ink:#f4f7ff;--dim:#8a97b8;--ok:#3dff9a;--hi:#ffd43b;--bad:#ff4d6d;--line:rgba(120,150,220,.16);--mark:#4f5d2a}
+.olive{--bg:#13150e;--bg2:#1c1f15;--ink:#f6f3ec;--dim:#a9ad95;--ok:#c9d68a;--hi:#f0d9a8;--bad:#ef8f7d;--line:rgba(179,192,122,.1)}
+#v{position:relative;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Geist,sans-serif}
+#v::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px}
+.glow{position:absolute;border-radius:50%;filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:14px;font-family:"Instrument Serif",serif;color:var(--ink)}
+.mark{border-radius:22%;background:var(--mark);display:grid;place-items:center}
+.chip{display:inline-block;font-family:"Geist Mono",monospace;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--bg);background:var(--bad);border-radius:999px}
+.big{font-family:"Geist Mono",monospace;font-weight:700;letter-spacing:-.04em;line-height:.95}
+.big b{color:var(--hi)}
+.calls{font-weight:900;letter-spacing:-.03em;line-height:1.02;text-transform:uppercase}
+.calls em{font-style:normal;color:var(--bg);background:var(--bad);padding:0 .14em;border-radius:.14em;box-shadow:0 0 60px rgba(255,77,109,.45)}
+.olive .calls em{box-shadow:none}
+.fix{display:inline-flex;align-items:center;gap:.4em;font-weight:800;border:4px solid var(--ok);color:var(--ok);border-radius:999px;background:rgba(61,255,154,.08)}
+.olive .fix{background:rgba(201,214,138,.1)}
+svg text{font-family:"Geist Mono",monospace;font-weight:700}
+.legend{display:flex;gap:1.2em;font-family:"Geist Mono",monospace;font-weight:500;color:var(--dim)}
+.legend i{display:inline-block;width:.8em;height:.8em;border-radius:50%;margin-right:.35em;vertical-align:-.05em}
+
+/* vertical 1080x1920: everything that matters sits in the middle 1080x1350 (y 285–1635), which the profile grid shows */
+.v #v{width:1080px;height:1920px}
+.v .brand{position:absolute;left:0;right:0;top:120px;justify-content:center;font-size:46px}
+.v .mark{width:64px;height:64px}
+.v .main{position:absolute;left:70px;right:70px;top:330px;text-align:center}
+.v .chip{font-size:30px;padding:12px 26px}
+.v .big{font-size:190px;margin-top:34px}
+.v .calls{font-size:104px;margin-top:22px}
+.v .tree{position:absolute;left:40px;top:920px;width:1000px;height:540px}
+.v .legend{position:absolute;left:0;right:0;top:1478px;justify-content:center;font-size:30px}
+.v .fix{position:absolute;left:50%;transform:translateX(-50%);top:1545px;font-size:46px;padding:14px 34px;white-space:nowrap}
+.v .handle{position:absolute;left:0;right:0;bottom:120px;text-align:center;font-family:"Geist Mono",monospace;font-size:34px;color:var(--dim)}
+
+/* horizontal 1280x720 */
+.h #v{width:1280px;height:720px}
+.h .brand{position:absolute;left:64px;top:52px;font-size:34px}
+.h .mark{width:48px;height:48px}
+.h .main{position:absolute;left:64px;top:140px;width:640px}
+.h .chip{font-size:22px;padding:9px 18px}
+.h .big{font-size:132px;margin-top:22px}
+.h .calls{font-size:72px;margin-top:14px}
+.h .fix{position:absolute;left:64px;bottom:56px;font-size:34px;padding:10px 26px}
+.h .tree{position:absolute;right:28px;top:120px;width:560px;height:470px}
+.h .legend{position:absolute;right:40px;width:520px;bottom:60px;justify-content:center;font-size:22px}
+.h .handle{display:none}
+</style></head><body>
+<div id="v">
+ <div class="glow" id="g1"></div><div class="glow" id="g2"></div>
+ <div class="brand"><span class="mark"><svg width="58%" height="58%" viewBox="0 0 32 32"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Crack Tech</div>
+ <div class="main">
+  <span class="chip">⚠ Recursion trap</span>
+  <div class="big">fib(<b>50</b>)</div>
+  <div class="calls">= <em>40 billion</em><br>calls</div>
+ </div>
+ <svg class="tree" id="tree"></svg>
+ <div class="legend"><span><i style="background:var(--ok)"></i>new work</span><span><i style="background:var(--bad)"></i>repeated work</span></div>
+ <div class="fix">The 1-line fix →</div>
+ <div class="handle">cracktech.app</div>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+const size = q.get('size') || 'v', theme = q.get('theme') || 'neon';
+document.body.className = size + ' ' + theme;
+const css = n => getComputedStyle(document.body).getPropertyValue(n).trim();
+// glows
+const g1 = document.getElementById('g1'), g2 = document.getElementById('g2');
+const neon = theme === 'neon';
+Object.assign(g1.style, size === 'v'
+  ? {left:'-260px', top:'420px', width:'900px', height:'900px'} : {left:'-300px', top:'-200px', width:'900px', height:'900px'});
+Object.assign(g2.style, size === 'v'
+  ? {right:'-300px', top:'1050px', width:'900px', height:'900px'} : {right:'-200px', top:'150px', width:'800px', height:'800px'});
+g1.style.background = `radial-gradient(circle, ${neon ? 'rgba(255,212,59,.13)' : 'rgba(79,93,42,.55)'}, transparent 65%)`;
+g2.style.background = `radial-gradient(circle, ${neon ? 'rgba(255,77,109,.16)' : 'rgba(239,143,125,.12)'}, transparent 65%)`;
+
+// fib(5) call tree; a call is red when that fib(n) was already computed earlier (depth-first, left first)
+const seen = new Set(); let leaf = 0; const nodes = [], edges = [];
+function build(n, d) {
+  const dup = seen.has(n);
+  const node = {n, d, dup, kids: []};
+  if (n > 1) { node.kids = [build(n - 1, d + 1), build(n - 2, d + 1)]; node.x = (node.kids[0].x + node.kids[1].x) / 2; }
+  else node.x = leaf++;
+  seen.add(n);
+  nodes.push(node); node.kids.forEach(k => edges.push([node, k])); return node;
+}
+build(5, 0);
+const svg = document.getElementById('tree'), W = svg.clientWidth, H = svg.clientHeight;
+const r = size === 'v' ? 44 : 30, fs = size === 'v' ? 30 : 21;
+const X = x => r + 6 + x * (W - 2 * r - 12) / (leaf - 1), Y = d => r + 6 + d * (H - 2 * r - 12) / 4;
+const ok = css('--ok'), bad = css('--bad'), bg = css('--bg');
+let s = '';
+for (const [a, b] of edges) s += `<line x1="${X(a.x)}" y1="${Y(a.d)}" x2="${X(b.x)}" y2="${Y(b.d)}" stroke="${b.dup ? bad : ok}" stroke-opacity=".55" stroke-width="${size==='v'?5:4}"/>`;
+for (const nd of nodes) {
+  const c = nd.dup ? bad : ok;
+  s += `<circle cx="${X(nd.x)}" cy="${Y(nd.d)}" r="${r}" fill="${bg}" stroke="${c}" stroke-width="${size==='v'?6:4}" ${neon ? `style="filter:drop-shadow(0 0 10px ${c})"` : ''}/>`;
+  s += `<text x="${X(nd.x)}" y="${Y(nd.d) + fs * .36}" fill="${c}" font-size="${fs}" text-anchor="middle">f${nd.n}</text>`;
+}
+svg.innerHTML = s;
+</script></body></html>
