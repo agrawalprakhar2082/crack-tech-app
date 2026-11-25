@@ -1,0 +1,37 @@
+{
+ "name": "unique-paths-hindi",
+ "frame": "unique-paths.html",
+ "voice": "hm_omega",
+ "lang": "hi",
+ "speed": 1.15,
+ "scenes": [
+  {"id": "hook", "lines": [
+   ["यह रोबोट फ्लैग तक कितने तरीकों से पहुँच सकता है?", "Flag tak | kitne *raaste*? 🏁"],
+   ["यह सिर्फ़ राइट या डाउन जा सकता है।", "Sirf *right* | ya *down*"]
+  ]},
+  {"id": "rule", "lines": [
+   ["रिकर्शन से यह आसान है। हर सेल से, दोनों मूव ट्राई करो।", "Har cell se | dono moves | *try karo*"],
+   ["फ्लैग पर पहुँचे? तो एक पाथ।", "Flag mila | = *1 path*"],
+   ["ग्रिड से बाहर गिरे? तो ज़ीरो।", "Grid se bahar | = *0*"]
+  ]},
+  {"id": "trace", "lines": [
+   ["अब देखो यह कैसे ढूँढता है। पहले राइट, फिर डाउन।", "Dekho: | pehle *right* | phir *down*"],
+   ["हर मूव एक रिकर्सिव कॉल है।", "Har move = | ek *recursive call*"],
+   ["जब पाथ खत्म होता है, तो यह एक कदम पीछे जाकर दूसरा रास्ता ट्राई करता है।", "Path khatam? | *Ek kadam peeche* | doosra raasta try"],
+   ["कुल तीन पाथ।", "Kul *3 paths* ✅"]
+  ]},
+  {"id": "trick", "lines": [
+   ["ट्रिक यह है: हर सेल का जवाब, राइट प्लस डाउन।", "Har cell = | *right + down*"],
+   ["दस बाय दस ग्रिड में अड़तालीस हज़ार छह सौ बीस पाथ हैं।", "10×10 grid = | *48,620* paths 🤯"],
+   ["हर सेल का जवाब सेव करो, तो सिर्फ़ लगभग सौ स्टेप्स।", "Answers save karo = | sirf *~100 steps* ⚡"]
+  ]}
+ ],
+ "cta_yt": [
+  ["ऐसे ही विज़ुअल कोडिंग के लिए सब्सक्राइब करो।", "*Subscribe* karo | aur visual coding ke liye"],
+  ["फ्री प्रैक्टिस के लिए, क्रैक टेक डॉट ऐप।", "Free practice: | *cracktech.app*"]
+ ],
+ "cta_ig": [
+  ["ऐसे ही विज़ुअल कोडिंग के लिए फॉलो करो।", "*Follow* karo | aur visual coding ke liye"],
+  ["और अगले इंटरव्यू के लिए इसे सेव कर लो।", "*Save* kar lo | next interview ke liye 🔖"]
+ ]
+}

@@ -1,5 +1,6 @@
 # Voice-over for a Short/Reel: reads <dir>/script.json, writes narration.wav and timeline.json.
 # Voice: Kokoro TTS (kokoro-onnx), "am_michael" (the owner chose this AI male voice).
+# Hindi: "voice": "hm_omega", "lang": "hi" in script.json (spoken text in Devanagari).
 # Model files (about 340 MB, not in git) go in _content/video/model/:
 #   https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
 #   https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
@@ -22,7 +23,7 @@ audio, t, timeline = [z(LEAD)], LEAD, []
 for si, sc in enumerate(cfg["scenes"]):
     scene = {"id": sc["id"], "start": 0.0 if si == 0 else round(t, 3), "lines": []}
     for li, (spoken, caption) in enumerate(sc["lines"]):
-        s, sr = k.create(spoken, voice=cfg.get("voice", "am_michael"), speed=cfg.get("speed", 1.18), lang="en-us")
+        s, sr = k.create(spoken, voice=cfg.get("voice", "am_michael"), speed=cfg.get("speed", 1.18), lang=cfg.get("lang", "en-us"))
         s = np.asarray(s, dtype=np.float32)
         nz = np.where(np.abs(s) > 0.01)[0]
         if len(nz): s = s[max(0, nz[0] - int(.03 * sr)):nz[-1] + int(.06 * sr)]

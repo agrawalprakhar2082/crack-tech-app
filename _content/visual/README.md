@@ -22,6 +22,9 @@ The skills `youtube-short` and `instagram-reel` (in `.claude/skills/`) say when 
 - `|` splits a caption into the chunks shown one after another (keep each 1–4 words and never split a phrase like "or down"); `*...*` is the coloured word. Without `|` it splits every 3 words.
 - Scene ids are free, except the last scene is always `cta` (added by make.py). The progress bar has one segment per scene.
 
+## Other languages
+- Hindi: add `"voice": "hm_omega", "lang": "hi"` to the spec, write the spoken text in Devanagari (English tech words transliterated: रिकर्शन, पाथ, ग्रिड) and the captions in Roman Hinglish with `|` chunks. Keep the same scene ids and line counts as the English spec, because the page times its animation by line. Hindi runs longer: speed 1.15 gave 46 s for Unique Paths (English 39 s). Example: `examples/unique-paths-hindi.json`. Check pronunciation with `k.tokenizer.phonemize(text, 'hi')`.
+
 ## Layout rules (safe for both apps)
 - Header y≈190, progress y=290, code card y 330–722, visual card y 735–1335, caption pill top 1360, nothing important below ~1480 (app UI: title, caption, buttons). Caption pill stays within x 110–970 (Instagram's buttons sit on the right).
 - Code: ≤ 6 lines, ≤ 40 characters a line at 33px. Highlight the line that is running (`.on`). Colour the parts the visual uses (e.g. right call cyan, down call pink).
