@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"><link rel="stylesheet" href="common.css"><style>
+#v{width:1400px;height:788px}
+.brand{position:absolute;left:80px;top:64px}
+.kk{position:absolute;left:80px;top:190px;font-size:26px}
+h1{position:absolute;left:80px;top:236px;margin:0;font-size:70px;line-height:1.2;font-weight:800;letter-spacing:-.03em;width:560px}
+.sub{position:absolute;left:80px;bottom:72px;font-size:32px;color:rgba(246,243,236,.8)}
+.q{position:absolute;right:70px;top:120px;width:560px;padding:26px 30px 30px;border-radius:26px;background:#1f2317;border:2px solid rgba(179,192,122,.5);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.qh{display:flex;justify-content:space-between;font-family:"Geist Mono",monospace;font-size:20px;color:#b3c07a;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
+.row{display:flex;align-items:center;gap:18px;padding:16px 18px;border-radius:16px;background:rgba(246,243,236,.05);margin-top:12px;font-size:25px}
+.t{font-family:"Geist Mono",monospace;font-size:22px;color:#d6dfa8;width:92px}
+.row.due{background:#d6dfa8;color:#13150e}.row.due .t{color:#13150e}
+.pill{margin-left:auto;font-family:"Geist Mono",monospace;font-size:18px;padding:4px 10px;border-radius:8px;background:rgba(179,192,122,.18);color:#b3c07a}
+.row.due .pill{background:#13150e;color:#d6dfa8}
+.tag{position:absolute;right:90px;top:640px;padding:14px 22px;border-radius:16px;background:#f6f3ec;color:#13150e;font-size:26px;font-weight:700;transform:rotate(-2deg)}
+</style></head><body><div id="v"><div class="glow"></div>
+<div class="brand"><span class="mark"><svg width="26" height="26" viewBox="0 0 32 32"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Crack Tech</div>
+<div class="k kk">System design</div>
+<h1>When should you use a <em>queue?</em></h1>
+<div class="sub">5 signals, and when it's the wrong answer.</div>
+<div class="q"><div class="qh"><span>Queue</span><span>5 signals</span></div>
+<div class="row"><span class="t">async</span>Send order email<span class="pill">later</span></div>
+<div class="row"><span class="t">buffer</span>50k/s sale spike<span class="pill">absorb</span></div>
+<div class="row due"><span class="t">retry</span>Payment timeout<span class="pill">try 3</span></div>
+<div class="row"><span class="t">delay</span>Expire unpaid order<span class="pill">15 min</span></div>
+<div class="row"><span class="t">order</span>Last 10 units<span class="pill">1 by 1</span></div>
+</div>
+<div class="tag">✓ idempotent consumers</div>
+</div></body></html>
