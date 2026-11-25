@@ -5,6 +5,8 @@ description: Make a Crack Tech YouTube Short and its Instagram Reel cut (AI male
 
 # Short + Reel
 
+For coding or system design topics, use the newer visual explainer style instead: the `youtube-short` and `instagram-reel` skills (`_content/visual/`). This skill is for the slide-style Shorts (AI terms series, Calendar, delay queues).
+
 Both are made from one spec with the toolkit in `_content/video/` (not published on the site).
 
 ## Steps
