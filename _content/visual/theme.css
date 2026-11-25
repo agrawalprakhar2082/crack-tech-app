@@ -1,0 +1,29 @@
+/* Shared look for visual explainer videos (1080x1920). Themes: body.neon (default) or body.olive.
+   Safe area for both YouTube Shorts and Instagram Reels: keep content between y=180 and y=1500,
+   and the caption pill between x=110 and x=970 (Instagram's buttons sit on the right below ~1150). */
+html,body{margin:0;background:#000}
+:root,.neon{--bg:#060a13;--card:#0b1222;--card2:#101a30;--ink:#f4f7ff;--dim:#8a97b8;--edge:rgba(120,150,220,.22);--line:rgba(120,150,220,.12);
+  --ok:#3dff9a;--hi:#ffd43b;--bad:#ff4d6d;--cy:#4cc9ff;--pk:#ff7ad9;--mark:#4f5d2a;--glow:1}
+.olive{--bg:#13150e;--card:#1a1d13;--card2:#22261a;--ink:#f6f3ec;--dim:#a9ad95;--edge:rgba(179,192,122,.3);--line:rgba(179,192,122,.08);
+  --ok:#c9d68a;--hi:#f0d9a8;--bad:#ef8f7d;--cy:#9fd0c7;--pk:#e7b4d6;--glow:0}
+#v{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Geist,sans-serif}
+#v::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px}
+.top{position:absolute;left:60px;right:60px;top:190px;display:flex;justify-content:space-between;align-items:center}
+.brand{display:flex;align-items:center;gap:14px;font-family:"Instrument Serif",serif;font-size:42px}
+.mark{width:58px;height:58px;border-radius:14px;background:var(--mark);display:grid;place-items:center}
+.tag{font-family:"Geist Mono",monospace;font-weight:700;font-size:26px;letter-spacing:.1em;text-transform:uppercase;padding:12px 22px;border-radius:999px;border:2px solid var(--cy);color:var(--cy)}
+#prog{position:absolute;left:60px;right:60px;top:290px;display:flex;gap:10px}
+#prog i{flex:1;height:10px;border-radius:5px;background:rgba(255,255,255,.1);position:relative;overflow:hidden}
+#prog i::after{content:"";position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--f,0));background:var(--hi)}
+.card{position:absolute;left:60px;right:60px;border-radius:30px;background:var(--card);border:2px solid var(--edge)}
+.ctitle{display:flex;justify-content:space-between;align-items:center;font-family:"Geist Mono",monospace;font-weight:700;font-size:24px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.code{font-family:"Geist Mono",monospace;font-size:33px;line-height:46px}
+.code div{white-space:pre;border-radius:10px;padding:0 12px;border:2px solid transparent}
+.code div.on{background:rgba(255,212,59,.12);border-color:var(--hi)}
+.code .n{color:var(--dim);display:inline-block;width:40px;opacity:.6}
+.code .kw{color:var(--pk)}.code .cm{color:var(--dim)}.code .r{color:var(--cy)}.code .d{color:var(--pk)}.code .g{color:var(--ok)}.code .b{color:var(--bad)}
+#cap{position:absolute;left:110px;right:110px;top:1360px;text-align:center;transition:none}
+#cap span{display:inline-block;font-weight:900;font-size:66px;line-height:1.12;letter-spacing:-.01em;text-transform:uppercase;padding:16px 34px;border-radius:24px;
+  background:rgba(6,10,19,.92);border:4px solid var(--c);box-shadow:0 0 calc(var(--glow)*40px) color-mix(in srgb,var(--c) 45%,transparent)}
+#cap b{color:var(--c);text-shadow:0 0 calc(var(--glow)*24px) color-mix(in srgb,var(--c) 70%,transparent)}
+.olive #cap span{background:rgba(19,21,14,.92)}

@@ -1,0 +1,35 @@
+{
+ "name": "unique-paths",
+ "frame": "unique-paths.html",
+ "speed": 1.1,
+ "scenes": [
+  {"id": "hook", "lines": [
+   ["How many ways can this robot reach the flag?", "How many ways | to reach | the *flag*? 🏁"],
+   ["It can only move right, or down.", "Only *right* | or *down*"]
+  ]},
+  {"id": "rule", "lines": [
+   ["Recursion makes this easy. From any cell, try both moves.", "From any cell | try *both* moves"],
+   ["Reach the flag? That's one path.", "Reach the flag | = *1 path*"],
+   ["Fall off the grid? That's zero.", "Off the grid | = *0*"]
+  ]},
+  {"id": "trace", "lines": [
+   ["Now watch it explore. Right first, then down.", "Watch: | *right* first | then *down*"],
+   ["Each move is one recursive call.", "Each move = | one *recursive call*"],
+   ["When a path ends, it steps back and tries the other way.", "Path ends? | *Step back* | try the other way"],
+   ["Three paths in total.", "*3 paths* | in total ✅"]
+  ]},
+  {"id": "trick", "lines": [
+   ["Here's the trick. Each cell's answer is right plus down.", "Each cell = | *right + down*"],
+   ["A ten by ten grid has forty-eight thousand, six hundred twenty paths.", "10×10 grid = | *48,620* paths 🤯"],
+   ["Save each cell's answer, and it takes about a hundred steps.", "Save answers = | about *100 steps* ⚡"]
+  ]}
+ ],
+ "cta_yt": [
+  ["Subscribe for more coding, visualized.", "*Subscribe* | for more visual coding"],
+  ["Practice free at crack tech dot app.", "Practice free at | *cracktech.app*"]
+ ],
+ "cta_ig": [
+  ["Follow for more coding, visualized.", "*Follow* | for more visual coding"],
+  ["And save this for your next interview.", "*Save* this | for your next interview 🔖"]
+ ]
+}
