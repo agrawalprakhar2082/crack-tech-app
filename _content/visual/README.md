@@ -23,7 +23,7 @@ The skills `youtube-short` and `instagram-reel` (in `.claude/skills/`) say when 
 - Scene ids are free, except the last scene is always `cta` (added by make.py). The progress bar has one segment per scene.
 
 ## Other languages
-- Hindi: add `"voice": "hm_omega", "lang": "hi"` to the spec, write the spoken text in Devanagari (English tech words transliterated: रिकर्शन, पाथ, ग्रिड) and the captions in Roman Hinglish with `|` chunks. Keep the same scene ids and line counts as the English spec, because the page times its animation by line. Hindi runs longer: speed 1.15 gave 46 s for Unique Paths (English 39 s). Example: `examples/unique-paths-hindi.json`. Check pronunciation with `k.tokenizer.phonemize(text, 'hi')`.
+- **Hinglish (owner's pick, Nov 2026):** add `"voice": "hm_omega:0.7+am_michael:0.3", "lang": "hinglish"` to the spec. Write the spoken text with Hindi words in Devanagari and English words in Latin letters ("यह robot flag तक कितने ways से पहुँच सकता है?"); `_content/video/hinglish.py` gives each word its own language's pronunciation, so English words sound English. Use plenty of English (the owner prefers it). Captions in Roman Hinglish with `|` chunks. Keep the same scene ids and line counts as the English spec, because the page times its animation by line. Example: `examples/unique-paths-hinglish.json` (46 s vs 39 s in English). The plain Hindi voices (`hm_omega`/`hm_psi` with `"lang": "hi"`) mispronounce English words; don't use them alone.
 
 ## Layout rules (safe for both apps)
 - Header y≈190, progress y=290, code card y 330–722, visual card y 735–1335, caption pill top 1360, nothing important below ~1480 (app UI: title, caption, buttons). Caption pill stays within x 110–970 (Instagram's buttons sit on the right).

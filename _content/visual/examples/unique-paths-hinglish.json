@@ -1,0 +1,37 @@
+{
+ "name": "unique-paths-hinglish",
+ "frame": "unique-paths.html",
+ "voice": "hm_omega:0.7+am_michael:0.3",
+ "lang": "hinglish",
+ "speed": 1.1,
+ "scenes": [
+  {"id": "hook", "lines": [
+   ["यह robot flag तक कितने ways से पहुँच सकता है?", "Flag tak | kitne *ways*? 🏁"],
+   ["Rule simple है: सिर्फ़ right या down.", "Sirf *right* | ya *down*"]
+  ]},
+  {"id": "rule", "lines": [
+   ["Recursion से यह easy है. हर cell से, दोनों moves try करो.", "Har cell se | dono moves | *try karo*"],
+   ["Flag पर पहुँचे? तो one path.", "Flag mila | = *1 path*"],
+   ["Grid से बाहर गए? तो zero.", "Grid se bahar | = *0*"]
+  ]},
+  {"id": "trace", "lines": [
+   ["अब देखो यह कैसे explore करता है. पहले right, फिर down.", "Dekho: | pehle *right* | phir *down*"],
+   ["हर move एक recursive call है.", "Har move = | ek *recursive call*"],
+   ["Path खत्म हुआ, तो एक step back, और दूसरा रास्ता try.", "Path khatam? | *Step back* | doosra raasta try"],
+   ["Total three paths.", "Total *3 paths* ✅"]
+  ]},
+  {"id": "trick", "lines": [
+   ["अब trick सुनो. हर cell का answer, right plus down.", "Har cell = | *right + down*"],
+   ["Ten by ten grid में forty-eight thousand six hundred twenty paths हैं.", "10×10 grid = | *48,620* paths 🤯"],
+   ["लेकिन हर cell का answer save करो, तो बस about hundred steps.", "Answers save karo = | bas *~100 steps* ⚡"]
+  ]}
+ ],
+ "cta_yt": [
+  ["ऐसे ही visual coding के लिए subscribe करो.", "*Subscribe* karo | visual coding ke liye"],
+  ["Free practice के लिए, crack tech dot app.", "Free practice: | *cracktech.app*"]
+ ],
+ "cta_ig": [
+  ["ऐसे ही visual coding के लिए follow करो.", "*Follow* karo | visual coding ke liye"],
+  ["और next interview के लिए इसे save कर लो.", "*Save* kar lo | next interview ke liye 🔖"]
+ ]
+}
