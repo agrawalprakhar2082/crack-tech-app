@@ -1,0 +1,110 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Climbing Stairs cover (copied from unique-paths-cover.html) (same layout and options as fibonacci-cover.html). Add &lang=hi for the Hinglish version (Hindi badge + Hinglish text). Open with ?size=v (1080x1920, Reel / Short) or ?size=h (1280x720, YouTube thumbnail)
+     and &theme=neon or &theme=olive. Render: node shot.js "$PWD/fibonacci-cover.html?size=v&theme=neon" out.png 1080 1920 -->
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Noto+Sans+Devanagari:wght@800&family=Geist:wght@400;600;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#000}
+
+:root{--cy:#4cc9ff;--pk:#ff7ad9}
+.olive{--cy:#9fd0c7;--pk:#e7b4d6}
+:root{--bg:#060a13;--bg2:#0d1526;--ink:#f4f7ff;--dim:#8a97b8;--ok:#3dff9a;--hi:#ffd43b;--bad:#ff4d6d;--line:rgba(120,150,220,.16);--mark:#4f5d2a}
+.olive{--bg:#13150e;--bg2:#1c1f15;--ink:#f6f3ec;--dim:#a9ad95;--ok:#c9d68a;--hi:#f0d9a8;--bad:#ef8f7d;--line:rgba(179,192,122,.1)}
+#v{position:relative;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Geist,sans-serif}
+#v::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px}
+.glow{position:absolute;border-radius:50%;filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:14px;font-family:"Instrument Serif",serif;color:var(--ink)}
+.mark{border-radius:22%;background:var(--mark);display:grid;place-items:center}
+.chip{display:inline-block;font-family:"Geist Mono",monospace;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--bg);background:var(--bad);border-radius:999px}
+.big{font-family:"Geist Mono",monospace;font-weight:700;letter-spacing:-.04em;line-height:.95}
+.big b{color:var(--hi)}
+.calls{font-weight:900;letter-spacing:-.03em;line-height:1.02;text-transform:uppercase}
+.calls em{font-style:normal;color:var(--bg);background:var(--hi);padding:0 .14em;border-radius:.14em;box-shadow:0 0 60px rgba(255,212,59,.4)}
+.olive .calls em{box-shadow:none}
+.fix{display:inline-flex;align-items:center;gap:.4em;font-weight:800;border:4px solid var(--ok);color:var(--ok);border-radius:999px;background:rgba(61,255,154,.08)}
+.olive .fix{background:rgba(201,214,138,.1)}
+svg text{font-family:"Geist Mono",monospace;font-weight:700}
+.legend{display:flex;gap:1.2em;font-family:"Geist Mono",monospace;font-weight:500;color:var(--dim)}
+.legend i{display:inline-block;width:.8em;height:.8em;border-radius:50%;margin-right:.35em;vertical-align:-.05em}
+
+.hindi{position:absolute;font-family:"Noto Sans Devanagari",sans-serif;font-weight:800;color:var(--bg);background:var(--pk);border-radius:.3em;transform:rotate(-6deg);line-height:1.5;box-shadow:0 0 calc(var(--g,1)*50px) rgba(255,122,217,.55);display:none}
+.hindi small{display:block;font-family:"Geist Mono",monospace;font-weight:700;letter-spacing:.14em;font-size:.36em;line-height:1.2}
+.olive .hindi{box-shadow:none}
+.v .hindi{right:24px;top:540px;font-size:70px;padding:8px 24px 14px;text-align:center}
+.h .hindi{left:520px;top:36px;font-size:44px;padding:4px 20px 10px;text-align:center}
+/* vertical 1080x1920: everything that matters sits in the middle 1080x1350 (y 285–1635), which the profile grid shows */
+.v #v{width:1080px;height:1920px}
+.v .brand{position:absolute;left:0;right:0;top:120px;justify-content:center;font-size:46px}
+.v .mark{width:64px;height:64px}
+.v .main{position:absolute;left:70px;right:70px;top:330px;text-align:center}
+.v .chip{font-size:30px;padding:12px 26px}
+.v .big{font-size:190px;margin-top:34px}
+.v .calls{font-size:128px;margin-top:40px}
+.v .tree{position:absolute;left:120px;top:830px;width:840px;height:600px}
+.v .legend{position:absolute;left:0;right:0;top:1478px;justify-content:center;font-size:30px}
+.v .fix{position:absolute;left:50%;transform:translateX(-50%);top:1545px;font-size:46px;padding:14px 34px;white-space:nowrap}
+.v .handle{position:absolute;left:0;right:0;bottom:120px;text-align:center;font-family:"Geist Mono",monospace;font-size:34px;color:var(--dim)}
+
+/* horizontal 1280x720 */
+.h #v{width:1280px;height:720px}
+.h .brand{position:absolute;left:64px;top:52px;font-size:34px}
+.h .mark{width:48px;height:48px}
+.h .main{position:absolute;left:64px;top:140px;width:640px}
+.h .chip{font-size:22px;padding:9px 18px}
+.h .big{font-size:132px;margin-top:22px}
+.h .calls{font-size:84px;margin-top:26px}
+.h .fix{position:absolute;left:64px;bottom:56px;font-size:34px;padding:10px 26px}
+.h .tree{position:absolute;right:28px;top:120px;width:560px;height:470px}
+.h .legend{position:absolute;right:40px;width:520px;bottom:60px;justify-content:center;font-size:22px}
+.h .handle{display:none}
+</style></head><body>
+<div id="v">
+ <div class="glow" id="g1"></div><div class="glow" id="g2"></div>
+ <div class="brand"><span class="mark"><svg width="58%" height="58%" viewBox="0 0 32 32"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Crack Tech</div>
+ <div class="hindi" id="hindi">हिंदी में<small>IN HINDI</small></div>
+ <div class="main">
+  <span class="chip" id="chip" style="background:var(--cy)">🤖 Recursion, visualized</span>
+  <div class="calls" id="head">How many ways<br>up <em>4 stairs</em>?</div>
+ </div>
+ <svg class="tree" id="tree"></svg>
+ <div class="legend" id="legend"><span style="color:var(--cy)">hop 1</span><span style="color:var(--pk)">hop 2</span><span>that's all it can do</span></div>
+ <div class="fix" id="fix">Hint: it's Fibonacci →</div>
+ <div class="handle">cracktech.app</div>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+const size = q.get('size') || 'v', theme = q.get('theme') || 'neon';
+document.body.className = size + ' ' + theme;
+if (q.get('lang') === 'hi') {
+  document.getElementById('hindi').style.display = 'block';
+  document.getElementById('chip').textContent = '🤖 Recursion, Hinglish mein';
+  document.getElementById('head').innerHTML = '4 stairs, kitne<br><em>ways</em>? 🤖';
+  document.getElementById('legend').innerHTML = '<span style="color:var(--cy)">hop 1</span><span style="color:var(--pk)">hop 2</span><span>bas itna hi</span>';
+  document.getElementById('fix').textContent = 'Hint: yeh Fibonacci hai →';
+}
+const neon = theme === 'neon', css = n => getComputedStyle(document.body).getPropertyValue(n).trim();
+const g1 = document.getElementById('g1'), g2 = document.getElementById('g2');
+Object.assign(g1.style, size === 'v' ? {left:'-260px', top:'300px', width:'900px', height:'900px'} : {left:'-300px', top:'-200px', width:'900px', height:'900px'});
+Object.assign(g2.style, size === 'v' ? {right:'-300px', top:'1000px', width:'900px', height:'900px'} : {right:'-200px', top:'150px', width:'800px', height:'800px'});
+g1.style.background = `radial-gradient(circle, ${neon ? 'rgba(255,212,59,.12)' : 'rgba(79,93,42,.55)'}, transparent 65%)`;
+g2.style.background = `radial-gradient(circle, ${neon ? 'rgba(76,201,255,.16)' : 'rgba(159,208,199,.12)'}, transparent 65%)`;
+// 4 stairs, the 5 ways as hop arcs, robot at the bottom, flag on top
+const svg = document.getElementById('tree'), W = svg.clientWidth, H = svg.clientHeight;
+const N = 4, sw = W / (N + 1.2), rise = H * 0.15, base = H * 0.97;
+const SX = i => sw * 0.6 + i * sw, SY = i => base - rise - i * rise;
+const ink = css('--ink'), bg2 = css('--bg2'), okc = css('--ok');
+let s = '';
+for (let i = 0; i <= N; i++) s += `<rect x="${SX(i) - sw / 2 + 4}" y="${SY(i)}" width="${sw - 8}" height="${base - SY(i)}" rx="${sw * .08}" fill="${bg2}" stroke="${i === N ? okc : 'rgba(120,150,220,.3)'}" stroke-width="${i === N ? 5 : 2}"/>`;
+const ways = [[1,1,1,1],[1,1,2],[1,2,1],[2,1,1],[2,2]], cols = [css('--hi'), css('--pk'), css('--cy'), okc, css('--bad')];
+ways.forEach((w, k) => { let at = 0; const lift = (k - 2) * sw * .07;
+  for (const j of w) { const x1 = SX(at), y1 = SY(at) - 6, x2 = SX(at + j), y2 = SY(at + j) - 6, h = (j === 1 ? .55 : .9) * sw + lift;
+    s += `<path d="M${x1} ${y1} Q${(x1 + x2) / 2} ${Math.min(y1, y2) - h} ${x2} ${y2}" fill="none" stroke="${cols[k]}" stroke-width="${sw * .04}" stroke-linecap="round" opacity=".9" ${neon ? `style="filter:drop-shadow(0 0 6px ${cols[k]})"` : ''}/>`; at += j; } });
+const fs = sw / 300;
+s += `<g transform="translate(${SX(N) + sw * .25},${SY(N) - 4}) scale(${fs})"><line x1="0" y1="-150" x2="0" y2="0" stroke="${ink}" stroke-width="9" stroke-linecap="round"/><path d="M0 -150 L80 -125 L0 -100 Z" fill="${okc}"/></g>`;
+const rs = sw / 190, cy = css('--cy');
+s += `<g transform="translate(${SX(0) - 75 * rs},${SY(0) - 140 * rs}) scale(${rs})">
+  <line x1="75" y1="16" x2="75" y2="34" stroke="${cy}" stroke-width="6" stroke-linecap="round"/><circle cx="75" cy="13" r="8" fill="${css('--hi')}"/>
+  <rect x="30" y="34" width="90" height="62" rx="20" fill="${bg2}" stroke="${cy}" stroke-width="6"/>
+  <circle cx="57" cy="64" r="10" fill="${cy}"/><circle cx="93" cy="64" r="10" fill="${cy}"/>
+  <rect x="44" y="102" width="62" height="34" rx="12" fill="${bg2}" stroke="${cy}" stroke-width="6"/><circle cx="75" cy="119" r="6" fill="${okc}"/></g>`;
+svg.innerHTML = s;
+</script></body></html>

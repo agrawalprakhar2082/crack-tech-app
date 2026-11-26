@@ -1,0 +1,209 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;600;700;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+{{THEME_CSS}}
+/* Climbing stairs: a robot hops 1 or 2 stairs up a 4-stair staircase and tries every way (same layout as unique-paths.html). */
+#codecard{top:330px;height:392px;padding:20px 26px;box-sizing:border-box}
+#codecard .ctitle{margin-bottom:10px}
+#memo{color:var(--ok);opacity:0}
+#stagecard{top:735px;height:600px}
+#gtitle{position:absolute;left:90px;right:90px;top:760px}
+#call{font-size:30px;letter-spacing:0;text-transform:none;color:var(--ink);background:var(--card2);border:2px solid var(--edge);padding:8px 18px;border-radius:14px}
+#count{font-size:30px;letter-spacing:.06em;color:var(--dim)}
+#count b{display:inline-block;color:var(--hi);font-size:40px;min-width:40px;text-align:center}
+svg#g{position:absolute;left:0;top:0;width:1080px;height:1920px}
+#robot{position:absolute;width:150px;height:150px;margin:-75px 0 0 -75px}
+#ways{position:absolute;left:100px;top:830px;display:flex;flex-direction:column;gap:8px}
+#ways span{font-family:"Geist Mono",monospace;font-weight:700;font-size:30px;padding:4px 14px;border-radius:10px;color:var(--bg);width:fit-content}
+.num{position:absolute;width:150px;text-align:center;font-family:"Geist Mono",monospace;font-weight:700;font-size:76px;line-height:1;color:var(--hi);text-shadow:0 0 calc(var(--glow)*24px) rgba(255,212,59,.5)}
+.num small{display:block;font-size:26px;color:var(--dim);margin-top:4px;text-shadow:none}
+.lbl{position:absolute;font-family:"Geist Mono",monospace;font-weight:700;font-size:28px;padding:6px 14px;border-radius:12px;white-space:nowrap}
+#fib{position:absolute;left:100px;top:840px;font-family:"Geist Mono",monospace;font-weight:700;font-size:44px;line-height:1.25;opacity:0}
+#fib b{color:var(--hi)}#fib em{font-style:normal;font-family:Geist,sans-serif;font-weight:900;font-size:58px;color:var(--pk);text-shadow:0 0 calc(var(--glow)*24px) rgba(255,122,217,.6)}
+#big{position:absolute;left:60px;right:60px;top:735px;height:600px;opacity:0}
+#mini{position:absolute;left:50px;top:80px;width:440px;height:440px}
+#bigtxt{position:absolute;left:530px;right:30px;top:150px}
+#bigtxt .k{font-family:"Geist Mono",monospace;font-weight:700;font-size:28px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+#bigtxt .n{font-family:"Geist Mono",monospace;font-weight:700;font-size:84px;letter-spacing:-.04em;line-height:1.05;margin-top:10px}
+#bigtxt .u{font-weight:800;font-size:44px;margin-top:4px}
+#cta{position:absolute;left:60px;right:60px;top:735px;height:600px;opacity:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px}
+.btn{font-weight:900;font-size:70px;padding:26px 60px;border-radius:999px;color:#fff;display:flex;align-items:center;gap:20px}
+.btn.yt{background:#e5322d;box-shadow:0 0 calc(var(--glow)*50px) rgba(229,50,45,.6)}
+.btn.ig{background:#0095f6;box-shadow:0 0 calc(var(--glow)*50px) rgba(0,149,246,.6)}
+.site{font-family:"Geist Mono",monospace;font-weight:700;font-size:46px;padding:18px 34px;border-radius:999px;border:3px solid var(--ok);color:var(--ok)}
+</style></head><body class="{{THEME}}">
+<div id="v">
+ <div class="top"><span class="brand"><span class="mark"><svg width="34" height="34" viewBox="0 0 32 32"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Crack Tech</span><span class="tag">Climbing stairs · recursion</span></div>
+ <div id="prog"></div>
+ <div class="card" id="codecard">
+  <div class="ctitle"><span>stairs.py</span><span id="memo">+ @cache ⚡ saves answers</span></div>
+  <div class="code" id="code">
+<div><span class="n">1</span><span class="kw">def</span> ways(n):   <span class="cm"># n = stairs left</span></div>
+<div><span class="n">2</span>    <span class="kw">if</span> n &lt; 0:</div>
+<div><span class="n">3</span>        <span class="kw">return</span> <span class="b">0</span>   <span class="cm"># jumped past the top</span></div>
+<div><span class="n">4</span>    <span class="kw">if</span> n == 0:</div>
+<div><span class="n">5</span>        <span class="kw">return</span> <span class="g">1</span>   <span class="cm"># reached the top</span></div>
+<div><span class="n">6</span>    <span class="kw">return</span> <span class="r">ways(n-1)</span> + <span class="d">ways(n-2)</span></div>
+  </div>
+ </div>
+ <div class="card" id="stagecard"></div>
+ <div class="ctitle" id="gtitle"><span id="call">ways(4)</span><span id="count">ways found <b id="cn">?</b></span></div>
+ <svg id="g"></svg>
+ <div id="ways"></div>
+ <div id="fib">1, 1, 2, 3, 5 …<br><em>Fibonacci!</em></div>
+ <div id="nums"></div>
+ <div id="robot"><svg viewBox="0 0 150 150" width="150" height="150">
+  <line x1="75" y1="16" x2="75" y2="34" stroke="var(--cy)" stroke-width="6" stroke-linecap="round"/><circle cx="75" cy="13" r="8" fill="var(--hi)"/>
+  <rect x="30" y="34" width="90" height="62" rx="20" fill="var(--card2)" stroke="var(--cy)" stroke-width="6"/>
+  <circle cx="57" cy="64" r="10" fill="var(--cy)"/><circle cx="93" cy="64" r="10" fill="var(--cy)"/>
+  <rect x="44" y="102" width="62" height="34" rx="12" fill="var(--card2)" stroke="var(--cy)" stroke-width="6"/>
+  <circle cx="75" cy="119" r="6" fill="var(--ok)"/></svg></div>
+ <div id="big"><svg id="mini" viewBox="0 0 440 440"></svg><div id="bigtxt"><div class="k" id="bk">30 stairs</div><div class="n" id="bn">0</div><div class="u" id="bu">ways</div></div></div>
+ <div id="cta">{{CTA}}</div>
+ <div id="cap"></div>
+</div>
+<script>
+{{RUNTIME}}
+const N = 4, SW = 150, RISE = 80;
+const SX = i => 190 + i * SW, SY = i => 1270 - i * RISE;          // stair i: centre x, top y (stair 0 = the floor)
+const RX = i => SX(i), RY = i => SY(i) - 54;                        // robot centre standing on stair i (robot drawn at 0.85)
+const WCOL = ['var(--hi)', 'var(--pk)', 'var(--cy)', 'var(--ok)', 'var(--hi)'];
+let STEPS = [], WAYS = [], T0, T1, FILL = [];
+const $ = id => document.getElementById(id);
+const BIGN = 30;
+
+window.setup = tl => {
+  RT.init(tl);
+  // Depth-first trace of ways(4): 1 stair first, then 2; each hop is an animation step.
+  let pos = 0; const trail = [0], hops = [], steps = [], ways = [];
+  const dfs = s => {
+    if (s === N) { ways.push(hops.slice()); steps.push({ kind: 'found', from: s, to: s, trail: trail.slice(), w: 1.5, n: ways.length }); return; }
+    for (const j of [1, 2]) {
+      if (s + j > N) { steps.push({ kind: 'off', from: s, to: s, j, trail: trail.slice(), w: 1.1 }); continue; }
+      steps.push({ kind: 'move', from: s, to: s + j, j, trail: trail.slice(), w: 1 }); trail.push(s + j); hops.push(j); pos = s + j;
+      dfs(s + j);
+      trail.pop(); hops.pop(); steps.push({ kind: 'back', from: s + j, to: s, j, trail: trail.slice(), w: 0.5 }); pos = s;
+    }
+  };
+  dfs(0);
+  T0 = RT.L('trace', 0).start + 1.0; T1 = RT.L('trace', 3).start - 0.1;
+  const W = steps.reduce((a, s) => a + s.w, 0); let t = T0;
+  for (const s of steps) { s.t0 = t; s.t1 = t + (T1 - T0) * s.w / W; t = s.t1; RT.addSfx(s.t0, s.kind === 'back' ? 'tick2' : s.kind === 'move' ? 'tick' : s.kind); }
+  STEPS = steps; WAYS = ways;
+  // trick: fill each stair's count from the top down (ways from stair i = ways(N - i))
+  const k0 = RT.L('trick', 0); const w = n => n < 0 ? 0 : n === 0 ? 1 : w(n - 1) + w(n - 2);
+  FILL = [4, 3, 2, 1, 0].map((i, k) => ({ i, v: w(N - i), sum: N - i >= 2 ? `${w(N - i - 1)} + ${w(N - i - 2)}` : '', t: k0.start + 1.0 + k * (k0.end - k0.start - 1.1) / 5 }));
+  FILL.forEach(f => RT.addSfx(f.t, 'tick'));
+  RT.addSfx(RT.L('trick', 1).start + 0.3, 'found'); RT.addSfx(RT.L('trick', 2).start + 1.6, 'found');
+  for (const s of tl.scenes.slice(1)) RT.addSfx(s.start, 'whoosh');
+  RT.addSfx(RT.L('rule', 1).start + 0.3, 'found'); RT.addSfx(RT.L('rule', 2).start + 0.3, 'off');
+  // the 30-stair staircase for the big panel
+  let m = ''; const u = 440 / BIGN;
+  for (let i = 0; i < BIGN; i++) m += `<rect id="m${i}" x="${i * u}" y="${440 - (i + 1) * u}" width="${u - 1.5}" height="${(i + 1) * u}" rx="2"/>`;
+  $('mini').innerHTML = m;
+  window.SFX = RT.sfx;
+};
+
+function robotAt(t) {
+  if (t < T0 || t >= T1) return { x: RX(0), y: RY(0), s: 1, step: null };
+  const s = STEPS.find(s => t >= s.t0 && t < s.t1); const q = RT.p(t, s.t0, s.t1), p = RT.ease(q);
+  let x, y, sc = 1;
+  if (s.kind === 'move' || s.kind === 'back') {
+    x = RX(s.from) + (RX(s.to) - RX(s.from)) * p; y = RY(s.from) + (RY(s.to) - RY(s.from)) * p - (s.j === 1 ? 60 : 90) * Math.sin(Math.PI * p);
+  } else if (s.kind === 'off') {      // a jump that would land past the top: try, bounce back
+    const b = Math.sin(Math.PI * q) * 0.4; x = RX(s.from) + (RX(s.from + s.j) - RX(s.from)) * b; y = RY(s.from) + (RY(s.from + s.j) - RY(s.from)) * b - 70 * Math.sin(Math.PI * q);
+  } else { x = RX(s.from); y = RY(s.from); sc = 1 + 0.15 * Math.sin(Math.PI * RT.p(t, s.t0, s.t0 + 0.35)); }
+  return { x, y, s: sc, step: s };
+}
+const arc = (a, b, col, w, op) => { const x1 = RX(a), y1 = SY(a) - 8, x2 = RX(b), y2 = SY(b) - 8, h = b - a === 1 ? 70 : 105;
+  return `<path d="M${x1} ${y1} Q${(x1 + x2) / 2} ${Math.min(y1, y2) - h} ${x2} ${y2}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" opacity="${op}"/>`; };
+
+window.setT = t => {
+  RT.frame(t);
+  const l = RT.at(t), sc = l.scene, li = l.li;
+  const inBig = sc === 'trick' && li >= 2, inCta = sc === 'cta';
+  const rb = robotAt(t), st = rb.step;
+  const show = !(inBig || inCta);
+  let svg = '';
+  if (show) {
+    // stairs
+    for (let i = 0; i <= N; i++) {
+      const top = i === N;
+      svg += `<rect x="${SX(i) - SW / 2 + 3}" y="${SY(i)}" width="${SW - 6}" height="${1312 - SY(i)}" rx="14" fill="var(--card2)" stroke="${top ? 'var(--ok)' : 'var(--edge)'}" stroke-width="${top ? 4 : 2}"/>`;
+      svg += `<text x="${SX(i)}" y="${SY(i) + 40}" text-anchor="middle" font-family="Geist Mono" font-weight="700" font-size="26" fill="var(--dim)">${i === 0 ? 'start' : i}</text>`;
+    }
+    // flag on the top stair
+    const fl = sc === 'rule' && li === 1 ? 1 + 0.12 * Math.sin(t * 9) : st && st.kind === 'found' ? 1.2 : 1;
+    if (sc !== 'trick') svg += `<g transform="translate(${SX(N) + 40},${SY(N) - 2}) scale(${fl})"><line x1="0" y1="-96" x2="0" y2="0" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/><path d="M0 -96 L54 -80 L0 -64 Z" fill="var(--ok)"/></g>`;
+    // live trail: the hops of the current way
+    if (st && sc === 'trace') {
+      for (let k = 1; k < st.trail.length; k++) svg += arc(st.trail[k - 1], st.trail[k], 'var(--ok)', 9, .85);
+    }
+    // overshoot marker (just past the top)
+    const offShow = st && st.kind === 'off' ? Math.sin(Math.PI * RT.p(t, st.t0, st.t1)) : sc === 'rule' && li === 2 ? RT.p(t, l.start + 0.2, l.start + 0.5) : 0;
+    if (offShow) { const ox = SX(N + 1) - 20, oy = SY(N) - 10;
+      svg += `<g opacity="${offShow}"><circle cx="${ox}" cy="${oy}" r="34" fill="var(--bad)"/><path d="M${ox - 13} ${oy - 13}L${ox + 13} ${oy + 13}M${ox + 13} ${oy - 13}L${ox - 13} ${oy + 13}" stroke="var(--bg)" stroke-width="8" stroke-linecap="round"/></g>`; }
+    // the two choices (hook line 1, rule line 0)
+    if ((sc === 'hook' && li === 1) || (sc === 'rule' && li === 0)) {
+      const a = RT.ease(RT.p(t, l.start + 0.1, l.start + 0.5));
+      svg += `<g style="stroke-dasharray:14 12">${arc(0, 1, 'var(--cy)', 8, a)}${arc(0, 2, 'var(--pk)', 8, a)}</g>`;
+    }
+  }
+  $('g').innerHTML = svg;
+  // labels
+  let lab = '';
+  if ((sc === 'hook' && li === 1) || (sc === 'rule' && li === 0)) { const a = RT.p(t, l.start + 0.5, l.start + 0.8);
+    const [l1, l2] = sc === 'hook' ? ['1 stair', '2 stairs'] : ['ways(3)', 'ways(2)'];
+    lab += `<div class="lbl" style="left:${SX(1) - 60}px;top:${SY(1) - 150}px;opacity:${a};background:var(--cy);color:var(--bg)">${l1}</div><div class="lbl" style="left:${SX(2) - 30}px;top:${SY(2) - 200}px;opacity:${a};background:var(--pk);color:var(--bg)">${l2}</div>`; }
+  const plus1 = t0 => `<div class="lbl" style="left:${SX(N) - 50}px;top:${SY(N) - 190}px;transform:scale(${RT.pop(t, t0)});background:var(--ok);color:var(--bg);font-size:40px">+1</div>`;
+  if (sc === 'rule' && li === 1) lab += plus1(l.start + 0.3);
+  if (sc === 'rule' && li === 2) lab += `<div class="lbl" style="left:${SX(N + 1) - 34}px;top:${SY(N) + 30}px;opacity:${RT.p(t, l.start + 0.3, l.start + 0.6)};color:var(--bad);font-size:40px">0</div>`;
+  if (st && st.kind === 'found') lab += plus1(st.t0);
+  if (sc === 'trick' && li <= 1) for (const f of FILL) if (t >= f.t) lab += `<div class="num" style="left:${SX(f.i) - 75}px;top:${SY(f.i) - 120 - (f.sum ? 22 : 0)}px;transform:scale(${RT.pop(t, f.t)})">${f.v}${f.sum ? `<small>${f.sum}</small>` : ''}</div>`;
+  $('nums').innerHTML = lab;
+  // the ways found so far, as hop lists
+  const nFound = sc === 'trace' ? STEPS.filter(s => s.kind === 'found' && t >= s.t0).length : (sc === 'trick' && li === 0) ? WAYS.length : 0;
+  const wl = $('ways'); const html = WAYS.slice(0, nFound).map((w, i) => `<span style="background:${WCOL[i]}">${w.join(' + ')}</span>`).join('');
+  if (wl.dataset.k !== html) { wl.innerHTML = html; wl.dataset.k = html; }
+  wl.style.opacity = sc === 'trick' ? 0.35 : 1;
+  $('fib').style.opacity = sc === 'trick' && li === 1 ? RT.p(t, l.start + 0.1, l.start + 0.4) : 0;
+  if (sc === 'trick' && li === 1) wl.style.opacity = 0;
+  // robot
+  const ro = $('robot');
+  ro.style.opacity = show && sc !== 'trick' ? 1 : 0; ro.style.left = rb.x + 'px'; ro.style.top = rb.y + 'px';
+  const bob = sc === 'hook' ? Math.sin(t * 6) * 6 : 0;
+  ro.style.transform = `translateY(${bob}px) scale(${0.85 * rb.s})`;
+  // title row: the current call + counter
+  $('gtitle').style.opacity = show ? 1 : 0;
+  let call = `ways(${N})`, cc = 'var(--ink)';
+  if (st) { const left = N - (st.kind === 'off' ? st.from + st.j : st.to);
+    call = st.kind === 'off' ? `ways(${left}) → 0` : st.kind === 'found' ? `ways(0) → 1` : st.kind === 'back' ? `back to ways(${left})` : `ways(${left})`;
+    cc = st.kind === 'off' ? 'var(--bad)' : st.kind === 'found' ? 'var(--ok)' : 'var(--ink)'; }
+  if (sc === 'trick') call = `ways(${N}) = ${WAYS.length}`;
+  $('call').textContent = call; $('call').style.color = cc;
+  $('cn').textContent = sc === 'hook' || sc === 'rule' ? '?' : sc === 'trace' ? STEPS.filter(s => s.kind === 'found' && t >= s.t0).length : WAYS.length;
+  const lastF = STEPS.filter(s => s.kind === 'found' && t >= s.t0).pop();
+  $('cn').style.transform = lastF && sc === 'trace' && t - lastF.t0 < 0.3 ? 'scale(1.25)' : 'none';
+  // code highlight
+  let on = [];
+  if (sc === 'rule') on = [[6], [4, 5], [2, 3]][li];
+  if (sc === 'trace') on = !st ? [6] : st.kind === 'off' ? [2, 3] : st.kind === 'found' ? [4, 5] : [1, 6];
+  if (sc === 'trick') on = [6];
+  [...$('code').children].forEach((d, i) => d.classList.toggle('on', on.includes(i + 1)));
+  $('memo').style.opacity = sc === 'trick' && li === 3 ? RT.p(t, l.start, l.start + 0.3) : 0;
+  // big panel: 30 stairs
+  $('big').style.opacity = inBig ? RT.p(t, RT.L('trick', 2).start - 0.05, RT.L('trick', 2).start + 0.25) : 0;
+  if (inBig) {
+    const k2 = RT.L('trick', 2), k3 = RT.L('trick', 3);
+    let lit = 0;
+    if (li === 2) { const p = RT.ease(RT.p(t, k2.start + 0.3, k2.start + 1.6));
+      $('bk').textContent = '30 stairs'; $('bn').textContent = Math.round(1346269 * p).toLocaleString('en-US'); $('bn').style.color = 'var(--hi)'; $('bu').textContent = 'ways'; }
+    else { lit = Math.round(BIGN * RT.p(t, k3.start + 0.2, k3.end - 0.3));
+      $('bk').textContent = 'with saved answers'; $('bn').textContent = lit; $('bn').style.color = 'var(--ok)'; $('bu').textContent = 'steps ⚡'; }
+    for (let i = 0; i < BIGN; i++) { const r = $('m' + i); const on2 = i < lit;
+      r.setAttribute('fill', on2 ? 'var(--ok)' : 'rgba(255,255,255,.08)'); r.setAttribute('stroke', on2 ? 'var(--ok)' : 'var(--edge)'); }
+  }
+  $('cta').style.opacity = inCta ? RT.p(t, RT.S('cta').start, RT.S('cta').start + 0.3) : 0;
+  if (inCta) $('cta').firstElementChild.style.transform = `scale(${RT.pop(t, RT.S('cta').start + 0.1, 0.35)})`;
+};
+</script></body></html>

@@ -7,3 +7,5 @@ One row per posted video. Fill in the numbers about 48 hours after posting (from
 | Fibonacci (owner's original) | IG / YT | | neon game style | | 33 s | | | | | made before this toolkit; covers in neon and olive |
 | Unique Paths | IG | | neon | How many ways can this robot reach the flag? | 39 s | | | | | |
 | Unique Paths | YT | | neon | How many ways can this robot reach the flag? | 40 s | | | | | |
+| Climbing Stairs | IG | | neon | How many ways can this robot climb four stairs? | 41 s | | | | | ends on the Fibonacci link |
+| Climbing Stairs | YT | | neon | How many ways can this robot climb four stairs? | 42 s | | | | | |

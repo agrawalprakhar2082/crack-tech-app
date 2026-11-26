@@ -1,0 +1,36 @@
+{
+ "name": "climbing-stairs",
+ "frame": "climbing-stairs.html",
+ "speed": 1.1,
+ "scenes": [
+  {"id": "hook", "lines": [
+   ["How many ways can this robot climb four stairs?", "4 stairs. | How many *ways*?"],
+   ["It can hop one stair, or two stairs at a time.", "*1 stair* | or *2 stairs*"]
+  ]},
+  {"id": "rule", "lines": [
+   ["Recursion makes it easy. From any stair, try both hops.", "From any stair | try *both* hops"],
+   ["Reach the top? That's one way.", "Reach the top | = *1 way*"],
+   ["Jump past the top? That's zero.", "Jump past the top | = *0*"]
+  ]},
+  {"id": "trace", "lines": [
+   ["Now watch it explore. One stair first, then two.", "Watch: | *1 stair* first | then *2*"],
+   ["Each hop is one recursive call.", "Each hop = | one *recursive call*"],
+   ["When a way ends, it steps back and tries the bigger hop.", "Way ends? | *Step back* | try the bigger hop"],
+   ["Five ways in total.", "*5 ways* | in total ✅"]
+  ]},
+  {"id": "trick", "lines": [
+   ["Here's the trick. Each stair's count is the sum of the next two.", "Each stair = | *sum of the next two*"],
+   ["One, one, two, three, five. That's Fibonacci!", "1, 1, 2, 3, 5 = | *Fibonacci* 🤯"],
+   ["Thirty stairs have over a million ways.", "30 stairs = | *1,346,269* ways"],
+   ["Save each answer, and it takes about thirty steps.", "Save answers = | about *30 steps* ⚡"]
+  ]}
+ ],
+ "cta_yt": [
+  ["Subscribe for more coding, visualized.", "*Subscribe* | for more visual coding"],
+  ["Practice free at crack tech dot app.", "Practice free at | *cracktech.app*"]
+ ],
+ "cta_ig": [
+  ["Follow for more coding, visualized.", "*Follow* | for more visual coding"],
+  ["And save this for your next interview.", "*Save* this | for your next interview 🔖"]
+ ]
+}
