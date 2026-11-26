@@ -20,6 +20,15 @@ Build with the toolkit in `_content/visual/` (read its `README.md` first). The s
 - Everything important stays between y 180 and 1480. The caption pill stays within x 110–970: Instagram's like, comment and share buttons sit on the right below y≈1150, and its caption text covers the bottom.
 - Render with `render.sh <out>/ig`. Check the contact sheet, then send the MP4 with `SendUserFile`.
 
+## Loop Reels (Instagram only, no voice)
+When the owner asks for a short looping Reel with music and no explanation (e.g. "show how BFS works"), follow "Loop Reels" in `_content/visual/README.md`:
+- 10–15 s, and the first frame already shows the title and the whole puzzle;
+- the last frame equals the first, so it loops;
+- the dark-panel style;
+- original music from `bfs_music.py` (or a copy of it), plus a no-music version for an Instagram library track.
+
+Reference look: the owner's screenshots of an animation-only algorithm account (dark navy panels, code + visual + Big-O). Take the feel, not the design.
+
 ## Cover
 - Use the same 1080×1920 cover as YouTube (`_content/covers/<name>-cover.html?size=v`).
 - Instagram's profile grid shows only the middle 1080×1350 (y 285–1635). Check it with `convert cover.png -crop 1080x1350+0+285 grid.png` and look at it before sending.
