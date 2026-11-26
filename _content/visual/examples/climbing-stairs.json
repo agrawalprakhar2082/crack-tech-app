@@ -4,7 +4,7 @@
  "speed": 1.1,
  "scenes": [
   {"id": "hook", "lines": [
-   ["How many ways can this robot climb four stairs?", "4 stairs. | How many *ways*?"],
+   ["How many ways can this robot climb four stairs?", "4 stairs. How many *ways*? 🤔"],
    ["It can hop one stair, or two stairs at a time.", "*1 stair* | or *2 stairs*"]
   ]},
   {"id": "rule", "lines": [

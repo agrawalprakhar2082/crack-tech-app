@@ -1,11 +1,11 @@
-# Original 8-bit (chiptune) loop for the BFS Reel: 128 BPM, 32 beats = 15 s, loops seamlessly.
+# Original 8-bit (chiptune) loop for the BFS Reel, on the page's beat grid (default 144 BPM, 24 beats = 10 s); loops seamlessly.
 # Square-wave bass and arpeggio over Am-F-C-G, noise drums, and game-style bleeps on BFS events
 # from sfx.json (pop = visit a node, pitch rises with the level; enq = added to the queue;
 # seen = already visited; clear = all done). Everything is synthesized here: no samples, no
-# existing melodies. Usage: python3 bfs_music.py <dir>  -> <dir>/music.wav
+# existing melodies. Usage: python3 bfs_music.py <dir> [bpm beats]  -> <dir>/music.wav (beats a multiple of 4)
 import json, sys
 import numpy as np, soundfile as sf
-d = sys.argv[1]; SR = 44100; BPM = 128; BEAT = 60 / BPM; BEATS = 32; L = int(round(BEATS * BEAT * SR))
+d = sys.argv[1]; SR = 44100; BPM = float(sys.argv[2]) if len(sys.argv) > 2 else 144; BEAT = 60 / BPM; BEATS = int(sys.argv[3]) if len(sys.argv) > 3 else 24; L = int(round(BEATS * BEAT * SR))
 out = np.zeros(L + SR * 2)
 def note(m): return 440 * 2 ** ((m - 69) / 12)
 def sq(f, dur, duty=.5, vol=.2, dec=6.0, sweep=None):
@@ -21,8 +21,9 @@ def noise(dur, vol, dec, hp=False):
 def put(w, beat):
     i = int(round(beat * BEAT * SR)); out[i:i + len(w)] += w[:len(out) - i]
 CHORDS = [(57, [57, 60, 64]), (53, [53, 57, 60]), (48, [48, 52, 55]), (55, [55, 59, 62])]   # Am F C G
-for bar in range(8):
-    root, tones = CHORDS[bar % 4]
+PROG = [0, 1, 2, 3] * (BEATS // 16) + ([1, 3] if BEATS % 16 == 8 else [])          # 6 bars: Am F C G F G
+for bar in range(BEATS // 4):
+    root, tones = CHORDS[PROG[bar]]
     for k, off in enumerate([0, 1, 1.5, 2, 3, 3.5]):                      # bass groove
         put(sq(note(root - 12 + (12 if k in (2, 5) else 0)), BEAT * .45, .5, .16, 7), bar * 4 + off)
     for s in range(16):                                                   # 16th arpeggio

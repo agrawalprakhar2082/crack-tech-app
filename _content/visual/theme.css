@@ -7,6 +7,9 @@ html,body{margin:0;background:#000}
 .olive{--bg:#13150e;--card:#1a1d13;--card2:#22261a;--ink:#f6f3ec;--dim:#a9ad95;--edge:rgba(179,192,122,.3);--line:rgba(179,192,122,.08);
   --ok:#c9d68a;--hi:#f0d9a8;--bad:#ef8f7d;--cy:#9fd0c7;--pk:#e7b4d6;--glow:0}
 #v{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Geist,sans-serif}
+/* Instagram/Shorts safe box: everything inside #stage is scaled into x 40-920, y ~270-1460 (the app's buttons sit
+   on the right from x~945, the header on top, the username and caption at the bottom). The background fills the frame. */
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;transform:translate(-5px,115px) scale(.898)}
 #v::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px}
 .top{position:absolute;left:60px;right:60px;top:190px;display:flex;justify-content:space-between;align-items:center}
 .brand{display:flex;align-items:center;gap:14px;font-family:"Instrument Serif",serif;font-size:42px}

@@ -17,12 +17,12 @@ Build with the toolkit in `_content/visual/` (read its `README.md` first). The s
   - the ending says **Follow** (blue button) and **Save** ("Save this for your next interview");
   - there is no link, because Instagram has no links under a Reel;
   - the tail is short, so the end flows back into the hook. Replays count.
-- Everything important stays between y 180 and 1480. The caption pill stays within x 110–970: Instagram's like, comment and share buttons sit on the right below y≈1150, and its caption text covers the bottom.
+- Everything stays inside the safe box (the `#stage` wrapper: about x 40–920, y 270–1460). Instagram's buttons cover x > 940 from y ≈ 880, the header covers the top 130 px, and the username and caption cover y > 1640. The owner saw the earlier layout (cards out to x 1020) get covered. Run `safecheck.sh` on a few frames and the cover before every render.
 - Render with `render.sh <out>/ig`. Check the contact sheet, then send the MP4 with `SendUserFile`.
 
 ## Loop Reels (Instagram only, no voice)
 When the owner asks for a short looping Reel with music and no explanation (e.g. "show how BFS works"), follow "Loop Reels" in `_content/visual/README.md`:
-- 10–15 s, and the first frame already shows the title and the whole puzzle;
+- about 10 s (the owner trimmed BFS from 15 s, so keep the action filling the loop), and the first frame already shows the title and the whole puzzle;
 - the last frame equals the first, so it loops;
 - the dark-panel style;
 - original music from `bfs_music.py` (or a copy of it), plus a no-music version for an Instagram library track.
@@ -31,7 +31,7 @@ Reference look: the owner's screenshots of an animation-only algorithm account (
 
 ## Cover
 - Use the same 1080×1920 cover as YouTube (`_content/covers/<name>-cover.html?size=v`).
-- Instagram's profile grid shows only the middle 1080×1350 (y 285–1635). Check it with `convert cover.png -crop 1080x1350+0+285 grid.png` and look at it before sending.
+- Instagram's profile grid shows the middle 3:4 (1080×1440, y 240–1680). Check it with `convert cover.png -crop 1080x1440+0+240 grid.png`, and run `safecheck.sh` on the cover before sending.
 - Send neon and olive versions.
 - Tell the owner to set it with "Edit cover → Add from camera roll" and to keep "Show on profile grid" on.
 

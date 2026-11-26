@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset="utf-8">
-<!-- BFS loop Reel (no voice; dark-panel style): 15 s at 128 BPM (32 beats); music by bfs_music.py on the same beat grid.
+<!-- BFS loop Reel (no voice; dark-panel style): 10 s at 144 BPM (24 beats); music by bfs_music.py on the same beat grid.
      Frame 0 and the last frame are the same state, so it loops seamlessly. How to render: _content/visual/README.md ("Loop Reels"). -->
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;700;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -8,9 +8,10 @@ html,body{margin:0;background:#000}
 #v{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Geist,sans-serif}
 .head{position:absolute;left:0;right:0;top:175px;display:flex;justify-content:center;align-items:center;gap:20px;font-weight:900;font-size:64px;letter-spacing:-.01em}
 .pill{background:var(--green);color:#03110a;padding:4px 22px 8px;border-radius:16px}
-.handle{position:absolute;right:60px;top:120px;font-family:"Geist Mono",monospace;font-weight:700;font-size:26px;color:#3fb6c9}
+.handle{position:absolute;right:70px;top:1508px;font-family:"Geist Mono",monospace;font-weight:700;font-size:26px;color:#3fb6c9}
 .panel{position:absolute;left:50px;right:50px;background:var(--panel);border:2px solid var(--edge);border-radius:28px}
 .k{position:absolute;font-family:"Geist Mono",monospace;font-weight:700;font-size:24px;letter-spacing:.18em;color:var(--dim)}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;transform:translate(-5px,115px) scale(.898)}
 svg#g{position:absolute;left:0;top:0;width:1080px;height:1920px}
 .code{position:absolute;left:80px;top:1000px;font-family:"Geist Mono",monospace;font-size:29px;line-height:44px}
 .code div{white-space:pre;padding:0 12px;border-radius:10px;border:2px solid transparent}
@@ -22,7 +23,7 @@ svg#g{position:absolute;left:0;top:0;width:1080px;height:1920px}
 .bigo span{display:block;margin-top:6px;font-size:26px;color:#aab2c2}
 .slot{position:absolute;width:62px;height:62px;border-radius:14px;border:3px solid #243043;box-sizing:border-box;display:grid;place-items:center;font-family:"Geist Mono",monospace;font-weight:700;font-size:28px}
 </style></head><body>
-<div id="v">
+<div id="v"><div id="stage">
  <div class="handle">cracktech.app</div>
  <div class="head">BFS <span class="pill">Breadth-First Search</span></div>
  <div class="panel" style="top:290px;height:660px"></div>
@@ -46,30 +47,31 @@ svg#g{position:absolute;left:0;top:0;width:1080px;height:1920px}
   <filter id="glow" filterUnits="userSpaceOnUse" x="0" y="0" width="1080" height="1920"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   <clipPath id="gp"><rect x="52" y="292" width="976" height="656" rx="26"/></clipPath>
   <filter id="soft" filterUnits="userSpaceOnUse" x="0" y="0" width="1080" height="1920"><feGaussianBlur stdDeviation="4"/></filter></defs><g id="gg"></g></svg>
-</div>
+</div></div>
 <script>
-const BPM = 128, BEAT = 60 / BPM, TOTAL = 32;                 // 32 beats = 15 s
+const BPM = 144, BEAT = 60 / BPM, TOTAL = 24;                 // 24 beats = 10 s
 const N = {A:[540,410], B:[270,565], C:[540,565], D:[810,565], E:[180,720], F:[410,720], G:[670,720], H:[900,720], I:[295,875], J:[785,875]};
 const LEVEL_Y = [410, 565, 720, 875];
 const EDGES = [['A','B'],['A','C'],['A','D'],['B','E'],['B','F'],['C','F'],['C','G'],['D','G'],['D','H'],['E','I'],['F','I'],['G','J'],['H','J']];
 const LC = ['#4cc9ff', '#c48bff', '#ffb627', '#2fe28a'];      // colour per BFS level
 const RED = '#ff4d6d', R0 = 46;
 const ADJ = {}; for (const k in N) ADJ[k] = []; for (const [a, b] of EDGES) { ADJ[a].push(b); ADJ[b].push(a); } for (const k in ADJ) ADJ[k].sort();
-// BFS from A on the beat grid: A enqueued at beat 1; pop i at beat 2 + 2i; neighbour k checked at +0.5(k+1) beats.
+// BFS from A on the beat grid: A enqueued at beat 0.5; pop i at beat 1 + 2i; neighbour k checked at +0.5(k+1) beats.
 const ST = {}, CHECKS = [], ORDER = [], EVENTS = [];
 for (const k in N) ST[k] = { td: Infinity, tp: Infinity, lvl: 0 };
-ST.A.td = 1; EVENTS.push({ b: 1, kind: 'enq', lvl: 0 });
+ST.A.td = 0.5; EVENTS.push({ b: 0.5, kind: 'enq', lvl: 0 });
 const q = ['A']; let i = 0;
 while (q.length) {
-  const u = q.shift(), tp = 2 + 2 * i; ST[u].tp = tp; ORDER.push(u); EVENTS.push({ b: tp, kind: 'pop', lvl: ST[u].lvl });
+  const u = q.shift(), tp = 1 + 2 * i; ST[u].tp = tp; ORDER.push(u); EVENTS.push({ b: tp, kind: 'pop', lvl: ST[u].lvl });
   ADJ[u].forEach((v, k) => { const b = tp + 0.5 * (k + 1), fresh = ST[v].td === Infinity;
     CHECKS.push({ u, v, b, fresh }); EVENTS.push({ b, kind: fresh ? 'enq' : 'seen', lvl: ST[u].lvl + 1 });
     if (fresh) { ST[v].td = b; ST[v].lvl = ST[u].lvl + 1; q.push(v); } });
   i++;
 }
-const RESET = 28;                   // beats 28-30 fade back to the start; 30-32 = the start state (same as frame 0)
+const RESET = 21.5, FADE = 1.5;     // all done at beat 21; 21.5-23 fade back to the start; 23-24 = the start state (same as frame 0)
 window.SFX = EVENTS.map(e => ({ t: +(e.b * BEAT).toFixed(4), kind: e.kind, lvl: e.lvl }));
-window.SFX.push({ t: +((2 + 2 * ORDER.length) * BEAT).toFixed(4), kind: 'clear', lvl: 0 });
+window.SFX.push({ t: +((1 + 2 * ORDER.length) * BEAT).toFixed(4), kind: 'clear', lvl: 0 });
+window.MUSIC = { bpm: BPM, beats: TOTAL };
 const WAVES = [1, 2, 3].map(L => ({ L, b: Math.min(...Object.keys(N).filter(k => ST[k].lvl === L).map(k => ST[k].td)) }));
 const ease = p => 1 - Math.pow(1 - p, 3), clamp = p => Math.max(0, Math.min(1, p)), mix = (a, b, p) => a + (b - a) * p;
 const $ = id => document.getElementById(id);
@@ -83,7 +85,7 @@ $('slots').innerHTML = sl + '<div id="qi"></div>';
 window.setup = () => {};
 window.setT = t => {
   const b = (t / BEAT) % TOTAL;
-  const fade = b >= RESET ? clamp((b - RESET) / 2) : 0, vis = 1 - ease(fade);
+  const fade = b >= RESET ? clamp((b - RESET) / FADE) : 0, vis = 1 - ease(fade);
   const bs = b >= RESET ? RESET - 0.01 : b;
   let s = '', top = '';
   // level guides
@@ -118,8 +120,8 @@ window.setT = t => {
     if (cur && vis > .5) s += `<circle cx="${x}" cy="${y}" r="${r + 16}" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="12 10" transform="rotate(${bs * 60} ${x} ${y})"/>`;
     const fill = (cur || done) && vis > .5 ? '#060a10' : queued && vis > .5 ? '#fff' : '#5b6578';
     s += `<text x="${x}" y="${y + 11}" text-anchor="middle" font-family="Geist Mono" font-weight="700" font-size="32" fill="${fill}">${k}</text>`; }
-  if (bs < 1.6) codeOn = bs >= 0.6 ? [1] : [];
-  if (bs >= 2 + 2 * ORDER.length - 0.3 && b < RESET) codeOn = [2];
+  if (bs < 1) codeOn = bs >= 0.3 ? [1] : [];
+  if (bs >= 1 + 2 * ORDER.length - 0.3 && b < RESET) codeOn = [2];
   $('gg').innerHTML = s + top;
   [...$('code').children].forEach((d, j) => { d.classList.toggle('on', codeOn.includes(j + 1) && vis > .5); d.classList.toggle('bad', codeBad.includes(j + 1) && vis > .5); });
   // queue: arrival order in the slots; the front one lifts out when visited

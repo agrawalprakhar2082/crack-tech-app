@@ -48,7 +48,17 @@ The skills `youtube-short` and `instagram-reel` (in `.claude/skills/`) say when 
 
 ## Loop Reels (no voice, music only)
 - For Instagram-only "watch it loop" Reels: 10–15 s, no narration, the animation does all the explaining. First example: `bfs.html` (BFS on a 10-node graph, Nov 2026), styled after the owner's reference (an animation-only algorithm account): near-black navy, dark rounded panels, crisp outlined shapes that fill when active, code with the running line highlighted, a big Big-O, small monospace labels, one colour per BFS level. Use our own layout and branding; never copy another account's design.
-- The page has no voice timeline: it runs on a beat grid (128 BPM, 32 beats = 15 s) and its `window.SFX` events (pop/enq/seen/clear) drive the music. The last frame equals the first (everything fades back to the start), so it loops seamlessly.
-- Render: copy the page to `out/<name>/frame.html`, write `{"duration": 15.0, "scenes": []}` to `timeline.json`, `node render.js out/<name> 30` (writes the frames and `sfx.json`), `python3 bfs_music.py out/<name>` (original 8-bit chiptune made by the script on the same grid; it wraps the tail into the start so the audio loops too), then ffmpeg the frames with `music.wav` (loudnorm −14) and once without audio, so the owner can add a track from Instagram's library instead.
+- Keep them tight: the owner cut BFS to 10 s ("nothing much happens at the end"), so the action fills the loop, with only a short done-state and a quick fade back.
+- The page has no voice timeline: it runs on a beat grid (BFS: 144 BPM, 24 beats = 10 s) and its `window.SFX` events (pop/enq/seen/clear) drive the music. The last frame equals the first (everything fades back to the start), so it loops seamlessly.
+- Render: copy the page to `out/<name>/frame.html`, write `{"duration": 10.0, "scenes": []}` to `timeline.json`, `node render.js out/<name> 30` (writes the frames and `sfx.json`), `python3 bfs_music.py out/<name> <bpm> <beats>` (original 8-bit chiptune made by the script on the same grid; it wraps the tail into the start so the audio loops too), then ffmpeg the frames with `music.wav` (loudnorm −14) and once without audio, so the owner can add a track from Instagram's library instead.
 - Music: never use copyrighted game music or sound effects (the owner asked for Mario; Nintendo's music would get the Reel muted). Make an original track in that spirit, or suggest a licensed track from Instagram's library.
 - Gotchas: an SVG filter on a perfectly vertical or horizontal line disappears unless the filter uses `filterUnits="userSpaceOnUse"` with a full-frame region. Clip effects (wave rings) to their panel. In code blocks, put `white-space:pre` on the line divs, not the container, or the whitespace between them shows as blank lines.
+
+## Safe area (Instagram and Shorts)
+- Measured from a phone screenshot (Nov 2026), in 1080×1920 video pixels:
+  - the app's header covers y < 130;
+  - the like/comment/share buttons cover x > 940 from y ≈ 880 down;
+  - the username and caption cover y > 1640;
+  - tall phones crop ~25 px at each side.
+- Every page wraps its content in `#stage`, scaled to 0.898 into roughly x 40–920, y 270–1460 (rule in `theme.css`; `bfs.html` has its own copy). The background still fills the frame. Covers do the same for `size=v`, and keep everything inside the 3:4 profile-grid crop (y 240–1680).
+- Check before rendering: `bash safecheck.sh out.png frame1.png …` draws the covered zones in red over frames.
