@@ -5,7 +5,12 @@ description: Make and package a Crack Tech Instagram Reel in the visual explaine
 
 # Instagram Reel (visual explainer)
 
-Build with the toolkit in `_content/visual/` (read its `README.md` first). The script rules are in the `youtube-short` skill, section 1: simple, the smallest example, hook in the first second, 30–45 s, numbers verified. Use them here too.
+Build with the toolkit in `_content/visual/` (read its `README.md` first). The script rules are in the `youtube-short` skill, section 1: simple, the smallest example, hook in the first second, 30–45 s, numbers verified. Use them here too, including **"Lessons from posting"** there:
+- the question goes in the very first frame;
+- each Reel looks different from the last;
+- prefer fresh angles;
+- never post near-copies close together;
+- diagnose with skip rate and watch time.
 
 ## Reel-specific build
 - `make.py` already writes `out/<name>/ig`:
@@ -35,10 +40,16 @@ Build with the toolkit in `_content/visual/` (read its `README.md` first). The s
 - Add an instrumental track **in the app**, at 5–10% under the voice: the same lo-fi or energetic beat for the whole series. Trending audio helps only if it fits.
 - New series or a new theme: post it as a **Trial reel** first. It's shown to non-followers, which tells you whether the hook works. Share it to the main grid if it does well after 24–48 hours.
 - Pin a comment (the answer, or "Full walkthrough + free practice: link in bio"). Reply to comments in the first hour.
+- **One Reel every 24–48 hours, at roughly the same time of day.** On a new account, Reels posted close together compete for the same small test audience of non-followers.
+- **Wait 48 hours before judging,** because Reels often pick up late. Never delete and repost.
+- **Check Account status** if reach suddenly drops: Settings → Account status, where nothing should be listed under "Content that may not be recommended".
 - Keep the account separate from personal contacts: no contact syncing or personal invites (owner's rule).
 
 ## Learning
-- Ask the owner for the 48-hour numbers: views, average watch time or % watched to the end, saves, shares, follows. Record them in `_content/visual/LOG.md` with the theme and hook.
+- Ask the owner for the 48-hour numbers: views, **skip rate**, average watch time or % watched to the end, saves, shares, follows. Record them in `_content/visual/LOG.md` with the theme, the hook and the hours since the previous post.
+- Read the numbers like this:
+  - a higher skip rate than usual means the opening failed (fix the first frame or hook);
+  - similar skip rate and watch time but fewer views means timing or luck.
 - After 6 or more posts, keep the theme and hook style that win on watch time and saves.
 - Don't promise follower or view numbers.
 

@@ -21,6 +21,14 @@ Build with the toolkit in `_content/visual/` (read its `README.md` first). One s
 - **Accuracy:** compute every number (Python) before it goes in the script, and never copy LeetCode's problem text. Use your own words; naming the problem ("Unique Paths") is fine.
 - **Series:** end on an idea that links to the next video (Fibonacci and Unique Paths both end on "save answers"). Name the next topic in the caption or a pinned comment.
 
+### Lessons from posting (November 2026, account at ~10 followers)
+Unique Paths got 100+ views within minutes. Climbing Stairs, posted next in the same style, didn't get picked up. Both were in English. What we took from it:
+- **The first frame must already ask the question, with the puzzle on screen.** The first caption chunk carries the full hook ("4 stairs. How many ways? 🤔"), never a fragment like "4 STAIRS." on its own. Check the first preview frame for this before rendering.
+- **Make each video look different from the last one.** On a new account, almost every view comes from strangers in small test batches. A Reel that looks like the previous one gets swiped as "seen this". Between consecutive videos, change at least two of: the theme, the opening visual or character, the hook style (question / shocking number / "mistake everyone makes"), and the accent colour.
+- **Prefer fresh angles to over-covered classics.** Climbing Stairs and Fibonacci have thousands of Reels. Give a classic a twist ("it's secretly Fibonacci" in the hook) or mix in less-covered topics and system design.
+- **Never post near-copies on the same account close together,** e.g. the English and Hinglish versions of one video. Instagram shows less-original Reels to fewer people. Space them several days apart, with a clearly different cover and first frame, or use a separate account.
+- **Diagnose before changing things.** Ask for each video's skip rate and average watch time at 48 hours. A high skip rate means the hook or opening is the problem; similar numbers with low views mean timing or luck. At ~100 views, randomness is large.
+
 ## 2. Build
 1. Write `_content/visual/examples/<name>.json` and `_content/visual/<name>.html` (copy `unique-paths.*`). Theme: `neon` by default, `--theme olive` for the A/B test (see step 4).
 2. Run `make.py`, then `render.sh <out>/yt preview`. Check `sheet.jpg` for:
@@ -51,6 +59,8 @@ Make neon and olive both, so the owner can pick. The cover asks the hook questio
 
 ## 5. Posting and learning
 - Post a few hours apart from the Instagram Reel, not at the same minute. Reply to early comments in the first hour.
+- **One video every 24–48 hours per platform, at roughly the same time of day.** Two posts close together compete for the same small test audience.
+- **Judge at 48 hours, not in the first minutes.** Never delete and repost the same video; reposts tend to reach fewer people.
 - **Theme test:** alternate neon and olive across similar videos. Ask the owner for 48-hour views, average view duration (% viewed) and subscribers gained, and record them in `_content/visual/LOG.md`. Then keep the winner as the default, and say what the data shows (a few posts is noise; look for a trend over 6+).
 - Don't promise follower or view numbers. Explain what drives them: the hook in the first second, viewers staying past 70%, replays, shares and saves.
 
