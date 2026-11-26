@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8">
-<!-- Unique Paths cover (same layout and options as fibonacci-cover.html). Open with ?size=v (1080x1920, Reel / Short) or ?size=h (1280x720, YouTube thumbnail)
+<!-- Unique Paths cover (same layout and options as fibonacci-cover.html). Add &lang=hi for the Hinglish version (Hindi badge + Hinglish text). Open with ?size=v (1080x1920, Reel / Short) or ?size=h (1280x720, YouTube thumbnail)
      and &theme=neon or &theme=olive. Render: node shot.js "$PWD/fibonacci-cover.html?size=v&theme=neon" out.png 1080 1920 -->
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;600;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Noto+Sans+Devanagari:wght@800&family=Geist:wght@400;600;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 html,body{margin:0;background:#000}
 
@@ -26,6 +26,11 @@ svg text{font-family:"Geist Mono",monospace;font-weight:700}
 .legend{display:flex;gap:1.2em;font-family:"Geist Mono",monospace;font-weight:500;color:var(--dim)}
 .legend i{display:inline-block;width:.8em;height:.8em;border-radius:50%;margin-right:.35em;vertical-align:-.05em}
 
+.hindi{position:absolute;font-family:"Noto Sans Devanagari",sans-serif;font-weight:800;color:var(--bg);background:var(--pk);border-radius:.3em;transform:rotate(-6deg);line-height:1.5;box-shadow:0 0 calc(var(--g,1)*50px) rgba(255,122,217,.55);display:none}
+.hindi small{display:block;font-family:"Geist Mono",monospace;font-weight:700;letter-spacing:.14em;font-size:.36em;line-height:1.2}
+.olive .hindi{box-shadow:none}
+.v .hindi{right:24px;top:540px;font-size:70px;padding:8px 24px 14px;text-align:center}
+.h .hindi{left:520px;top:36px;font-size:44px;padding:4px 20px 10px;text-align:center}
 /* vertical 1080x1920: everything that matters sits in the middle 1080x1350 (y 285–1635), which the profile grid shows */
 .v #v{width:1080px;height:1920px}
 .v .brand{position:absolute;left:0;right:0;top:120px;justify-content:center;font-size:46px}
@@ -55,19 +60,27 @@ svg text{font-family:"Geist Mono",monospace;font-weight:700}
 <div id="v">
  <div class="glow" id="g1"></div><div class="glow" id="g2"></div>
  <div class="brand"><span class="mark"><svg width="58%" height="58%" viewBox="0 0 32 32"><path d="M12 9l-6 7 6 7M20 9l6 7-6 7" stroke="#f6f3ec" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Crack Tech</div>
+ <div class="hindi" id="hindi">हिंदी में<small>IN HINDI</small></div>
  <div class="main">
-  <span class="chip" style="background:var(--cy)">🤖 Recursion, visualized</span>
-  <div class="calls">How many<br><em>paths</em> to 🏁?</div>
+  <span class="chip" id="chip" style="background:var(--cy)">🤖 Recursion, visualized</span>
+  <div class="calls" id="head">How many<br><em>paths</em> to 🏁?</div>
  </div>
  <svg class="tree" id="tree"></svg>
- <div class="legend"><span style="color:var(--cy)">→ right</span><span style="color:var(--pk)">↓ down</span><span>that's all it can do</span></div>
- <div class="fix">Watch it try them all →</div>
+ <div class="legend" id="legend"><span style="color:var(--cy)">→ right</span><span style="color:var(--pk)">↓ down</span><span>that's all it can do</span></div>
+ <div class="fix" id="fix">Watch it try them all →</div>
  <div class="handle">cracktech.app</div>
 </div>
 <script>
 const q = new URLSearchParams(location.search);
 const size = q.get('size') || 'v', theme = q.get('theme') || 'neon';
 document.body.className = size + ' ' + theme;
+if (q.get('lang') === 'hi') {
+  document.getElementById('hindi').style.display = 'block';
+  document.getElementById('chip').textContent = '🤖 Recursion, Hinglish mein';
+  document.getElementById('head').innerHTML = 'Flag tak kitne<br><em>paths</em>? 🏁';
+  document.getElementById('legend').innerHTML = '<span style="color:var(--cy)">→ right</span><span style="color:var(--pk)">↓ down</span><span>bas itna hi</span>';
+  document.getElementById('fix').textContent = 'Dekho, robot sab try karta hai →';
+}
 const neon = theme === 'neon', css = n => getComputedStyle(document.body).getPropertyValue(n).trim();
 const g1 = document.getElementById('g1'), g2 = document.getElementById('g2');
 Object.assign(g1.style, size === 'v' ? {left:'-260px', top:'300px', width:'900px', height:'900px'} : {left:'-300px', top:'-200px', width:'900px', height:'900px'});
