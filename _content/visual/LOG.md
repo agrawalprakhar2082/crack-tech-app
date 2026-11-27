@@ -14,3 +14,4 @@ One row per posted video. Fill in the numbers about 48 hours after posting (from
 
 ## Learnings so far
 - Nov 2026 (10 followers): Unique Paths was picked up within minutes; Climbing Stairs (same template, posted next, English too) wasn't. Likely causes: the same look as the previous Reel, a heavily covered topic, a weaker first second ("4 STAIRS." on its own before the question), and posts close together. Being acted on: the question goes in the first frame, each Reel gets a different look, one post every 24–48 h, judge at 48 h with skip rate. See "Lessons from posting" in `.claude/skills/youtube-short/SKILL.md`.
+- Nov 2026: the owner reports the BFS and DFS loop Reels (10 s, music only, dark panels, cracktech.app on top) performed better than the narrated explainers. The loop format is now the default in the `instagram-reel` skill (section 1); the narrated format stays for step-by-step explanations. Add their numbers above when available.

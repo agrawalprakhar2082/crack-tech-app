@@ -1,11 +1,13 @@
 ---
 name: youtube-short
-description: Make and package a Crack Tech YouTube Short in the visual explainer style (a step-by-step trace of code or a system design idea, e.g. Unique Paths with a robot on a grid), plus its cover, title, description, tags and posting checklist. Use when the owner asks for a YouTube Short or video on a coding/DSA or system design topic, a YouTube thumbnail, or YouTube tags/title for a video. For the Instagram cut use instagram-reel (same build, run both).
+description: Make and package a Crack Tech YouTube Short, either a 10-second music-only algorithm loop (the best performer, recipe in instagram-reel) or a narrated visual explainer (a step-by-step trace of code or a system design idea, e.g. Unique Paths with a robot on a grid), plus its cover, title, description, tags and posting checklist. Use when the owner asks for a YouTube Short or video on a coding/DSA or system design topic, a YouTube thumbnail, or YouTube tags/title for a video. For the Instagram cut use instagram-reel (same build, run both).
 ---
 
 # YouTube Short (visual explainer)
 
 Build with the toolkit in `_content/visual/` (read its `README.md` first). One spec makes the Short and the Reel, so make both unless told otherwise, and use the `instagram-reel` skill for the Instagram half.
+
+**What performs best so far (Nov 2026): the 10-second music-only loop Reels** (BFS and DFS: dark panels, the algorithm animating with code, Big-O, the data structure and the result row; `cracktech.app` on top). Their recipe is in the `instagram-reel` skill, section 1. The same MP4 works as a Short. Title it `<ALGO> in 10 seconds 👀 #shorts`, use the music version (or a YouTube Audio Library track), and set the pair as each other's Related video. Use the narrated format below when the owner wants something explained step by step.
 
 ## 1. Plan the script (the part that decides views)
 - **Simple beats clever.** The owner wants explanations a beginner follows on first watch:
