@@ -62,3 +62,4 @@ The skills `youtube-short` and `instagram-reel` (in `.claude/skills/`) say when 
   - tall phones crop ~25 px at each side.
 - Every page wraps its content in `#stage`, scaled to 0.898 into roughly x 40–920, y 270–1460 (rule in `theme.css`; `bfs.html` has its own copy). The background still fills the frame. Covers do the same for `size=v`, and keep everything inside the 3:4 profile-grid crop (y 240–1680).
 - Check before rendering: `bash safecheck.sh out.png frame1.png …` draws the covered zones in red over frames.
+- Branding: loop Reels show `cracktech.app` centred above the title (owner, Nov 2026), so it's on the cover and in every frame; their `#stage` sits a little lower (translate y 170) to make room.
