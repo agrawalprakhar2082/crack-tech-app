@@ -1,0 +1,94 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Load balancer loop Reel (no voice): the same 16 requests from 4 clients go through 4 strategies (round robin, least
+     connections, IP hash, weighted round robin) to 3 servers, where S2 is slow. 10 s loop at 144 BPM; music by
+     bfs_music.py from window.SFX. Frame 0 = last frame. Render: "Loop Reels" in README.md. -->
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;700;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#000}
+:root{--bg:#070a10;--panel:#0d121b;--edge:#1c2433;--dim:#6b7486;--ink:#e8ecf3;--acc:#4cc9ff}
+#v{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Geist,sans-serif}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;transform:translate(-5px,170px) scale(.898)}
+.handle{position:absolute;left:0;right:0;top:112px;text-align:center;font-family:"Geist Mono",monospace;font-weight:700;font-size:30px;letter-spacing:.06em;color:#3fb6c9}
+.head{position:absolute;left:0;right:0;top:175px;display:flex;justify-content:center;align-items:center;gap:20px;font-weight:900;font-size:62px;letter-spacing:-.01em}
+.pill{background:var(--acc);color:#04121a;padding:4px 22px 8px;border-radius:16px}
+.panel{position:absolute;left:50px;right:50px;background:var(--panel);border:2px solid var(--edge);border-radius:28px}
+.name{position:absolute;left:84px;font-weight:800;font-size:33px}
+.rule{position:absolute;left:84px;width:380px;font-family:"Geist Mono",monospace;font-weight:500;font-size:22px;line-height:1.35;color:var(--dim)}
+.badge{position:absolute;left:84px;max-width:330px;font-family:"Geist Mono",monospace;font-weight:700;font-size:22px;line-height:1.3;padding:6px 12px;border-radius:10px}
+.foot{position:absolute;left:84px;right:84px;top:1430px;display:flex;justify-content:space-between;font-family:"Geist Mono",monospace;font-weight:700;font-size:25px;color:#aab2c2}
+.foot i{font-style:normal}
+svg#g{position:absolute;left:0;top:0;width:1080px;height:1920px}
+</style></head><body>
+<div id="v"><div id="stage">
+ <div class="handle">cracktech.app</div>
+ <div class="head">Load Balancing <span class="pill">4 Strategies</span></div>
+ <div id="rows"></div>
+ <div class="panel" style="top:1410px;height:84px"></div>
+ <div class="foot"><span>🐢 S2 is 3× slower</span><span>clients <i style="color:#4cc9ff">●A</i> <i style="color:#ff5fa2">●B</i> <i style="color:#ffb627">●C</i> <i style="color:#2fe28a">●D</i></span></div>
+ <svg id="g"><defs><filter id="glow" filterUnits="userSpaceOnUse" x="0" y="0" width="1080" height="1920"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g id="gg"></g></svg>
+</div></div>
+<script>
+const OFF = 0.5, FADE0 = 9.2, FADE1 = 9.85, TRAVEL_IN = 0.25, TRAVEL = 0.35;
+const CLIENT = { A: '#4cc9ff', B: '#ff5fa2', C: '#ffb627', D: '#2fe28a' };
+const REQ = [...Array(16).keys()].map(i => ({ t: +(0.3 + 0.38 * i).toFixed(2), c: 'ABCD'[(i * 3 + Math.floor(i / 4)) % 4] }));
+const DUR = [0.9, 2.6, 0.9];                          // S2 is slow
+const W = [0, 2, 0, 2, 1, 2];                         // weighted round robin order for weights S1:2, S2:1, S3:3
+const ROWS = [
+  { name: 'Round Robin', col: '#4cc9ff', rule: 'S1 → S2 → S3 → repeat', badge: '⚠ slow S2 piles up', pick: (r, j) => j % 3 },
+  { name: 'Least Connections', col: '#c48bff', rule: 'fewest active requests wins', badge: '✓ steers around slow S2', pick: (r, j, act) => [0, 1, 2].sort((a, b) => act[a] - act[b] || a - b)[0] },
+  { name: 'IP Hash', col: '#ffb627', rule: 'same client → same server', badge: '📌 B + D both hit S2', pick: (r, j) => ({ A: 0, B: 1, C: 2, D: 1 })[REQ[j].c] },
+  { name: 'Weighted RR', col: '#2fe28a', rule: 'weights S1:2 · S2:1 · S3:3', badge: '⚖ even load: max 2', pick: (r, j) => W[j % 6] },
+];
+// simulate each strategy: which server each request goes to, and when it finishes
+ROWS.forEach(r => { r.srv = []; r.end = []; REQ.forEach((q, j) => {
+  const act = [0, 1, 2].map(s => REQ.slice(0, j).filter((p, k) => r.srv[k] === s && r.end[k] > q.t).length);
+  const s = r.pick(r, j, act); r.srv.push(s); r.end.push(q.t + DUR[s]); }); });
+window.SFX = REQ.map((q, j) => ({ t: +(q.t + OFF).toFixed(3), kind: 'pop', lvl: 'ABCD'.indexOf(q.c) + 1 }));
+// a bonk whenever a server reaches 3 active requests in any row
+ROWS.forEach(r => REQ.forEach((q, j) => { const s = r.srv[j]; const n = REQ.filter((p, k) => r.srv[k] === s && p.t <= q.t && r.end[k] > q.t).length; if (n >= 3) window.SFX.push({ t: +(q.t + OFF + TRAVEL).toFixed(3), kind: 'seen', lvl: 0 }); }));
+window.SFX.push({ t: 9.1, kind: 'clear', lvl: 0 });
+const ease = p => 1 - Math.pow(1 - p, 3), clamp = p => Math.max(0, Math.min(1, p)), mix = (a, b, p) => a + (b - a) * p;
+const $ = id => document.getElementById(id);
+const TOP = i => 290 + i * 280, H = 262, LBX = 545, SX0 = 760, SX1 = 992, SH = 58;
+const SY = (T, s) => T + 48 + s * 70;                  // server box top
+$('rows').innerHTML = ROWS.map((r, i) => `<div class="panel" style="top:${TOP(i)}px;height:${H}px"></div>
+  <div class="name" style="top:${TOP(i) + 20}px;color:${r.col}">${r.name}</div><div class="rule" style="top:${TOP(i) + 66}px">${r.rule}</div>
+  <div class="badge" id="b${i}" style="top:${TOP(i) + 176}px;color:${r.col};background:${r.col}1f;opacity:0">${r.badge}</div>`).join('');
+
+window.setup = () => {};
+window.setT = t => {
+  const vis = 1 - ease(clamp((t - FADE0) / (FADE1 - FADE0)));
+  const s = Math.min(t, FADE0) - OFF;
+  let g = '', top = '';
+  ROWS.forEach((r, i) => {
+    const T = TOP(i), ly = T + 147;
+    // links and the load balancer
+    for (let k = 0; k < 3; k++) g += `<line x1="${LBX}" y1="${ly}" x2="${SX0}" y2="${SY(T, k) + SH / 2}" stroke="#1f2836" stroke-width="5"/>`;
+    g += `<line x1="430" y1="${ly}" x2="${LBX - 40}" y2="${ly}" stroke="#1f2836" stroke-width="5" stroke-dasharray="2 10" stroke-linecap="round"/>`;
+    g += `<rect x="${LBX - 40}" y="${ly - 40}" width="80" height="80" rx="18" transform="rotate(45 ${LBX} ${ly})" fill="#0a0e15" stroke="${r.col}" stroke-width="5"/>`;
+    g += `<text x="${LBX}" y="${ly + 10}" text-anchor="middle" font-family="Geist Mono" font-weight="700" font-size="28" fill="${r.col}">LB</text>`;
+    // servers with their active requests
+    for (let k = 0; k < 3; k++) {
+      const act = REQ.map((q, j) => j).filter(j => r.srv[j] === k && REQ[j].t + TRAVEL <= s && r.end[j] > s);
+      const n = act.length, hot = n >= 3 ? '#ff4d6d' : n === 2 ? '#ffb627' : '#2a3446';
+      const y0 = SY(T, k);
+      g += `<rect x="${SX0}" y="${y0}" width="${SX1 - SX0}" height="${SH}" rx="14" fill="#0a0e15" stroke="${vis > .5 ? hot : '#2a3446'}" stroke-width="${n >= 3 && vis > .5 ? 5 : 3}" ${n >= 3 && vis > .5 ? 'filter="url(#glow)"' : ''}/>`;
+      g += `<text x="${SX0 + 16}" y="${y0 + 38}" font-family="Geist Mono" font-weight="700" font-size="26" fill="#aab2c2">S${k + 1}</text>${k === 1 ? `<text x="${SX1 - 40}" y="${y0 + 39}" font-size="26">🐢</text>` : ''}`;
+      act.forEach((j, p) => { const pin = ease(clamp((s - REQ[j].t - TRAVEL) / 0.15)), out = clamp((s - (r.end[j] - 0.2)) / 0.2);
+        top += `<circle cx="${SX0 + 80 + p * 27}" cy="${y0 + SH / 2}" r="${11 * (0.6 + 0.4 * pin)}" fill="${CLIENT[REQ[j].c]}" opacity="${(1 - out) * vis}"/>`; });
+    }
+    // requests in flight: client -> LB -> server
+    REQ.forEach((q, j) => {
+      const p0 = (s - (q.t - TRAVEL_IN)) / TRAVEL_IN; if (p0 < 0) return;
+      const col = CLIENT[q.c];
+      if (p0 < 1) { top += `<circle cx="${mix(430, LBX, ease(p0))}" cy="${ly}" r="12" fill="${col}" opacity="${vis}"/>`; return; }
+      const p1 = (s - q.t) / TRAVEL; if (p1 >= 1) return;
+      const k = r.srv[j], tx = SX0 + 10, ty = SY(T, k) + SH / 2, e = ease(clamp(p1));
+      g += `<line x1="${LBX}" y1="${ly}" x2="${tx}" y2="${ty}" stroke="${col}" stroke-width="5" opacity="${(1 - clamp(p1)) * vis}"/>`;
+      top += `<circle cx="${mix(LBX, tx, e)}" cy="${mix(ly, ty, e)}" r="12" fill="${col}" opacity="${vis}" filter="url(#glow)"/>`;
+    });
+    $('b' + i).style.opacity = clamp((s - 2.6) / 0.3) * vis;
+  });
+  $('gg').innerHTML = g + top;
+};
+</script></body></html>
