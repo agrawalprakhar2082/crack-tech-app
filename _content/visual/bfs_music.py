@@ -1,6 +1,6 @@
 # Original 8-bit (chiptune) loop for the BFS Reel, on the page's beat grid (default 144 BPM, 24 beats = 10 s); loops seamlessly.
 # Square-wave bass and arpeggio over Am-F-C-G, noise drums, and game-style bleeps on BFS events
-# from sfx.json (pop = visit a node, pitch rises with the level; enq = added to the queue;
+# from sfx.json (pop = visit a node, pitch rises with the level or depth; enq = added to the queue; back = return (DFS);
 # seen = already visited; clear = all done). Everything is synthesized here: no samples, no
 # existing melodies. Usage: python3 bfs_music.py <dir> [bpm beats]  -> <dir>/music.wav (beats a multiple of 4)
 import json, sys
@@ -32,11 +32,12 @@ for bar in range(BEATS // 4):
         put(sq(150, .12, .5, .3, 25, sweep=45), bar * 4 + b)               # kick
         if b in (1, 3): put(noise(.12, .18, 28), bar * 4 + b)              # snare
         put(noise(.04, .05, 90, hp=True), bar * 4 + b + .5)                # hat
-PENTA = [69, 72, 74, 76, 79, 81]
+PENTA = [69, 72, 74, 76, 79, 81, 84, 86, 88, 91]
 for e in json.load(open(f"{d}/sfx.json")):
-    b = e["t"] / BEAT; lv = min(e.get("lvl", 0), 5)
+    b = e["t"] / BEAT; lv = min(e.get("lvl", 0), len(PENTA) - 1)
     if e["kind"] == "pop": put(sq(note(PENTA[lv] + 12), .16, .5, .14, 10), b); put(sq(note(PENTA[lv] + 24), .1, .25, .06, 16), b + .25)
-    elif e["kind"] == "enq": put(sq(note(PENTA[min(lv, 5)] + 7), .07, .125, .08, 30), b)
+    elif e["kind"] == "enq": put(sq(note(PENTA[lv] + 7), .07, .125, .08, 30), b)
+    elif e["kind"] == "back": put(sq(note(PENTA[lv]), .09, .25, .06, 22, sweep=note(PENTA[lv]) * .8), b)
     elif e["kind"] == "seen": put(sq(330, .14, .5, .1, 14, sweep=160), b)
     elif e["kind"] == "clear":
         for j, m in enumerate([69, 72, 76, 81, 84]): put(sq(note(m + 12), .14, .5, .12, 9), b + j * .25)

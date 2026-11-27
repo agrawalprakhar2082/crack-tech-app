@@ -1,0 +1,138 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- DFS loop Reel (pair of bfs.html, same graph) (no voice; dark-panel style): 10 s at 144 BPM (24 beats); music by bfs_music.py on the same beat grid.
+     Frame 0 and the last frame are the same state, so it loops seamlessly. How to render: _content/visual/README.md ("Loop Reels"). -->
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;700;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#000}
+:root{--bg:#070a10;--panel:#0d121b;--edge:#1c2433;--dim:#6b7486;--ink:#e8ecf3;--green:#ff5fa2}
+#v{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Geist,sans-serif}
+.head{position:absolute;left:0;right:0;top:175px;display:flex;justify-content:center;align-items:center;gap:20px;font-weight:900;font-size:64px;letter-spacing:-.01em}
+.pill{background:var(--green);color:#1a0610;padding:4px 22px 8px;border-radius:16px}
+.handle{position:absolute;right:70px;top:1508px;font-family:"Geist Mono",monospace;font-weight:700;font-size:26px;color:#3fb6c9}
+.panel{position:absolute;left:50px;right:50px;background:var(--panel);border:2px solid var(--edge);border-radius:28px}
+.k{position:absolute;font-family:"Geist Mono",monospace;font-weight:700;font-size:24px;letter-spacing:.18em;color:var(--dim)}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;transform:translate(-5px,115px) scale(.898)}
+svg#g{position:absolute;left:0;top:0;width:1080px;height:1920px}
+.code{position:absolute;left:80px;top:1000px;font-family:"Geist Mono",monospace;font-size:29px;line-height:44px}
+.code div{white-space:pre;padding:0 12px;border-radius:10px;border:2px solid transparent}
+.code div.on{background:rgba(255,95,162,.12);border-color:var(--green)}
+.code div.bad{background:rgba(255,77,109,.12);border-color:#ff4d6d}
+.code .kw{color:#c48bff}.code .fn{color:#4cc9ff}.code .cm{color:var(--dim)}
+.bigo{position:absolute;right:90px;top:1060px;width:250px;text-align:center}
+.bigo b{display:block;font-weight:900;font-size:62px;color:var(--green);letter-spacing:-.02em}
+.bigo span{display:block;margin-top:6px;font-size:26px;color:#aab2c2}
+.slot{position:absolute;width:62px;height:62px;border-radius:14px;border:3px solid #243043;box-sizing:border-box;display:grid;place-items:center;font-family:"Geist Mono",monospace;font-weight:700;font-size:28px}
+</style></head><body>
+<div id="v"><div id="stage">
+ <div class="handle">cracktech.app</div>
+ <div class="head">DFS <span class="pill">Depth-First Search</span></div>
+ <div class="panel" style="top:290px;height:660px"></div>
+ <div class="k" style="left:84px;top:316px">GRAPH</div>
+ <div class="k" id="lvls" style="right:84px;top:316px"></div>
+ <div class="panel" style="top:975px;height:330px"></div>
+ <div class="code" id="code">
+<div><span class="kw">def</span> <span class="fn">dfs</span>(u):</div>
+<div>    seen.add(u)</div>
+<div>    <span class="kw">for</span> v <span class="kw">in</span> graph[u]:</div>
+<div>        <span class="kw">if</span> v <span class="kw">not in</span> seen:</div>
+<div>            <span class="fn">dfs</span>(v)   <span class="cm"># go deeper</span></div>
+<div>    <span class="kw">return</span>   <span class="cm"># backtrack</span></div>
+ </div>
+ <div class="bigo" style="top:1000px"><b>O(V + E)</b><span>each node &amp; edge once</span></div>
+ <div class="panel" style="top:1320px;height:172px"></div>
+ <div class="k" style="left:84px;top:1360px">STACK</div>
+ <div class="k" style="left:84px;top:1434px">VISITED</div>
+ <div id="slots"></div>
+ <svg id="g"><defs>
+  <filter id="glow" filterUnits="userSpaceOnUse" x="0" y="0" width="1080" height="1920"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <clipPath id="gp"><rect x="52" y="292" width="976" height="656" rx="26"/></clipPath>
+  <filter id="soft" filterUnits="userSpaceOnUse" x="0" y="0" width="1080" height="1920"><feGaussianBlur stdDeviation="4"/></filter></defs><g id="gg"></g></svg>
+</div></div>
+<script>
+const BPM = 144, BEAT = 60 / BPM, TOTAL = 24;                 // 24 beats = 10 s
+const N = {A:[540,410], B:[270,565], C:[540,565], D:[810,565], E:[180,720], F:[410,720], G:[670,720], H:[900,720], I:[295,875], J:[785,875]};
+const EDGES = [['A','B'],['A','C'],['A','D'],['B','E'],['B','F'],['C','F'],['C','G'],['D','G'],['D','H'],['E','I'],['F','I'],['G','J'],['H','J']];
+const RED = '#ff4d6d', R0 = 46;
+const DC = d => `hsl(${190 + d * 16}, 92%, ${64 - d * 1.2}%)`;   // colour by recursion depth: cyan -> violet -> pink
+const ADJ = {}; for (const k in N) ADJ[k] = []; for (const [a, b] of EDGES) { ADJ[a].push(b); ADJ[b].push(a); } for (const k in ADJ) ADJ[k].sort();
+// Recursive DFS from A (neighbours in alphabetical order) laid out on the beat grid:
+// going down an edge takes 1.15 beats, checking an already-seen neighbour 0.3, returning 0.45.
+const ENTER = 1.15, SEEN = 0.3, BACK = 0.45;
+const ST = {}, STEPS = [], ORDER = [], EVENTS = [];
+for (const k in N) ST[k] = { tin: Infinity, tout: Infinity, depth: 0, parent: null };
+let cur = 0.5; const seen = new Set();
+function dfs(u, parent, depth) {
+  seen.add(u); ST[u].tin = cur; ST[u].depth = depth; ST[u].parent = parent; ORDER.push(u);
+  EVENTS.push({ b: cur, kind: 'pop', lvl: depth });
+  for (const v of ADJ[u]) {
+    if (seen.has(v)) { STEPS.push({ kind: 'seen', u, v, t0: cur, t1: cur + SEEN }); EVENTS.push({ b: cur, kind: 'seen', lvl: depth }); cur += SEEN; continue; }
+    STEPS.push({ kind: 'enter', u, v, t0: cur, t1: cur + ENTER * 0.6 }); cur += ENTER * 0.6;
+    dfs(v, u, depth + 1); cur += ENTER * 0.4;
+  }
+  ST[u].tout = cur + BACK; if (parent) STEPS.push({ kind: 'back', u, v: parent, t0: cur, t1: cur + BACK });
+  EVENTS.push({ b: cur, kind: 'back', lvl: depth }); cur += BACK;
+}
+dfs('A', null, 0);
+const END = cur, RESET = Math.min(END + 0.4, 22), FADE = 1.5;   // then fade back to the start state (= frame 0)
+window.SFX = EVENTS.map(e => ({ t: +(e.b * BEAT).toFixed(4), kind: e.kind, lvl: e.lvl }));
+window.SFX.push({ t: +(END * BEAT).toFixed(4), kind: 'clear', lvl: 0 });
+window.MUSIC = { bpm: BPM, beats: TOTAL };
+const ease = p => 1 - Math.pow(1 - p, 3), clamp = p => Math.max(0, Math.min(1, p)), mix = (a, b, p) => a + (b - a) * p;
+const $ = id => document.getElementById(id);
+$('lvls').innerHTML = `<span style="color:${DC(0)}">depth 0</span> <span style="display:inline-block;width:160px;height:10px;border-radius:5px;vertical-align:3px;background:linear-gradient(90deg,${DC(0)},${DC(5)},${DC(9)})"></span> <span style="color:${DC(9)}">9</span>`;
+const QX = 260, SL = 72; let sl = '';
+for (let j = 0; j < 10; j++) sl += `<div class="slot" style="left:${QX + j * SL}px;top:1420px" id="v${j}"></div>`;
+for (let j = 0; j < 10; j++) sl += `<div class="slot" style="left:${QX + j * SL}px;top:1346px;opacity:.55"></div>`;
+$('slots').innerHTML = sl + '<div id="qi"></div>';
+
+window.setup = () => {};
+window.setT = t => {
+  const b = (t / BEAT) % TOTAL;
+  const fade = b >= RESET ? clamp((b - RESET) / FADE) : 0, vis = 1 - ease(fade);
+  const bs = b >= RESET ? RESET - 0.01 : b;
+  let s = '', top = '', codeOn = [], codeBad = [];
+  for (const [a, c] of EDGES) s += `<line x1="${N[a][0]}" y1="${N[a][1]}" x2="${N[c][0]}" y2="${N[c][1]}" stroke="#202938" stroke-width="7" stroke-linecap="round"/>`;
+  // tree edges: bright while the child is on the stack, dimmer once it has returned
+  for (const k in N) { const st = ST[k]; if (!st.parent) continue; const [x1, y1] = N[st.parent], [x2, y2] = N[k], col = DC(st.depth);
+    const st0 = STEPS.find(x => x.kind === 'enter' && x.v === k); const p = clamp((bs - st0.t0) / (st0.t1 - st0.t0)); if (p <= 0) continue;
+    const onStack = bs < st.tout, e = ease(p);
+    s += `<line x1="${x1}" y1="${y1}" x2="${mix(x1, x2, e)}" y2="${mix(y1, y2, e)}" stroke="${col}" stroke-width="${onStack ? 9 : 6}" stroke-linecap="round" opacity="${(onStack ? 1 : .55) * vis}" ${onStack ? 'filter="url(#glow)"' : ''}/>`; }
+  for (const x of STEPS) {
+    const [x1, y1] = N[x.u], [x2, y2] = N[x.v]; const p = (bs - x.t0) / (x.t1 - x.t0);
+    if (x.kind === 'enter' && p >= 0 && p < 1) { const e = ease(p); top += `<circle cx="${mix(x1, x2, e)}" cy="${mix(y1, y2, e)}" r="10" fill="#fff" opacity="${vis}" filter="url(#glow)"/>`; codeOn = [5]; }
+    if (x.kind === 'back' && p >= 0 && p < 1) { const e = ease(p); top += `<circle cx="${mix(x1, x2, e)}" cy="${mix(y1, y2, e)}" r="8" fill="${DC(ST[x.u].depth)}" opacity="${vis}"/>`; codeOn = [6]; }
+    if (x.kind === 'seen' && p >= 0) { const f = clamp(1 - (bs - x.t0) / 0.5); if (f > 0) {
+      s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${RED}" stroke-width="6" stroke-dasharray="5 14" opacity="${f * vis}"/>`;
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, r1 = R0 + 6 + 24 * (1 - f), r2 = r1 + 16 * f;
+        top += `<line x1="${x2 + r1 * Math.cos(a)}" y1="${y2 + r1 * Math.sin(a)}" x2="${x2 + r2 * Math.cos(a)}" y2="${y2 + r2 * Math.sin(a)}" stroke="${RED}" stroke-width="5" stroke-linecap="round" opacity="${f * vis}"/>`; } }
+      if (p < 1) { codeOn = [3]; codeBad = [4]; } }
+  }
+  // the stack at this moment: nodes entered and not yet returned, by depth
+  const stack = Object.keys(N).filter(k => bs >= ST[k].tin && bs < ST[k].tout).sort((a, c) => ST[a].depth - ST[c].depth);
+  const topNode = stack[stack.length - 1];
+  for (const k in N) { const [x, y] = N[k], st = ST[k], col = DC(st.depth);
+    const on = bs >= st.tin && bs < st.tout, done = bs >= st.tout, isTop = k === topNode;
+    if (isTop && bs - st.tin < 0.35 && !codeOn.length) codeOn = [2];
+    const pop = bs >= st.tin && bs - st.tin < 0.35 ? 1 + 0.25 * Math.sin(Math.PI * (bs - st.tin) / 0.35) : 1;
+    const r = R0 * pop * (isTop ? 1.1 : 1);
+    s += `<circle cx="${x}" cy="${y}" r="${r}" fill="#0a0e15" stroke="#2a3446" stroke-width="4"/>`;
+    if (on) s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" opacity="${(isTop ? 1 : .9) * vis}" ${isTop ? 'filter="url(#glow)"' : ''}/>`;
+    if (done) s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" fill-opacity=".22" stroke="${col}" stroke-width="5" opacity="${vis}"/>`;
+    if (isTop && vis > .5) s += `<circle cx="${x}" cy="${y}" r="${r + 16}" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="12 10" transform="rotate(${bs * 60} ${x} ${y})"/>`;
+    const fill = on && vis > .5 ? '#060a10' : done && vis > .5 ? '#fff' : '#5b6578';
+    s += `<text x="${x}" y="${y + 11}" text-anchor="middle" font-family="Geist Mono" font-weight="700" font-size="32" fill="${fill}">${k}</text>`; }
+  if (bs < 0.5) codeOn = bs >= 0.2 ? [1] : [];
+  $('gg').innerHTML = s + top;
+  [...$('code').children].forEach((d, j) => { d.classList.toggle('on', codeOn.includes(j + 1) && vis > .5); d.classList.toggle('bad', codeBad.includes(j + 1) && vis > .5); });
+  // call stack: one slot per depth; a frame drops in when entered and lifts out when it returns
+  let qh = '';
+  for (const k in N) { const st = ST[k]; if (bs < st.tin || bs >= st.tout + 0.25) continue;
+    const inn = ease(clamp((bs - st.tin) / 0.25)), out = clamp((bs - st.tout) / 0.25), col = DC(st.depth);
+    qh += `<div class="slot" style="left:${QX + st.depth * SL}px;top:1346px;border-color:${col};background:${col};color:#060a10;opacity:${inn * (1 - out) * vis};transform:translateY(${-50 * (1 - inn) - 50 * ease(out)}px)">${k}</div>`; }
+  $('qi').innerHTML = qh;
+  ORDER.forEach((k, j) => { const e = $('v' + j), d = bs - ST[k].tin, col = DC(ST[k].depth);
+    if (d >= 0 && vis > 0.02) { const p = ease(clamp(d / 0.3)); e.textContent = k; e.style.background = col; e.style.borderColor = col; e.style.color = '#060a10'; e.style.opacity = 0.35 + 0.65 * vis; e.style.transform = `scale(${0.7 + 0.3 * p})`; }
+    else { e.textContent = ''; e.style.background = 'transparent'; e.style.borderColor = '#243043'; e.style.opacity = 1; e.style.transform = 'none'; } });
+};
+window.DFS_END = END;
+</script></body></html>
