@@ -1,0 +1,124 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Rate limiting loop Reel (no voice): the same 16 requests hit 4 limiters (token bucket, leaky bucket, fixed window,
+     sliding window), limit 4 requests per 2 s. 10 s loop at 144 BPM (24 beats); music by bfs_music.py from window.SFX.
+     Frame 0 = last frame. Render: "Loop Reels" in README.md. -->
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;700;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#000}
+:root{--bg:#070a10;--panel:#0d121b;--edge:#1c2433;--dim:#6b7486;--ink:#e8ecf3;--acc:#ffb627;--ok:#2fe28a;--bad:#ff4d6d}
+#v{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Geist,sans-serif}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;transform:translate(-5px,170px) scale(.898)}
+.handle{position:absolute;left:0;right:0;top:112px;text-align:center;font-family:"Geist Mono",monospace;font-weight:700;font-size:30px;letter-spacing:.06em;color:#3fb6c9}
+.head{position:absolute;left:0;right:0;top:175px;display:flex;justify-content:center;align-items:center;gap:20px;font-weight:900;font-size:62px;letter-spacing:-.01em}
+.pill{background:var(--acc);color:#1a1002;padding:4px 22px 8px;border-radius:16px}
+.panel{position:absolute;left:50px;right:50px;background:var(--panel);border:2px solid var(--edge);border-radius:28px}
+.name{position:absolute;left:84px;font-weight:800;font-size:34px}
+.rule{position:absolute;left:84px;font-family:"Geist Mono",monospace;font-weight:500;font-size:22px;color:var(--dim)}
+.tally{position:absolute;right:84px;font-family:"Geist Mono",monospace;font-weight:700;font-size:30px}
+.tally b{color:var(--ok)}.tally i{font-style:normal;color:var(--bad);margin-left:18px}
+.badge{position:absolute;right:84px;font-family:"Geist Mono",monospace;font-weight:700;font-size:23px;padding:6px 14px;border-radius:10px}
+.foot{position:absolute;left:84px;right:84px;top:1430px;display:flex;justify-content:space-between;font-family:"Geist Mono",monospace;font-weight:700;font-size:26px;color:#aab2c2}
+.foot span i{font-style:normal}
+svg#g{position:absolute;left:0;top:0;width:1080px;height:1920px}
+</style></head><body>
+<div id="v"><div id="stage">
+ <div class="handle">cracktech.app</div>
+ <div class="head">Rate Limiting <span class="pill">4 Algorithms</span></div>
+ <div id="rows"></div>
+ <div class="panel" style="top:1410px;height:84px"></div>
+ <div class="foot"><span>LIMIT: 4 requests / 2 s</span><span><i style="color:var(--ok)">●</i> allowed &nbsp;<i style="color:var(--bad)">●</i> rejected</span></div>
+ <svg id="g"><defs><filter id="glow" filterUnits="userSpaceOnUse" x="0" y="0" width="1080" height="1920"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g id="gg"></g></svg>
+</div></div>
+<script>
+const BPM = 144, BEAT = 60 / BPM, TOTAL = 24;          // 10 s loop
+const OFF = 0.5, IN = 0.6, OUT = 0.5;                   // video time = sim time + OFF; a request takes IN s to reach the gate
+const FADE0 = 9.1, FADE1 = 9.8;                         // fade back to the start state (= frame 0)
+const R = [0.4, 1.0, 1.6, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 5.6, 6.3, 7.0, 7.6];
+const CAP = 4, WIN = 2, REFILL = 0.5, LEAK = 0.5;
+const ROWS = [
+  { key: 'token', name: 'Token Bucket', col: '#4cc9ff', rule: '4 tokens · +1 token every 0.5 s', badge: '⚡ bursts pass at once' },
+  { key: 'leaky', name: 'Leaky Bucket', col: '#c48bff', rule: 'queue of 4 · drains 1 every 0.5 s', badge: '💧 steady output' },
+  { key: 'fixed', name: 'Fixed Window', col: '#ffb627', rule: 'max 4 per 2 s block', badge: '⚠ 8 in 0.8 s at the edge' },
+  { key: 'slide', name: 'Sliding Window', col: '#2fe28a', rule: 'max 4 in any 2 s', badge: '✓ still 4 per 2 s' },
+];
+const TOP = i => 290 + i * 280, H = 262, GX = 520, LEFT = 100, RIGHT = 975;
+// ---- simulate all four on the same requests ----
+const tb = [], tokAfter = []; { let tok = CAP, last = 0; for (const t of R) { tok = Math.min(CAP, tok + (t - last) / REFILL); last = t; if (tok >= 1) { tok -= 1; tb.push(1); } else tb.push(0); tokAfter.push(tok); } }
+const lb = [], exitT = {}; { const q = []; let tick = LEAK; const drain = upTo => { while (tick <= upTo) { if (q.length) exitT[q.shift()] = tick; tick += LEAK; } };
+  R.forEach((t, i) => { drain(t); if (q.length < CAP) { q.push(i); lb.push(1); } else lb.push(0); }); drain(99); }
+const fw = []; { const c = {}; for (const t of R) { const w = Math.floor(t / WIN); if ((c[w] || 0) < CAP) { c[w] = (c[w] || 0) + 1; fw.push(1); } else fw.push(0); } }
+const sw = [], acc = []; for (const t of R) { if (acc.filter(a => a > t - WIN).length < CAP) { acc.push(t); sw.push(1); } else sw.push(0); }
+const OK = { token: tb, leaky: lb, fixed: fw, slide: sw };
+// sound: one note per request (higher when more limiters let it through), a bonk if any rejected
+window.SFX = R.map((t, i) => ({ t: +(t + OFF).toFixed(3), kind: 'pop', lvl: tb[i] + lb[i] + fw[i] + sw[i] }));
+R.forEach((t, i) => { if (tb[i] + lb[i] + fw[i] + sw[i] < 4) window.SFX.push({ t: +(t + OFF + 0.05).toFixed(3), kind: 'seen', lvl: 0 }); });
+window.SFX.push({ t: 9.0, kind: 'clear', lvl: 0 });
+const ease = p => 1 - Math.pow(1 - p, 3), clamp = p => Math.max(0, Math.min(1, p)), mix = (a, b, p) => a + (b - a) * p;
+const $ = id => document.getElementById(id);
+$('rows').innerHTML = ROWS.map((r, i) => `<div class="panel" style="top:${TOP(i)}px;height:${H}px"></div>
+  <div class="name" style="top:${TOP(i) + 20}px;color:${r.col}">${r.name}</div><div class="rule" style="top:${TOP(i) + 66}px">${r.rule}</div>
+  <div class="tally" id="t${i}" style="top:${TOP(i) + 22}px"></div><div class="badge" id="b${i}" style="top:${TOP(i) + 66}px;color:${r.col};background:${r.col}1f;opacity:0">${r.badge}</div>`).join('');
+
+window.setup = () => {};
+window.setT = t => {
+  const vis = 1 - ease(clamp((t - FADE0) / (FADE1 - FADE0)));
+  const s = Math.min(t, FADE0) - OFF;                    // sim time (frozen during the fade)
+  let g = '';
+  ROWS.forEach((r, i) => {
+    const T = TOP(i), y = T + 172, ok = OK[r.key];
+    g += `<line x1="${LEFT}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="#1d2533" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>`;
+    // ---- the limiter widget at the gate ----
+    if (r.key === 'token' || r.key === 'leaky') {
+      g += `<path d="M${GX - 62} ${T + 112} L${GX - 48} ${T + 236} L${GX + 48} ${T + 236} L${GX + 62} ${T + 112}" fill="#0a0e15" stroke="${r.col}" stroke-width="5" stroke-linejoin="round"/>`;
+    }
+    if (r.key === 'token') {
+      let k = -1; R.forEach((ta, j) => { if (ta <= s) k = j; });
+      const tok = s < 0 ? CAP : Math.min(CAP, (k < 0 ? CAP : tokAfter[k]) + (s - (k < 0 ? 0 : R[k])) / REFILL);
+      const tokV = mix(CAP, tok, vis);
+      for (let c = 0; c < CAP; c++) { const cx = GX - 22 + (c % 2) * 44, cy = T + 210 - Math.floor(c / 2) * 44, f = clamp(tokV - c);
+        g += `<circle cx="${cx}" cy="${cy}" r="17" fill="${r.col}" opacity="${0.12 + 0.88 * f}" ${f >= 1 ? 'filter="url(#glow)"' : ''}/>`; }
+    }
+    if (r.key === 'leaky') {
+      const inQ = R.map((ta, j) => j).filter(j => lb[j] && R[j] <= s && exitT[j] > s).sort((a, b) => a - b);
+      inQ.forEach((j, idx) => { const p = ease(clamp((s - R[j]) / 0.2));
+        g += `<circle cx="${GX}" cy="${mix(T + 112, T + 214 - idx * 30, p)}" r="13" fill="${r.col}" opacity="${vis}"/>`; });
+      g += `<line x1="${GX}" y1="${T + 236}" x2="${GX}" y2="${T + 252}" stroke="${r.col}" stroke-width="5" stroke-linecap="round"/>`;
+    }
+    if (r.key === 'fixed') {
+      const w = Math.max(0, Math.floor(s / WIN)), n = s < 0 ? 0 : R.filter((ta, j) => ta <= s && Math.floor(ta / WIN) === w && fw[j]).length;
+      const prog = s < 0 ? 0 : (s % WIN) / WIN, flash = s >= 0 ? clamp(1 - (s % WIN) / 0.25) : 0;
+      g += `<rect x="${GX - 78}" y="${T + 104}" width="156" height="104" rx="16" fill="#0a0e15" stroke="${r.col}" stroke-width="5"/>`;
+      g += `<text x="${GX}" y="${T + 172}" text-anchor="middle" font-family="Geist Mono" font-weight="700" font-size="44" fill="${n >= CAP && vis > .5 ? RED() : '#fff'}">${vis > .5 ? n : 0}/4</text>`;
+      g += `<rect x="${GX - 78}" y="${T + 222}" width="156" height="12" rx="6" fill="#1d2533"/><rect x="${GX - 78}" y="${T + 222}" width="${156 * prog * vis}" height="12" rx="6" fill="${r.col}"/>`;
+      if (flash > 0 && s > 0.3) g += `<rect x="${GX - 84}" y="${T + 98}" width="168" height="116" rx="20" fill="none" stroke="#fff" stroke-width="4" opacity="${flash * vis}"/>`;
+    }
+    if (r.key === 'slide') {
+      const x0 = GX - 130, x1 = GX + 130;
+      g += `<rect x="${x0}" y="${T + 118}" width="${x1 - x0}" height="92" rx="16" fill="#0a0e15" stroke="${r.col}" stroke-width="5"/>`;
+      const live = R.map((ta, j) => j).filter(j => sw[j] && R[j] <= s && R[j] > s - WIN);
+      live.forEach(j => { const x = x1 - 16 - (s - R[j]) / WIN * (x1 - x0 - 32);
+        g += `<line x1="${x}" y1="${T + 134}" x2="${x}" y2="${T + 194}" stroke="${r.col}" stroke-width="8" stroke-linecap="round" opacity="${vis}"/>`; });
+      g += `<text x="${GX}" y="${T + 246}" text-anchor="middle" font-family="Geist Mono" font-weight="700" font-size="24" fill="${live.length >= CAP && vis > .5 ? RED() : '#aab2c2'}">last 2 s: ${vis > .5 ? live.length : 0}/4</text>`;
+    }
+    // ---- the requests ----
+    R.forEach((ta, j) => {
+      const pin = (s - (ta - IN)) / IN; if (pin < 0) return;
+      const gateX = r.key === 'slide' ? GX - 140 : GX - 90;
+      if (pin < 1) { g += `<circle cx="${mix(LEFT, gateX, pin)}" cy="${y}" r="13" fill="#fff" opacity="${vis}"/>`; return; }
+      if (!ok[j]) { const f = clamp(1 - (s - ta) / 0.45); if (f <= 0) return;
+        g += `<circle cx="${gateX}" cy="${y}" r="${13 + 18 * (1 - f)}" fill="none" stroke="${RED()}" stroke-width="5" opacity="${f * vis}"/>`;
+        for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3, r1 = 16 + 22 * (1 - f); g += `<line x1="${gateX + r1 * Math.cos(a)}" y1="${y + r1 * Math.sin(a)}" x2="${gateX + (r1 + 12) * Math.cos(a)}" y2="${y + (r1 + 12) * Math.sin(a)}" stroke="${RED()}" stroke-width="5" stroke-linecap="round" opacity="${f * vis}"/>`; }
+        return; }
+      const tOut = r.key === 'leaky' ? exitT[j] : ta; const po = (s - tOut) / OUT;
+      if (po >= 0 && po < 1) g += `<circle cx="${mix(GX + 90, RIGHT, ease(po))}" cy="${y}" r="13" fill="${'#2fe28a'}" opacity="${vis}" filter="url(#glow)"/>`;
+    });
+    // tallies and badges
+    const done = R.map((ta, j) => j).filter(j => R[j] <= s);
+    const a = done.filter(j => ok[j]).length, rj = done.length - a;
+    $('t' + i).innerHTML = `<b>✓ ${vis > .5 ? a : 0}</b><i>✗ ${vis > .5 ? rj : 0}</i>`;
+    $('b' + i).style.opacity = clamp((s - 4.25) / 0.3) * vis;
+  });
+  $('gg').innerHTML = g;
+};
+function RED() { return '#ff4d6d'; }
+</script></body></html>
