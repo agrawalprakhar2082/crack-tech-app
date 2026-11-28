@@ -1,0 +1,145 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- BFS vs DFS loop Reel (no voice): both run at the same time on the same graph, side by side. The graph is two groups
+     joined only through the bridge node C. 10 s at 144 BPM (24 beats); music by bfs_music.py from window.SFX.
+     Frame 0 = last frame. Render: "Loop Reels" in README.md. -->
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;700;800;900&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#000}
+:root{--bg:#070a10;--panel:#0d121b;--edge:#1c2433;--dim:#6b7486;--ink:#e8ecf3;--bfs:#2fe28a;--dfs:#ff5fa2}
+#v{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Geist,sans-serif}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;transform:translate(-5px,170px) scale(.898)}
+.handle{position:absolute;left:0;right:0;top:112px;text-align:center;font-family:"Geist Mono",monospace;font-weight:700;font-size:30px;letter-spacing:.06em;color:#3fb6c9}
+.head{position:absolute;left:0;right:0;top:172px;display:flex;justify-content:center;align-items:center;gap:18px;font-weight:900;font-size:64px;letter-spacing:-.01em}
+.head .b{color:var(--bfs)}.head .d{color:var(--dfs)}.head small{font-size:40px;color:var(--dim);font-weight:800}
+.pill{font-size:34px;background:#e8ecf3;color:#070a10;padding:4px 16px 6px;border-radius:12px;margin-left:8px}
+.panel{position:absolute;background:var(--panel);border:2px solid var(--edge);border-radius:28px}
+.k{position:absolute;font-family:"Geist Mono",monospace;font-weight:700;font-size:22px;letter-spacing:.16em;color:var(--dim)}
+.ttl{position:absolute;font-weight:900;font-size:40px}
+.ttl span{font-family:"Geist Mono",monospace;font-weight:700;font-size:22px;letter-spacing:.1em;color:var(--dim);margin-left:10px}
+.slot{position:absolute;width:44px;height:44px;border-radius:10px;border:3px solid #243043;box-sizing:border-box;display:grid;place-items:center;font-family:"Geist Mono",monospace;font-weight:700;font-size:22px}
+.oslot{position:absolute;width:56px;height:56px;border-radius:12px;border:3px solid #243043;box-sizing:border-box;display:grid;place-items:center;font-family:"Geist Mono",monospace;font-weight:700;font-size:26px}
+.note{position:absolute;left:84px;right:84px;font-family:"Geist Mono",monospace;font-weight:700;font-size:24px}
+svg#g{position:absolute;left:0;top:0;width:1080px;height:1920px}
+</style></head><body>
+<div id="v"><div id="stage">
+ <div class="handle">cracktech.app</div>
+ <div class="head"><span class="b">BFS</span><small>vs</small><span class="d">DFS</span><span class="pill">same graph</span></div>
+ <div class="panel" style="left:50px;top:290px;width:474px;height:820px"></div>
+ <div class="panel" style="left:556px;top:290px;width:474px;height:820px"></div>
+ <div class="ttl" style="left:82px;top:304px;color:var(--bfs)">BFS<span>LEVEL BY LEVEL</span></div>
+ <div class="ttl" style="left:588px;top:304px;color:var(--dfs)">DFS<span>AS DEEP AS IT CAN</span></div>
+ <div class="k" style="left:82px;top:1012px">QUEUE</div>
+ <div class="k" style="left:588px;top:1012px">STACK</div>
+ <div class="panel" style="left:50px;right:50px;top:1130px;height:182px"></div>
+ <div class="k" style="left:84px;top:1160px;color:var(--bfs)">BFS</div>
+ <div class="k" style="left:84px;top:1236px;color:var(--dfs)">DFS</div>
+ <div class="note" id="n1" style="top:1336px;color:var(--bfs);opacity:0">BFS: rings out from A → F is 3rd</div>
+ <div class="note" id="n2" style="top:1374px;color:var(--dfs);opacity:0">DFS: dives through bridge C → F is last</div>
+ <div id="slots"></div>
+ <svg id="g"><defs><filter id="glow" filterUnits="userSpaceOnUse" x="0" y="0" width="1080" height="1920"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g id="gg"></g></svg>
+</div></div>
+<script>
+const BPM = 144, BEAT = 60 / BPM, TOTAL = 24;
+// graph in panel-local coordinates: group 1 (A B F G) on top, bridge C, group 2 (D E H I) below
+const P = { A: [237, 120], B: [117, 215], F: [357, 215], G: [237, 310], C: [237, 425], D: [117, 545], E: [357, 545], H: [117, 655], I: [357, 655] };
+const EDGES = [['A','B'],['A','F'],['B','G'],['F','G'],['B','C'],['G','C'],['C','D'],['C','E'],['D','E'],['D','H'],['E','I'],['H','I']];
+const PX = [50, 556], PY = 290, R0 = 32, RED = '#ff4d6d';
+const at = (side, k) => [PX[side] + P[k][0], PY + P[k][1]];
+const ADJ = {}; for (const k in P) ADJ[k] = []; for (const [a, b] of EDGES) { ADJ[a].push(b); ADJ[b].push(a); } for (const k in ADJ) ADJ[k].sort();
+const LC = ['#4cc9ff', '#2fe28a', '#ffb627', '#c48bff', '#ff5fa2'];          // BFS: colour per level
+const DC = d => `hsl(${190 + d * 20}, 92%, ${64 - d * 1.5}%)`;                  // DFS: colour per depth
+const END = 17.2, RESET = 20.2, FADE = 1.5, STEP = 1.8;   // both finish at beat 17.2; hold; fade back to the start
+// ---- BFS schedule ----
+const B = { st: {}, checks: [], order: [] }, EV = [];
+for (const k in P) B.st[k] = { td: Infinity, tp: Infinity, lvl: 0 };
+B.st.A.td = 0.5; { const q = ['A']; let i = 0;
+  while (q.length) { const u = q.shift(), tp = 1 + STEP * i; B.st[u].tp = tp; B.order.push(u); EV.push({ b: tp, kind: 'pop', lvl: B.st[u].lvl });
+    const n = ADJ[u].length; ADJ[u].forEach((v, k) => { const b = tp + (k + 1) * 1.6 / (n + 1), fresh = B.st[v].td === Infinity;
+      B.checks.push({ u, v, b, fresh }); if (fresh) { B.st[v].td = b; B.st[v].lvl = B.st[u].lvl + 1; q.push(v); } }); i++; } }
+// ---- DFS schedule (recursive), then scaled to finish with BFS ----
+const D = { st: {}, steps: [], order: [] };
+for (const k in P) D.st[k] = { tin: Infinity, tout: Infinity, depth: 0, parent: null };
+{ let cur = 0, seen = new Set(); const ENTER = 1, SEEN = 0.35, BACK = 0.45;
+  const go = (u, parent, depth) => { seen.add(u); Object.assign(D.st[u], { tin: cur, depth, parent }); D.order.push(u);
+    for (const v of ADJ[u]) { if (seen.has(v)) { D.steps.push({ kind: 'seen', u, v, t0: cur, t1: cur + SEEN }); cur += SEEN; continue; }
+      D.steps.push({ kind: 'enter', u, v, t0: cur, t1: cur + ENTER * 0.6 }); cur += ENTER * 0.6; go(v, u, depth + 1); cur += ENTER * 0.4; }
+    D.st[u].tout = cur + BACK; if (parent) D.steps.push({ kind: 'back', u, v: parent, t0: cur, t1: cur + BACK }); cur += BACK; };
+  go('A', null, 0);
+  const sc = (END - 0.5) / cur, f = x => 0.5 + x * sc;
+  for (const k in P) { D.st[k].tin = f(D.st[k].tin); D.st[k].tout = f(D.st[k].tout); }
+  D.steps.forEach(s => { s.t0 = f(s.t0); s.t1 = f(s.t1); }); }
+D.order.forEach(k => EV.push({ b: D.st[k].tin, kind: 'enq', lvl: D.st[k].depth }));
+window.SFX = EV.map(e => ({ t: +(e.b * BEAT).toFixed(4), kind: e.kind, lvl: e.lvl }));
+window.SFX.push({ t: +(END * BEAT).toFixed(4), kind: 'clear', lvl: 0 });
+const ease = p => 1 - Math.pow(1 - p, 3), clamp = p => Math.max(0, Math.min(1, p)), mix = (a, b, p) => a + (b - a) * p;
+const $ = id => document.getElementById(id);
+let sl = '';
+for (let j = 0; j < 9; j++) { sl += `<div class="slot" style="left:${82 + j * 48}px;top:1046px;opacity:.5"></div><div class="slot" style="left:${588 + j * 48}px;top:1046px;opacity:.5"></div>`;
+  sl += `<div class="oslot" id="ob${j}" style="left:${200 + j * 66}px;top:1144px"></div><div class="oslot" id="od${j}" style="left:${200 + j * 66}px;top:1220px"></div>`; }
+$('slots').innerHTML = sl + '<div id="ds"></div>';
+
+function node(side, k, x, y, state, col, ring, vis, r) {
+  let s = `<circle cx="${x}" cy="${y}" r="${r}" fill="#0a0e15" stroke="#2a3446" stroke-width="4"/>`;
+  if (state === 'q') s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" fill-opacity=".18" stroke="${col}" stroke-width="5" opacity="${vis}"/>`;
+  if (state === 'on' || state === 'done') s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" opacity="${(state === 'on' ? 1 : .8) * vis}" ${ring ? 'filter="url(#glow)"' : ''}/>`;
+  if (ring && vis > .5) s += `<circle cx="${x}" cy="${y}" r="${r + 13}" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="10 8" transform="rotate(${ring * 60} ${x} ${y})"/>`;
+  const fill = (state === 'on' || state === 'done') && vis > .5 ? '#060a10' : state === 'q' && vis > .5 ? '#fff' : '#5b6578';
+  return s + `<text x="${x}" y="${y + 9}" text-anchor="middle" font-family="Geist Mono" font-weight="700" font-size="26" fill="${fill}">${k}</text>`;
+}
+window.setup = () => {};
+window.setT = t => {
+  const b = (t / BEAT) % TOTAL, vis = 1 - ease(b >= RESET ? clamp((b - RESET) / FADE) : 0), bs = b >= RESET ? RESET - 0.01 : b;
+  let s = '', top = '';
+  for (const side of [0, 1]) {
+    // the two groups and the bridge
+    const ox = PX[side], oy = PY;
+    s += `<rect x="${ox + 70}" y="${oy + 80}" width="334" height="272" rx="40" fill="#ffffff" fill-opacity=".025" stroke="#2a3446" stroke-dasharray="6 10" stroke-width="2"/>`;
+    s += `<rect x="${ox + 70}" y="${oy + 505}" width="334" height="192" rx="40" fill="#ffffff" fill-opacity=".025" stroke="#2a3446" stroke-dasharray="6 10" stroke-width="2"/>`;
+    s += `<text x="${ox + 310}" y="${oy + 110}" font-family="Geist Mono" font-weight="700" font-size="18" fill="#4a5366" letter-spacing="2">GROUP 1</text>`;
+    s += `<text x="${ox + 237}" y="${oy + 688}" text-anchor="middle" font-family="Geist Mono" font-weight="700" font-size="18" fill="#4a5366" letter-spacing="2">GROUP 2</text>`;
+    s += `<text x="${ox + 290}" y="${oy + 432}" font-family="Geist Mono" font-weight="700" font-size="20" fill="#8b93a5">← bridge</text>`;
+    for (const [a, c] of EDGES) { const [x1, y1] = at(side, a), [x2, y2] = at(side, c); s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#202938" stroke-width="7" stroke-linecap="round"/>`; }
+  }
+  // ---- BFS side ----
+  for (const ch of B.checks) { const [x1, y1] = at(0, ch.u), [x2, y2] = at(0, ch.v), col = ch.fresh ? LC[B.st[ch.v].lvl] : RED, p = (bs - (ch.b - 0.35)) / 0.35;
+    if (p >= 0 && p < 1) { const e = ease(p); top += `<circle cx="${mix(x1, x2, e)}" cy="${mix(y1, y2, e)}" r="9" fill="#fff" opacity="${vis}" filter="url(#glow)"/>`;
+      if (ch.fresh) s += `<line x1="${x1}" y1="${y1}" x2="${mix(x1, x2, e)}" y2="${mix(y1, y2, e)}" stroke="${col}" stroke-width="7" stroke-linecap="round" opacity="${vis}"/>`; }
+    if (p >= 1 && ch.fresh) s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="7" stroke-linecap="round" opacity="${vis}"/>`;
+    if (p >= 1 && !ch.fresh) { const f = clamp(1 - (bs - ch.b) / 0.5); if (f > 0) top += `<circle cx="${x2}" cy="${y2}" r="${R0 + 6 + 16 * (1 - f)}" fill="none" stroke="${RED}" stroke-width="4" opacity="${f * vis}"/>`; } }
+  for (const L of [1, 2, 3, 4]) { const first = Math.min(...Object.keys(P).filter(k => B.st[k].lvl === L).map(k => B.st[k].td)), p = (bs - first + 0.2) / 1.8;
+    if (p > 0 && p < 1) { const [cx, cy] = at(0, 'A'); s += `<circle cx="${cx}" cy="${cy}" r="${R0 + (110 + 135 * (L - 1)) * ease(p)}" fill="none" stroke="${LC[L]}" stroke-width="${5 * (1 - p)}" opacity="${.45 * (1 - p) * vis}"/>`; } }
+  for (const k in P) { const st = B.st[k], [x, y] = at(0, k); const st8 = bs < st.td ? '' : bs < st.tp ? 'q' : bs < st.tp + STEP ? 'on' : 'done';
+    const pop = bs >= st.td && bs - st.td < 0.35 ? 1 + 0.25 * Math.sin(Math.PI * (bs - st.td) / 0.35) : 1;
+    s += node(0, k, x, y, st8, LC[st.lvl], st8 === 'on' ? bs : 0, vis, R0 * pop * (st8 === 'on' ? 1.1 : 1)); }
+  // ---- DFS side ----
+  for (const k in P) { const st = D.st[k]; if (!st.parent) continue; const st0 = D.steps.find(x => x.kind === 'enter' && x.v === k), p = clamp((bs - st0.t0) / (st0.t1 - st0.t0)); if (p <= 0) continue;
+    const [x1, y1] = at(1, st.parent), [x2, y2] = at(1, k), on = bs < st.tout, e = ease(p);
+    s += `<line x1="${x1}" y1="${y1}" x2="${mix(x1, x2, e)}" y2="${mix(y1, y2, e)}" stroke="${DC(st.depth)}" stroke-width="${on ? 9 : 6}" stroke-linecap="round" opacity="${(on ? 1 : .55) * vis}" ${on ? 'filter="url(#glow)"' : ''}/>`; }
+  for (const x of D.steps) { const [x1, y1] = at(1, x.u), [x2, y2] = at(1, x.v), p = (bs - x.t0) / (x.t1 - x.t0);
+    if (x.kind === 'enter' && p >= 0 && p < 1) { const e = ease(p); top += `<circle cx="${mix(x1, x2, e)}" cy="${mix(y1, y2, e)}" r="9" fill="#fff" opacity="${vis}" filter="url(#glow)"/>`; }
+    if (x.kind === 'back' && p >= 0 && p < 1) { const e = ease(p); top += `<circle cx="${mix(x1, x2, e)}" cy="${mix(y1, y2, e)}" r="7" fill="${DC(D.st[x.u].depth)}" opacity="${vis}"/>`; }
+    if (x.kind === 'seen' && p >= 0) { const f = clamp(1 - (bs - x.t0) / 0.5); if (f > 0) top += `<circle cx="${x2}" cy="${y2}" r="${R0 + 6 + 16 * (1 - f)}" fill="none" stroke="${RED}" stroke-width="4" opacity="${f * vis}"/>`; } }
+  const stack = Object.keys(P).filter(k => bs >= D.st[k].tin && bs < D.st[k].tout).sort((a, c) => D.st[a].depth - D.st[c].depth), topNode = stack[stack.length - 1];
+  for (const k in P) { const st = D.st[k], [x, y] = at(1, k); const st8 = bs < st.tin ? '' : bs < st.tout ? 'on' : 'done';
+    const pop = bs >= st.tin && bs - st.tin < 0.35 ? 1 + 0.25 * Math.sin(Math.PI * (bs - st.tin) / 0.35) : 1;
+    s += node(1, k, x, y, st8 === 'done' ? 'q' : st8, DC(st.depth), k === topNode ? bs : 0, vis, R0 * pop * (k === topNode ? 1.1 : 1)); }
+  $('gg').innerHTML = s + top;
+  // queue (BFS) and stack (DFS) rows
+  const inQ = Object.keys(P).filter(k => bs >= B.st[k].td && bs < B.st[k].tp + 0.2).sort((a, c) => B.st[a].td - B.st[c].td);
+  let h = '';
+  inQ.forEach(k => { const ahead = inQ.filter(o => B.st[o].td < B.st[k].td).reduce((a, o) => a + (1 - ease(clamp((bs - B.st[o].tp - 0.1) / 0.2))), 0), out = clamp((bs - B.st[k].tp) / 0.2), inn = ease(clamp((bs - B.st[k].td) / 0.25)), col = LC[B.st[k].lvl];
+    h += `<div class="slot" style="left:${82 + ahead * 48 + (1 - inn) * 80}px;top:1046px;border-color:${col};background:${col}30;color:#fff;opacity:${inn * (1 - out) * vis};transform:translateY(${-40 * ease(out)}px)">${k}</div>`; });
+  for (const k in P) { const st = D.st[k]; if (bs < st.tin || bs >= st.tout + 0.2) continue; const inn = ease(clamp((bs - st.tin) / 0.2)), out = clamp((bs - st.tout) / 0.2), col = DC(st.depth);
+    h += `<div class="slot" style="left:${588 + st.depth * 48}px;top:1046px;border-color:${col};background:${col};color:#060a10;opacity:${inn * (1 - out) * vis};transform:translateY(${-40 * (1 - inn) - 40 * ease(out)}px)">${k}</div>`; }
+  $('ds').innerHTML = h;
+  // visit orders, with F ringed once both are done
+  const ringF = clamp((bs - END - 0.1) / 0.3) * vis;
+  B.order.forEach((k, j) => { const e = $('ob' + j), d = bs - B.st[k].tp, col = LC[B.st[k].lvl]; fill(e, k, d, col, vis, k === 'F' ? ringF : 0); });
+  D.order.forEach((k, j) => { const e = $('od' + j), d = bs - D.st[k].tin, col = DC(D.st[k].depth); fill(e, k, d, col, vis, k === 'F' ? ringF : 0); });
+  $('n1').style.opacity = $('n2').style.opacity = ringF;
+};
+function fill(e, k, d, col, vis, ring) {
+  if (d >= 0 && vis > 0.02) { const p = ease(clamp(d / 0.3)); e.textContent = k; e.style.background = col; e.style.borderColor = ring > 0 ? '#fff' : col; e.style.boxShadow = ring > 0 ? `0 0 ${18 * ring}px #fff` : 'none'; e.style.color = '#060a10'; e.style.opacity = 0.35 + 0.65 * vis; e.style.transform = `scale(${(0.7 + 0.3 * p) * (1 + 0.12 * ring)})`; }
+  else { e.textContent = ''; e.style.background = 'transparent'; e.style.borderColor = '#243043'; e.style.boxShadow = 'none'; e.style.opacity = 1; e.style.transform = 'none'; }
+}
+</script></body></html>
